@@ -66,6 +66,7 @@
   #panel td { padding: 3px 0; word-break: break-word; }
   #panel ol { padding-left: 20px; }
   #close { position: absolute; top: 10px; right: 12px; width: 26px; height: 26px; }
+  @media (min-width: 900px) { body.panel-open header, body.panel-open main { margin-right: 420px; } }
 </style>
 </head>
 <body>
@@ -149,6 +150,9 @@ function relations() {
   down.delete(sel.id)
   return { up, down, name: sel.name }
 }
+
+// ось не уходит левее создания пайплайна: отсчёт всегда с нуля
+const clampView = ([a, b]) => (a < 0 ? [0, b - a] : [a, b])
 
 const pos = (v) => ((v - state.view[0]) / (state.view[1] - state.view[0])) * 100
 const bar = (cls, from, to) => `<div class="bar ${cls}" style="left:${pos(from)}%;width:${Math.max(pos(to) - pos(from), 0.1)}%"></div>`
@@ -277,6 +281,7 @@ function drawPanel() {
   const s = state.selected && state.index.get(state.selected)
   const panel = $('#panel')
   panel.hidden = !s
+  document.body.classList.toggle('panel-open', Boolean(s))
   if (!s) return
   const rows = isAgg() ? aggDetails(s) : details(s)
   panel.innerHTML = `<button id="close" aria-label="Закрыть">×</button><h2>${esc(s.name)}</h2>`
@@ -298,23 +303,26 @@ $('#rows').addEventListener('mousedown', (e) => {
   drag = { x: e.clientX, view: state.view, width: laneEl.getBoundingClientRect().width, moved: false }
 })
 
+const endDrag = () => {
+  if (drag?.moved) dragEndedAt = Date.now()
+  drag = null
+  document.body.classList.remove('dragging')
+}
+
 document.addEventListener('mousemove', (e) => {
   if (!drag) return
+  if ((e.buttons & 1) === 0) return endDrag()
   const dx = e.clientX - drag.x
   if (!drag.moved && Math.abs(dx) < DRAG_THRESHOLD_PX) return
   drag.moved = true
   document.body.classList.add('dragging')
   const [a, b] = drag.view
   const d = (-dx / drag.width) * (b - a)
-  state.view = [a + d, b + d]
+  state.view = clampView([a + d, b + d])
   redraw()
 })
 
-document.addEventListener('mouseup', () => {
-  if (drag?.moved) dragEndedAt = Date.now()
-  drag = null
-  document.body.classList.remove('dragging')
-})
+document.addEventListener('mouseup', endDrag)
 
 document.addEventListener('click', (e) => {
   // отпускание кнопки после перетаскивания порождает click — он не должен менять выделение
@@ -356,10 +364,10 @@ $('#rows').addEventListener('wheel', (e) => {
   if (e.ctrlKey) {
     const nw = Math.max(w * (e.deltaY > 0 ? 1.25 : 0.8), 1000)
     const left = a + f * w - f * nw
-    state.view = [left, left + nw]
+    state.view = clampView([left, left + nw])
   } else {
     const d = ((e.deltaY || e.deltaX) / rect.width) * w
-    state.view = [a + d, b + d]
+    state.view = clampView([a + d, b + d])
   }
   draw()
 }, { passive: false })

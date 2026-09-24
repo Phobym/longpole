@@ -3,45 +3,136 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111318" media="(prefers-color-scheme: dark)">
 <title>pipeline-trace</title>
 <style>
   :root {
-    --bg: #ffffff; --fg: #1f2328; --muted: #6e7781; --line: #e6e8eb; --row-alt: #f7f8fa; --hover: #eef1f6;
-    --selected: #e3e8ff; --box: #f5c518; --ok: #6c5fc7; --fail: #e5484d; --warn: #f59e0b; --run: #3b82f6;
-    --idle: #9aa4af; --queued: #cfd5dc; --critical: #111827; --dep-up: #0284c7; --dep-down: #16a34a;
+    color-scheme: light dark;
+    --bg: #f7f8fa; --card: #ffffff; --line: #e8eaee; --line-soft: #f1f2f5; --fg: #1a1b1f; --muted: #8b909a;
+    --hover: #f3f4f8; --selected: #eef0ff; --focus: #6b6ff0;
+    --ok: #8b8ff6; --fail: #f06262; --warn: #f2b33d; --run: #5b9cf8; --idle: #b4b9c2; --queued: #dfe2e7; --thin: #c9ccd3;
+    --crit: #f59a3c; --crit-fg: #b65c0c; --crit-soft: #fbd3a8; --crit-bg: #fffaf4;
+    --over-a: var(--crit); --over-b: #fde0c7; --retry-a: var(--fail); --retry-b: #fbd0d0; --retry-fg: #c23434;
+    --wait: #e3e5e9; --guide: #c9ccd3;
+    --dep-up: #0284c7; --dep-down: #16a34a;
+    --pill-ok-bg: #e9f7ef; --pill-ok-fg: #1a7f45; --pill-mid-bg: #fff3dc; --pill-mid-fg: #9a6200; --pill-bad-bg: #fdecec; --pill-bad-fg: #c23434;
+    --name-w: minmax(220px, 30%); --rt-w: 96px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #16171b; --fg: #e6e7ea; --muted: #9aa0a8; --line: #2a2d33; --row-alt: #1b1d22; --hover: #23262d;
-      --selected: #2b3050; --box: #d4a90f; --ok: #8b7ff0; --fail: #f16a6e; --warn: #f5a524; --run: #5b9cf8;
-      --idle: #6b7280; --queued: #3a3f47; --critical: #f9fafb; --dep-up: #38bdf8; --dep-down: #4ade80;
+      --bg: #111318; --card: #1a1c22; --line: #2a2d35; --line-soft: #22252c; --fg: #e6e7ea; --muted: #8d939e;
+      --hover: #20232a; --selected: #262a45; --focus: #9a9cf8;
+      --ok: #9a9cf8; --fail: #f16a6e; --warn: #f5b041; --run: #5b9cf8; --idle: #5b616b; --queued: #343842; --thin: #4a4f59;
+      --crit: #f5a04a; --crit-fg: #f7b26a; --crit-soft: #5a3b1c; --crit-bg: #241c14;
+      --over-b: #4a3320; --retry-b: #4a2426; --retry-fg: #f58a8d;
+      --wait: #3a3e47; --guide: #4a4f59;
+      --dep-up: #38bdf8; --dep-down: #4ade80;
+      --pill-ok-bg: #16301f; --pill-ok-fg: #6fd49a; --pill-mid-bg: #33280f; --pill-mid-fg: #f0c060; --pill-bad-bg: #3a1a1b; --pill-bad-fg: #f58a8d;
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.4 -apple-system, system-ui, sans-serif; }
-  header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); }
-  .top { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; padding: 10px 12px 6px; }
-  .top h1 { font-size: 15px; margin: 0; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 12.5px/1.35 -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+  a { color: inherit; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-radius: 4px; }
   .muted { color: var(--muted); }
-  a { color: var(--ok); }
-  button { font: inherit; color: inherit; background: none; border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
-  .grid { display: grid; grid-template-columns: minmax(260px, 38%) 1fr; }
-  .axis { position: relative; height: 20px; overflow: hidden; border-left: 1px solid var(--line); }
-  .tick { position: absolute; top: 3px; font-size: 11px; color: var(--muted); padding-left: 3px; border-left: 1px solid var(--line); }
-  .hint { padding: 3px 12px; font-size: 11px; color: var(--muted); }
-  .row { display: grid; grid-template-columns: minmax(260px, 38%) 1fr; height: 22px; cursor: pointer; }
-  .row:nth-child(even) { background: var(--row-alt); }
-  .row:hover { background: var(--hover); }
-  .row.selected { background: var(--selected); }
-  .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; line-height: 22px; }
-  .tg { display: inline-block; min-width: 38px; margin-right: 4px; padding: 0 3px; font-size: 11px; line-height: 16px; }
-  span.tg { border: 0; }
-  .k { display: inline-block; width: 16px; text-align: center; font-size: 10px; font-weight: 700; border-radius: 3px; margin-right: 4px; background: var(--line); }
-  .row.critical .name { font-weight: 600; }
-  .lane { position: relative; overflow: hidden; border-left: 1px solid var(--line); cursor: grab; }
-  body.dragging, body.dragging * { cursor: grabbing !important; user-select: none; }
+  #page { padding: 0 16px 32px; }
+  @media (min-width: 900px) { body.panel-open #page { margin-right: 420px; } }
+
+  /* шапка */
+  .top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 14px 0 10px; position: relative; }
+  .top h1 { font-size: 15px; margin: 0 4px 0 0; font-weight: 600; }
+  .top h1 a { text-decoration: none; }
+  .top h1 a:hover { text-decoration: underline; }
+  .chip { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--muted); white-space: nowrap; }
+  .chip b { color: var(--fg); font-weight: 600; }
+  .chip.crit { border-color: var(--crit-soft); color: var(--crit-fg); }
+  .chip.crit b { color: var(--crit-fg); }
+  .chip.bad { border-color: var(--pill-bad-bg); color: var(--retry-fg); }
+  .chip.bad b { color: var(--retry-fg); }
+  #back { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; background: var(--card); }
+  #help { margin-left: auto; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--muted); }
+  #keys { position: absolute; right: 0; top: 44px; z-index: 4; background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+          padding: 10px 14px; box-shadow: 0 6px 24px rgb(0 0 0 / .12); }
+  #keys ul { margin: 0; padding: 0; list-style: none; }
+  #keys li { padding: 2px 0; }
+  #keys kbd { font: inherit; font-weight: 600; }
+
+  /* карточки */
+  .card { background: var(--card); border-radius: 10px; box-shadow: 0 0 0 1px var(--line); margin: 1px 0 10px; overflow: hidden; }
+  .card.cont { border-radius: 0 0 10px 10px; margin-top: -9px; }
+  .hot { box-shadow: 0 0 0 1px var(--crit-soft); padding-bottom: 6px; }
+  .hot h2 { margin: 0; padding: 7px 12px; font-size: 12.5px; font-weight: 600; color: var(--crit-fg); background: var(--crit-bg); }
+  .hs { display: flex; gap: 8px; align-items: baseline; width: 100%; text-align: left; padding: 4px 12px; }
+  .hs:hover { background: var(--hover); }
+  .save { min-width: 62px; font-weight: 600; color: var(--crit-fg); }
+  .why { color: var(--muted); }
+
+  /* ось и строки: одна сетка, поэтому дорожки всех строк на одной вертикали */
+  .grid, .row { display: grid; grid-template-columns: var(--name-w) 1fr var(--rt-w); }
+  #axisbar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 4px 0 6px; }
+  .axis { position: relative; height: 16px; overflow: hidden; }
+  .tick { position: absolute; top: 0; font-size: 10.5px; color: var(--muted); transform: translateX(-50%); white-space: nowrap; }
   .track { position: absolute; top: 0; bottom: 0; left: 12px; right: 24px; }
   #rows { position: relative; }
+  .row { height: 26px; align-items: stretch; cursor: pointer; scroll-margin: 40px 0; }
+  .row:hover { background: var(--hover); }
+  .row.selected { background: var(--selected); }
+  .row:focus-visible { outline-offset: -2px; border-radius: 0; }
+  .row.stage { height: 32px; border-bottom: 1px solid var(--line-soft); }
+  .row.stage .nm { font-weight: 600; font-size: 13px; }
+  .row.pipeline .nm { font-weight: 600; }
+  .row.critical .nm { font-weight: 600; }
+  .row.dep-up { box-shadow: inset 3px 0 var(--dep-up); }
+  .row.dep-down { box-shadow: inset 3px 0 var(--dep-down); }
+  .name { display: flex; align-items: center; min-width: 0; white-space: nowrap; padding-right: 8px; }
+  .nm { overflow: hidden; text-overflow: ellipsis; }
+  .after { color: var(--muted); font-size: 11px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; }
+  .tg { flex: none; width: 34px; text-align: left; color: var(--fg); font-size: 12px; }
+  .tg .n { color: var(--muted); margin-left: 2px; }
+  .lane { position: relative; overflow: hidden; cursor: grab; }
+  body.dragging, body.dragging * { cursor: grabbing !important; user-select: none; }
+  .rt { display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; }
+  .meta { position: absolute; right: 12px; top: 0; bottom: 0; display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+  /* поверх линий связей: подписи не перечёркнуты */
+  .meta, .dep-tag { z-index: 1; background: var(--card); padding-left: 6px; }
+  .row.selected .meta, .row.selected .dep-tag { background: var(--selected); }
+  .meta b { color: var(--fg); font-weight: 600; }
+  .meta em { font-style: normal; color: var(--crit-fg); font-weight: 600; }
+
+  /* полоски */
+  .bar { position: absolute; top: calc(50% - 5px); height: 10px; min-width: 2px; border-radius: 5px; }
+  .st-success, .st-running, .st-pending { background: var(--ok); }
+  .st-running, .st-pending { background: var(--run); }
+  .st-failed { background: var(--fail); }
+  .st-warn { background: var(--warn); }
+  .st-canceled, .st-skipped, .st-manual, .st-created { background: var(--idle); }
+  .row.critical .main:not(.thin) { background: var(--crit); }
+  .row.group.critical .thin { background: var(--crit); }
+  .thin { top: calc(50% - 2px); height: 4px; border-radius: 2px; background: var(--thin); }
+  .partial { opacity: .5; }
+  .cut { border-radius: 5px 0 0 5px; }
+  .over { border-radius: 0 5px 5px 0; background: repeating-linear-gradient(135deg, var(--over-a) 0 3px, var(--over-b) 3px 6px); }
+  .over.solo { border-radius: 5px; }
+  .fail { background: repeating-linear-gradient(135deg, var(--retry-a) 0 3px, var(--retry-b) 3px 6px); }
+  .wait { top: calc(50% - 1px); height: 2px; border-radius: 1px; background: var(--wait); }
+  .queued { top: calc(50% - 1px); height: 2px; border-radius: 1px; background: var(--queued); }
+  .whisker { top: calc(50% - 1px); height: 2px; border-radius: 1px; background: var(--guide); }
+  .gap { top: calc(50% - 1px); height: 0; border-top: 2px dashed var(--crit); border-radius: 0; }
+  .guide { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--guide); }
+  .label { position: absolute; top: calc(50% - 8px); line-height: 16px; font-size: 11px; white-space: nowrap; color: var(--muted); }
+  .label b { color: var(--crit-fg); font-weight: 600; }
+  .label .r { color: var(--retry-fg); font-weight: 600; }
+  .dep-tag { position: absolute; right: 6px; top: calc(50% - 8px); line-height: 16px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .dep-tag.up { color: var(--dep-up); }
+  .dep-tag.down { color: var(--dep-down); }
+  .pill { border-radius: 999px; padding: 0 7px; font-size: 10.5px; line-height: 16px; white-space: nowrap; }
+  .pill.ok { background: var(--pill-ok-bg); color: var(--pill-ok-fg); }
+  .pill.mid { background: var(--pill-mid-bg); color: var(--pill-mid-fg); }
+  .pill.bad { background: var(--pill-bad-bg); color: var(--pill-bad-fg); }
+
+  /* линии связей */
   #links { position: absolute; top: 0; pointer-events: none; overflow: hidden; }
   #links path.link { fill: none; stroke: var(--muted); stroke-width: 1; opacity: .35; }
   #links path.link.up { stroke: var(--dep-up); stroke-width: 1.5; opacity: 1; }
@@ -49,52 +140,52 @@
   #links .arrow { fill: var(--muted); }
   #links .arrow.up { fill: var(--dep-up); }
   #links .arrow.down { fill: var(--dep-down); }
-  .bar { position: absolute; top: 5px; height: 12px; min-width: 2px; border-radius: 2px; }
-  .box { background: var(--box); }
-  .st-success { background: var(--ok); }
-  .st-failed { background: var(--fail); }
-  .st-warn { background: var(--warn); }
-  .st-running, .st-pending { background: var(--run); }
-  .st-canceled, .st-skipped, .st-manual, .st-created { background: var(--idle); }
-  .queued { background: var(--queued); }
-  .attempt { opacity: .3; background: var(--fail); }
-  .whisker { top: 10px; height: 2px; background: var(--muted); }
-  .gap { top: 10px; height: 0; border-top: 2px dashed var(--critical); }
-  .row.critical .bar.main { outline: 2px solid var(--critical); outline-offset: 1px; }
-  .label { position: absolute; top: 3px; font-size: 11px; white-space: nowrap; color: var(--muted); }
-  .row.dep-up { box-shadow: inset 4px 0 var(--dep-up); }
-  .row.dep-down { box-shadow: inset 4px 0 var(--dep-down); }
-  .dep-tag { position: absolute; right: 6px; top: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-  .dep-tag.up { color: var(--dep-up); }
-  .dep-tag.down { color: var(--dep-down); }
-  #panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); overflow: auto; z-index: 3;
-           background: var(--bg); border-left: 1px solid var(--line); padding: 12px 16px; box-shadow: -4px 0 16px rgb(0 0 0 / .12); }
+
+  /* панель деталей */
+  #panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); overflow: auto; overscroll-behavior: contain; z-index: 3;
+           background: var(--card); border-left: 1px solid var(--line); padding: 14px 18px; box-shadow: -4px 0 16px rgb(0 0 0 / .08); }
   #panel h2 { font-size: 15px; margin: 4px 28px 12px 0; word-break: break-all; }
+  .kpis { display: flex; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
+  .kpis div { display: flex; flex-direction: column; }
+  .kpis b { font-size: 18px; font-weight: 600; }
+  .kpis span { color: var(--muted); font-size: 11px; }
   #panel table { border-collapse: collapse; width: 100%; }
   #panel th { text-align: left; font-weight: 400; color: var(--muted); padding: 3px 12px 3px 0; vertical-align: top; white-space: nowrap; }
   #panel td { padding: 3px 0; word-break: break-word; }
-  #panel ol { padding-left: 20px; }
-  #close { position: absolute; top: 10px; right: 12px; width: 26px; height: 26px; }
-  @media (min-width: 900px) { body.panel-open header, body.panel-open main { margin-right: 420px; } }
+  #panel ol { padding-left: 20px; margin: 0; }
+  #panel a { color: var(--focus); }
+  #close { position: absolute; top: 10px; right: 12px; width: 26px; height: 26px; font-size: 16px; color: var(--muted); }
 </style>
 </head>
 <body>
-<header>
-  <div class="top"><h1 id="title"></h1><span id="summary" class="muted"></span><button id="back" hidden>← к агрегату</button></div>
-  <div class="grid"><div class="hint">Перетаскивание — сдвиг, Ctrl + колесо — масштаб, Shift + колесо — сдвиг, 0 — сброс, клик по стейджу — критический путь до его конца, клик по джобе — её связи</div><div class="axis" id="axis"></div></div>
-</header>
-<main id="rows"></main>
+<div id="page">
+  <header class="top">
+    <h1 id="title" translate="no"></h1><span id="chips"></span><button id="back" hidden>← к агрегату</button>
+    <button id="help" aria-label="Управление" aria-expanded="false" aria-controls="keys">?</button>
+    <div id="keys" hidden><ul>
+      <li><kbd>Перетаскивание</kbd>, <kbd>Shift</kbd> + колесо, <kbd>[</kbd> <kbd>]</kbd> — сдвиг оси</li>
+      <li><kbd>Ctrl</kbd> + колесо — масштаб, <kbd>0</kbd> — весь пайплайн</li>
+      <li><kbd>↑</kbd> <kbd>↓</kbd> — соседняя строка, <kbd>Enter</kbd> — выбрать</li>
+      <li><kbd>←</kbd> <kbd>→</kbd> — свернуть и развернуть</li>
+      <li>Клик по стейджу — критический путь до его конца</li>
+      <li>Клик по джобе — её связи, <kbd>Esc</kbd> — снять выделение</li>
+    </ul></div>
+  </header>
+  <section id="hot"></section>
+  <div id="axisbar"><div class="grid"><div></div><div class="axis" id="axis"></div><div></div></div></div>
+  <main id="rows"></main>
+</div>
 <aside id="panel" hidden></aside>
 <script>
 /*__CRITICAL_PATH__*/
 const REPORT = /*__DATA__*/null;
-const KIND = { pipeline: 'P', stage: 'S', group: 'G', job: 'J', bridge: 'B' }
 const STEPS = [1e3, 5e3, 1e4, 3e4, 6e4, 12e4, 3e5, 6e5, 9e5, 18e5, 36e5, 72e5]
 const $ = (sel) => document.querySelector(sel)
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 function fmt(ms) {
   if (ms == null) return '—'
+  if (ms === 0) return '0s'
   if (ms < 1000) return `${Math.round(ms)}ms`
   const s = ms / 1000
   if (s < 60) return `${s.toFixed(1)}s`
@@ -103,12 +194,27 @@ function fmt(ms) {
   return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}m`
 }
 
-const state = { tree: null, index: new Map(), parent: new Map(), collapsed: new Set(), selected: null, scope: null, crit: { ids: new Set(), gaps: [] }, rel: { up: new Set(), down: new Set(), own: new Set(), name: '' }, view: [0, 1] }
+function plural(n, one, few, many) {
+  const d = n % 10
+  const dd = n % 100
+  if (d === 1 && dd !== 11) return one
+  return d >= 2 && d <= 4 && (dd < 12 || dd > 14) ? few : many
+}
+
+const state = { tree: null, ins: null, index: new Map(), parent: new Map(), collapsed: new Set(), selected: null, scope: null, crit: { ids: new Set(), gaps: [] }, rel: { up: new Set(), down: new Set(), own: new Set(), name: '' }, view: [0, 1] }
 const isAgg = () => state.tree === REPORT.agg
 const fullView = () => [0, (isAgg() ? state.tree.stats.end.p90 : state.tree.end) || 1]
+const EMPTY_INSIGHTS = { stages: {}, retryLoss: {}, totalRetryLoss: 0, hotspots: [], saving: 0 }
+
+function insightsOf(tree) {
+  const ins = REPORT.insights
+  const found = tree === REPORT.agg ? ins?.agg : ins?.trees?.[REPORT.trees.indexOf(tree)]
+  return found ?? EMPTY_INSIGHTS
+}
 
 function open(tree) {
   state.tree = tree
+  state.ins = insightsOf(tree)
   state.index = new Map()
   state.parent = new Map()
   state.collapsed = new Set()
@@ -137,6 +243,7 @@ function recompute() {
 }
 
 const LINKABLE = new Set(['job', 'bridge', 'group'])
+const LEAF = new Set(['job', 'bridge'])
 const leafIds = (s) => (s.kind === 'group' ? s.children.flatMap(leafIds) : [s.id])
 
 // связанный узел внутри свёрнутой группы подсвечивается строкой группы
@@ -160,59 +267,135 @@ function relations() {
   return { up, down, own, name: sel.name }
 }
 
+// тот же ключ, что stabilityKey() в src/insights.mjs: стейджи и bridge-предки, затем имя
+function stabilityKey(s) {
+  const names = [s.name]
+  for (let p = state.parent.get(s.id); p; p = state.parent.get(p.id)) if (p.kind === 'stage' || p.kind === 'bridge') names.unshift(p.name)
+  return names.join(' / ')
+}
+
+function stabilityOf(s) {
+  if (!LEAF.has(s.kind)) return null
+  if (isAgg()) return state.ins.stability?.[s.id] ?? null
+  return REPORT.insights?.stability?.[stabilityKey(s)] ?? null
+}
+
+function pill(st) {
+  if (!st || !st.present) return ''
+  if (st.retried === 0) return '<span class="pill ok">стабильна</span>'
+  const cls = st.retried / st.present < 0.3 ? 'mid' : 'bad'
+  return `<span class="pill ${cls}" title="ретраи в ${esc(st.retried)} из ${esc(st.present)} пайплайнов">↻ ${esc(st.retried)} из ${esc(st.present)}</span>`
+}
+
+// превышение стейджа, для которого узел — узкое место
+const excessOf = (id) => Object.values(state.ins.stages).find((ex) => ex.id === id) ?? null
+
 // ось не уходит левее создания пайплайна: отсчёт всегда с нуля
 const clampView = ([a, b]) => (a < 0 ? [0, b - a] : [a, b])
+const shiftView = (fraction) => {
+  const [a, b] = state.view
+  const d = (b - a) * fraction
+  state.view = clampView([a + d, b + d])
+}
 
 const pos = (v) => ((v - state.view[0]) / (state.view[1] - state.view[0])) * 100
 const bar = (cls, from, to) => `<div class="bar ${cls}" style="left:${pos(from)}%;width:${Math.max(pos(to) - pos(from), 0.1)}%"></div>`
+const guide = (at) => `<div class="guide" style="left:${pos(at)}%"></div>`
 const label = (from, to, text) => pos(to) > 80
-  ? `<span class="label" style="right:calc(${100 - pos(from)}% + 4px)">${text}</span>`
-  : `<span class="label" style="left:calc(${pos(to)}% + 4px)">${text}</span>`
+  ? `<span class="label" style="right:calc(${100 - pos(from)}% + 6px)">${text}</span>`
+  : `<span class="label" style="left:calc(${pos(to)}% + 6px)">${text}</span>`
+const notRun = (text) => `<span class="label" style="left:4px">${text}</span>`
 
 function mainClass(s) {
-  if (s.kind === 'pipeline' || s.kind === 'stage' || s.kind === 'group') return 'main box'
-  if (isAgg()) return 'main st-success'
+  if (s.kind === 'pipeline' || s.kind === 'group') return 'main thin'
+  if (isAgg()) return `main st-success${s.stats.present < s.stats.total ? ' partial' : ''}`
   return `main st-${esc(s.status)}${s.allowFailure && s.status === 'failed' ? ' st-warn' : ''}`
 }
 
-function lane(s) {
-  if (isAgg()) {
-    const st = s.stats
-    if (!st.present) return '<span class="label" style="left:4px">не запускалась</span>'
-    const parts = [`p50 ${fmt(st.duration.p50)} · p90 ${fmt(st.duration.p90)}`]
-    if (st.present < st.total) parts.push(`${st.present}/${st.total}`)
-    if (st.critical) parts.push(`крит. ${Math.round(st.critical * 100)}%`)
-    const typicalEnd = st.start.p50 + st.duration.p50
-    const slowEnd = st.start.p50 + st.duration.p90
-    return bar(mainClass(s), st.start.p50, typicalEnd) + bar('whisker', typicalEnd, slowEnd) + label(st.start.p50, slowEnd, parts.join(' · '))
-  }
-  if (s.start == null || s.end == null) return `<span class="label" style="left:4px">не запускалась · ${esc(s.status)}</span>`
-  let html = ''
-  for (const a of s.attempts) if (a.start != null && a.end != null) html += bar('attempt', a.start, a.end)
+// у узкого места стейджа хвост правее конца остальных джоб заштрихован
+function mainBar(s, from, to, ex) {
+  if (!ex || ex.id !== s.id) return bar(mainClass(s), from, to)
+  const cut = Math.min(Math.max(ex.peersEnd, from), to)
+  const head = cut > from ? bar(`${mainClass(s)} cut`, from, cut) : ''
+  return head + bar(`over${head ? '' : ' solo'}`, cut, to)
+}
+
+const excessText = (s, ex) => (ex && ex.id === s.id ? ` <b>+${fmt(ex.excess)}</b>` : '')
+
+function attemptsHtml(s) {
+  const tries = s.attempts.filter((a) => a.start != null && a.end != null).sort((a, b) => a.start - b.start)
+  return tries.map((a, i) => {
+    const next = tries[i + 1]?.start ?? s.start
+    return bar('fail', a.start, a.end) + (next > a.end ? bar('wait', a.end, next) : '')
+  }).join('')
+}
+
+function laneSingle(s, ex) {
+  if (s.start == null || s.end == null) return notRun(`не запускалась · ${esc(s.status)}`)
+  let html = attemptsHtml(s)
   if (s.queued) html += bar('queued', s.start - s.queued, s.start)
   for (const g of state.crit.gaps) if (g.to === s.id) html += bar('gap', s.start - g.ms, s.start)
-  return html + bar(mainClass(s), s.start, s.end) + label(s.start, s.end, fmt(s.end - s.start))
+  let text = fmt(s.end - s.start)
+  if (s.attempts.length) {
+    const loss = state.ins.retryLoss[s.id]
+    text += ` · <span class="r">↻${s.attempts.length}${loss ? ` −${fmt(loss)}` : ''}</span>`
+  }
+  return html + mainBar(s, s.start, s.end, ex) + label(s.start, s.end, text + excessText(s, ex))
 }
 
-function stageInfo(s) {
-  if (isAgg()) return `до конца p50 ${fmt(s.stats.end.p50)} · p90 ${fmt(s.stats.end.p90)}`
-  return s.end == null ? '' : `длина ${fmt(s.end - s.start)} · до конца ${fmt(s.end)}`
+function laneAgg(s, ex) {
+  const st = s.stats
+  if (!st.present) return notRun('не запускалась')
+  const from = st.start.p50
+  const to = from + st.duration.p50
+  const slow = from + st.duration.p90
+  let text = fmt(st.duration.p50)
+  if (st.retried) text += ` · <span class="r">↻ ${esc(st.retried)}/${esc(st.present)}</span>`
+  return bar('whisker', to, slow) + mainBar(s, from, to, ex) + label(from, slow, text + excessText(s, ex))
 }
 
-function rowHtml(s, depth) {
-  const toggle = s.children.length
-    ? `<button class="tg" data-toggle="${esc(s.id)}">${state.collapsed.has(s.id) ? '▸' : '▾'} ${s.children.length}</button>`
-    : '<span class="tg"></span>'
-  const info = s.kind === 'stage' ? ` <span class="muted">${stageInfo(s)}</span>` : ''
-  const after = s.after ? ` <span class="muted">← ${esc(state.index.get(s.after)?.name)}</span>` : ''
-  const up = state.rel.up.has(s.id)
-  const down = state.rel.down.has(s.id)
-  const tag = up
-    ? `<span class="dep-tag up">↑ нужна для ${esc(state.rel.name)}</span>`
-    : down ? `<span class="dep-tag down">↓ ждёт ${esc(state.rel.name)}</span>` : ''
-  const cls = `row${state.selected === s.id ? ' selected' : ''}${state.crit.ids.has(s.id) ? ' critical' : ''}${up ? ' dep-up' : ''}${down ? ' dep-down' : ''}`
-  return `<div class="${cls}" data-id="${esc(s.id)}"><div class="name" style="padding-left:${depth * 14 + 6}px" title="${esc(s.name)}">`
-    + `${toggle}<span class="k">${KIND[s.kind]}</span>${esc(s.name)}${after}${info}</div><div class="lane"><div class="track">${lane(s)}</div>${tag}</div></div>`
+function stageMeta(s) {
+  const ex = state.ins.stages[s.id]
+  const held = ex ? `<em>держит <span translate="no">${esc(state.index.get(ex.id)?.name)}</span> +${fmt(ex.excess)}</em>` : ''
+  if (isAgg()) {
+    const { duration: d, end: e } = s.stats
+    return `${held}<span title="p50 · p90">длина <b>${fmt(d.p50)}</b> · ${fmt(d.p90)}</span><span title="p50 · p90">до конца <b>${fmt(e.p50)}</b> · ${fmt(e.p90)}</span>`
+  }
+  if (s.end == null) return held
+  return `${held}<span>длина <b>${fmt(s.end - s.start)}</b></span><span>до конца <b>${fmt(s.end)}</b></span>`
+}
+
+function lane(s, card) {
+  if (s.kind === 'stage') return `<div class="meta">${stageMeta(s)}</div>`
+  // длина пайплайна уже в шапке и в заголовке bridge
+  if (s.kind === 'pipeline') return s.start == null || s.end == null ? '' : bar('main thin', s.start, s.end)
+  const ex = card ? state.ins.stages[card] : null
+  const g = ex ? guide(ex.peersEnd) : ''
+  return g + (isAgg() ? laneAgg(s, ex) : laneSingle(s, ex))
+}
+
+function toggleHtml(s) {
+  if (!s.children.length) return '<span class="tg"></span>'
+  const collapsed = state.collapsed.has(s.id)
+  return `<button class="tg" data-toggle="${esc(s.id)}" aria-expanded="${!collapsed}" aria-label="${collapsed ? 'Развернуть' : 'Свернуть'} ${esc(s.name)}">`
+    + `${collapsed ? '▸' : '▾'}<span class="n">${s.children.length}</span></button>`
+}
+
+function depTag(s) {
+  if (state.rel.up.has(s.id)) return `<span class="dep-tag up">↑ нужна для <span translate="no">${esc(state.rel.name)}</span></span>`
+  if (state.rel.down.has(s.id)) return `<span class="dep-tag down">↓ ждёт <span translate="no">${esc(state.rel.name)}</span></span>`
+  return ''
+}
+
+const onCritical = (s) => state.crit.ids.has(s.id) || (s.kind === 'group' && leafIds(s).some((id) => state.crit.ids.has(id)))
+
+function rowHtml(s, depth, card) {
+  const after = s.after ? `<span class="after" translate="no">← ${esc(state.index.get(s.after)?.name)}</span>` : ''
+  const cls = ['row', s.kind, state.selected === s.id && 'selected', onCritical(s) && 'critical',
+    state.rel.up.has(s.id) && 'dep-up', state.rel.down.has(s.id) && 'dep-down'].filter(Boolean).join(' ')
+  return `<div class="${cls}" data-id="${esc(s.id)}" tabindex="0">`
+    + `<div class="name" style="padding-left:${8 + depth * 12}px" title="${esc(s.name)}">${toggleHtml(s)}<span class="nm" translate="no">${esc(s.name)}</span>${after}</div>`
+    + `<div class="lane"><div class="track">${lane(s, card)}</div>${depTag(s)}</div><div class="rt">${pill(stabilityOf(s))}</div></div>`
 }
 
 function drawAxis() {
@@ -234,7 +417,11 @@ function drawLinks() {
   const origin = host.getBoundingClientRect()
   const box = track.getBoundingClientRect()
   const rows = new Map()
-  for (const el of host.querySelectorAll('.row')) rows.set(el.dataset.id, el.offsetTop + el.offsetHeight / 2)
+  // строки лежат в карточках, поэтому координаты — от #rows, а не от offsetParent
+  for (const el of host.querySelectorAll('.row')) {
+    const r = el.getBoundingClientRect()
+    rows.set(el.dataset.id, r.top - origin.top + r.height / 2)
+  }
   const x = (v) => (pos(v) / 100) * box.width
   const plain = []
   const marked = []
@@ -258,48 +445,117 @@ function drawLinks() {
   host.insertAdjacentHTML('beforeend', `<svg id="links" style="left:${box.left - origin.left}px;width:${box.width}px;height:${host.scrollHeight}px"><defs>${ARROWS}</defs>${plain.join('')}${marked.join('')}</svg>`)
 }
 
+const chip = (html, cls = '') => `<span class="chip ${cls}">${html}</span>`
+
 function drawHeader() {
   const { meta } = REPORT
   const root = state.tree
-  $('#title').textContent = `${meta.project} · ${isAgg() ? meta.label : root.name}`
-  document.title = `pipeline-trace · ${$('#title').textContent}`
+  const ins = state.ins
+  const jobs = [...state.index.values()].filter((s) => LEAF.has(s.kind)).length
+  const chips = []
   if (isAgg()) {
-    const counts = Object.entries(meta.statusCounts ?? {}).map(([k, v]) => `${v} ${k.toLowerCase()}`).join(', ')
-    $('#summary').textContent = `агрегат: ${root.stats.total} пайплайнов (${counts}) · длина p50 ${fmt(root.stats.end.p50)} · p90 ${fmt(root.stats.end.p90)}`
+    const counts = Object.entries(meta.statusCounts ?? {}).map(([k, v]) => `${esc(v)} ${esc(k.toLowerCase())}`).join(', ')
+    $('#title').innerHTML = `${esc(meta.project)} · ${esc(meta.label)}`
+    chips.push(chip(`<b>${esc(root.stats.total)}</b> ${plural(root.stats.total, 'пайплайн', 'пайплайна', 'пайплайнов')}${counts ? ` (${counts})` : ''}`))
+    chips.push(chip(`<b>${fmt(root.stats.end.p50)} · ${fmt(root.stats.end.p90)}</b> длина p50 · p90`))
   } else {
-    $('#summary').innerHTML = `<a href="${esc(root.url)}" target="_blank" rel="noopener">${esc(root.name)}</a> · ${esc(root.status)} · ${esc(root.ref)} · длина ${fmt(root.end)}`
+    $('#title').innerHTML = `${esc(meta.project)} · <a href="${esc(root.url)}" target="_blank" rel="noopener">${esc(root.name)}</a>`
+    chips.push(chip(esc(root.ref)), chip(esc(root.status)), chip(`<b>${fmt(root.end)}</b> длина`))
   }
+  chips.push(chip(`ретраи <b>${fmt(ins.totalRetryLoss)}</b>`, ins.totalRetryLoss > 0 ? 'bad' : ''))
+  chips.push(chip(`можно сэкономить до <b>${fmt(ins.saving)}</b>`, ins.saving > 0 ? 'crit' : ''))
+  chips.push(chip(`<b>${jobs}</b> ${plural(jobs, 'джоба', 'джобы', 'джоб')}`))
+  $('#chips').innerHTML = chips.join(' ')
+  document.title = `pipeline-trace · ${$('#title').textContent}`
   $('#back').hidden = !REPORT.agg || isAgg()
 }
 
+function hotspotReason(h) {
+  if (h.kind === 'excess') return `стейдж <span translate="no">${esc(h.stage)}</span> ждёт её ${fmt(h.excess)} после остальных${isAgg() ? '' : ', на критическом пути'}`
+  if (isAgg()) return `ретраи в ${esc(h.retried)} из ${esc(h.present)} пайплайнов`
+  const node = state.index.get(h.id)
+  const st = node && stabilityOf(node)
+  const n = Number(h.retries)
+  return `${esc(n)} ${plural(n, 'упавшая попытка', 'упавшие попытки', 'упавших попыток')}${st ? `, ретраи в ${esc(st.retried)} из ${esc(st.present)} последних` : ''}`
+}
+
+function drawHot() {
+  const list = state.ins.hotspots
+  $('#hot').innerHTML = list.length
+    ? `<div class="card hot"><h2>Куда направить силы</h2>${list.map((h) => `<button class="hs" data-hot="${esc(h.id)}"><span class="save">−${fmt(h.saving)}</span>`
+      + `<span><span translate="no">${esc(h.name)}</span> <span class="why">— ${hotspotReason(h)}</span></span></button>`).join('')}</div>`
+    : ''
+}
+
+// Карточка — подряд идущие строки одного стейджа. Строки downstream-пайплайна внутри
+// bridge закрывают карточку, остаток стейджа продолжается карточкой без заголовка.
+function rowsHtml() {
+  const out = []
+  let open = null
+  const walk = (s, depth, card) => {
+    const own = s.kind === 'stage' ? s.id : s.kind === 'pipeline' ? null : card
+    if (own !== open) {
+      if (open) out.push('</section>')
+      if (own) out.push(`<section class="card${s.kind === 'stage' ? '' : ' cont'}">`)
+      open = own
+    }
+    out.push(rowHtml(s, depth, own))
+    if (!state.collapsed.has(s.id)) s.children.forEach((c) => walk(c, depth + 1, own))
+  }
+  walk(state.tree, 0, null)
+  if (open) out.push('</section>')
+  return out.join('')
+}
+
+function focusedRow() {
+  const el = document.activeElement
+  const row = el?.closest?.('#rows .row')
+  return row ? { id: row.dataset.id, toggle: el.matches('[data-toggle]') } : null
+}
+
+function restoreFocus(f) {
+  if (!f) return
+  const row = [...$('#rows').querySelectorAll('.row')].find((el) => el.dataset.id === f.id)
+  const target = f.toggle ? row?.querySelector('[data-toggle]') : row
+  target?.focus({ preventScroll: true })
+}
+
 function draw() {
+  const focus = focusedRow()
   drawHeader()
+  drawHot()
   drawAxis()
   state.rel = relations()
-  const html = []
-  const walk = (s, depth) => {
-    html.push(rowHtml(s, depth))
-    if (!state.collapsed.has(s.id)) s.children.forEach((c) => walk(c, depth + 1))
-  }
-  walk(state.tree, 0)
-  $('#rows').innerHTML = html.join('')
+  $('#rows').innerHTML = rowsHtml()
   // панель меняет ширину водопада, поэтому линии меряются после неё
   drawPanel()
   drawLinks()
+  restoreFocus(focus)
 }
 
 const link = (url, text) => (url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : '—')
 const p5090 = (x) => `p50 ${fmt(x.p50)} · p90 ${fmt(x.p90)}`
+const kpi = (value, name) => `<div><b>${value}</b><span>${name}</span></div>`
+
+function insightRows(s) {
+  if (!LEAF.has(s.kind)) return []
+  const loss = state.ins.retryLoss[s.id]
+  const rows = [['Потери на ретраях', loss ? fmt(loss) + (isAgg() ? ' в среднем' : '') : 'нет']]
+  const ex = excessOf(s.id)
+  if (ex) rows.push(['Превышение стейджа', `+${fmt(ex.excess)} после остальных джоб стейджа`])
+  return rows
+}
 
 function details(s) {
   const rows = [['Тип', esc(s.kind)], ['Статус', esc(s.status) + (s.allowFailure ? ' (allow_failure)' : '')]]
   if (s.stage) rows.push(['Стейдж', esc(s.stage)])
-  rows.push(['Старт', fmt(s.start)], ['Конец', fmt(s.end)], ['Длительность', s.start == null ? '—' : fmt(s.end - s.start)])
+  rows.push(['Конец', fmt(s.end)])
   if (s.queued != null) rows.push(['Очередь', fmt(s.queued)])
   if (s.deps.length) rows.push(['Зависит от', s.deps.map((id) => esc(state.index.get(id)?.name ?? id)).join('<br>')])
   if (s.attempts.length) {
     rows.push(['Попытки', s.attempts.map((a) => `${link(a.url, a.status)} ${a.start == null ? '' : fmt(a.end - a.start)}`).join('<br>')])
   }
+  rows.push(...insightRows(s))
   rows.push(['GitLab', link(s.url, 'открыть')])
   if (s.kind === 'stage' || s.kind === 'pipeline') rows.push(['Критический путь', `до конца «${esc(s.name)}» выделен в водопаде`])
   return rows
@@ -307,20 +563,30 @@ function details(s) {
 
 function aggDetails(s) {
   const st = s.stats
-  const rows = [
-    ['Тип', esc(s.kind)], ['Запускалась', `${st.present} из ${st.total}`],
-    ['Старт', p5090(st.start)], ['Длительность', p5090(st.duration)], ['До конца', p5090(st.end)],
-  ]
+  const rows = [['Тип', esc(s.kind)], ['Запускалась', `${esc(st.present)} из ${esc(st.total)}`]]
   if (st.queued.p50 != null) rows.push(['Очередь', p5090(st.queued)])
-  if (s.kind === 'job' || s.kind === 'bridge') {
-    rows.push(['Ретраев в среднем', st.retries.toFixed(2)], ['На критическом пути', `${Math.round(st.critical * 100)}% пайплайнов`])
+  if (LEAF.has(s.kind)) {
+    rows.push(['Ретраи', `в ${esc(st.retried)} из ${esc(st.present)} пайплайнов, в среднем ${st.retries.toFixed(2)}`])
+    rows.push(['На критическом пути', `${Math.round(st.critical * 100)}% пайплайнов`])
   }
+  rows.push(...insightRows(s))
   const samples = [...st.samples].sort((a, b) => (b.end - b.start) - (a.end - a.start))
   rows.push(['Пайплайны', `<ol>${samples.map((x) => {
     const tree = REPORT.trees[x.tree]
-    return `<li><a href="#" data-open-tree="${x.tree}">${esc(tree.name)}</a> ${fmt(x.end - x.start)} · ${link(tree.url, 'GitLab')}</li>`
+    return `<li><a href="#" data-open-tree="${esc(x.tree)}">${esc(tree.name)}</a> ${fmt(x.end - x.start)} · ${link(tree.url, 'GitLab')}</li>`
   }).join('')}</ol>`])
   return rows
+}
+
+function kpisHtml(s) {
+  if (isAgg()) {
+    const st = s.stats
+    if (!st.present) return ''
+    const two = (x) => `${fmt(x.p50)} · ${fmt(x.p90)}`
+    return kpi(two(st.duration), 'длительность p50 · p90') + kpi(two(st.start), 'старт') + kpi(two(st.end), 'до конца')
+  }
+  if (s.start == null) return ''
+  return kpi(fmt(s.end - s.start), 'длительность') + kpi(fmt(s.start), 'старт') + kpi(fmt(s.end), 'до конца')
 }
 
 function drawPanel() {
@@ -330,8 +596,37 @@ function drawPanel() {
   document.body.classList.toggle('panel-open', Boolean(s))
   if (!s) return
   const rows = isAgg() ? aggDetails(s) : details(s)
-  panel.innerHTML = `<button id="close" aria-label="Закрыть">×</button><h2>${esc(s.name)}</h2>`
+  panel.innerHTML = `<button id="close" aria-label="Закрыть">×</button><h2 translate="no">${esc(s.name)}</h2><div class="kpis">${kpisHtml(s)}</div>`
     + `<table>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('')}</table>`
+}
+
+function select(id) {
+  const s = state.index.get(id)
+  state.selected = s.id
+  if (!isAgg() && (s.kind === 'stage' || s.kind === 'pipeline')) { state.scope = s.id; recompute() }
+  draw()
+}
+
+function toggle(id, collapse = !state.collapsed.has(id)) {
+  collapse ? state.collapsed.add(id) : state.collapsed.delete(id)
+  draw()
+}
+
+function rowEl(id) {
+  return [...$('#rows').querySelectorAll('.row')].find((el) => el.dataset.id === id)
+}
+
+function reveal(id) {
+  for (let p = state.parent.get(id); p; p = state.parent.get(p.id)) state.collapsed.delete(p.id)
+  select(id)
+  const row = rowEl(id)
+  row?.scrollIntoView({ block: 'center' })
+  row?.focus({ preventScroll: true })
+}
+
+function toggleHelp(show = $('#keys').hidden) {
+  $('#keys').hidden = !show
+  $('#help').setAttribute('aria-expanded', String(show))
 }
 
 const DRAG_THRESHOLD_PX = 4
@@ -373,12 +668,12 @@ document.addEventListener('mouseup', endDrag)
 document.addEventListener('click', (e) => {
   // отпускание кнопки после перетаскивания порождает click — он не должен менять выделение
   if (Date.now() - dragEndedAt < 50) return
-  const toggle = e.target.closest('[data-toggle]')
-  if (toggle) {
-    const id = toggle.dataset.toggle
-    state.collapsed.has(id) ? state.collapsed.delete(id) : state.collapsed.add(id)
-    return draw()
-  }
+  if (e.target.closest('#help')) return toggleHelp()
+  if (!e.target.closest('#keys')) toggleHelp(false)
+  const tg = e.target.closest('[data-toggle]')
+  if (tg) return toggle(tg.dataset.toggle)
+  const hot = e.target.closest('[data-hot]')
+  if (hot) return state.index.has(hot.dataset.hot) && reveal(hot.dataset.hot)
   const openTree = e.target.closest('[data-open-tree]')
   if (openTree) {
     e.preventDefault()
@@ -388,15 +683,31 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('#back')) return open(REPORT.agg)
   const row = e.target.closest('.row')
   if (!row || e.target.closest('a')) return
-  const s = state.index.get(row.dataset.id)
-  state.selected = s.id
-  if (!isAgg() && (s.kind === 'stage' || s.kind === 'pipeline')) { state.scope = s.id; recompute() }
-  draw()
+  select(row.dataset.id)
 })
 
+function onRowKey(e, row) {
+  const s = state.index.get(row.dataset.id)
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    const rows = [...$('#rows').querySelectorAll('.row')]
+    rows[rows.indexOf(row) + (e.key === 'ArrowDown' ? 1 : -1)]?.focus()
+  } else if (e.key === 'Enter') {
+    select(s.id)
+  } else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && s.children.length) {
+    toggle(s.id, e.key === 'ArrowLeft')
+  } else {
+    return
+  }
+  e.preventDefault()
+}
+
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { state.selected = null; draw() }
-  if (e.key === '0' && !e.ctrlKey && !e.metaKey) { state.view = fullView(); draw() }
+  if (e.ctrlKey || e.metaKey || e.altKey) return
+  if (e.target.matches?.('#rows .row')) onRowKey(e, e.target)
+  if (e.defaultPrevented) return
+  if (e.key === 'Escape') { toggleHelp(false); state.selected = null; draw() }
+  if (e.key === '0') { state.view = fullView(); draw() }
+  if (e.key === '[' || e.key === ']') { shiftView(e.key === ']' ? 0.1 : -0.1); draw() }
 })
 
 $('#rows').addEventListener('wheel', (e) => {

@@ -38,7 +38,8 @@
   span.tg { border: 0; }
   .k { display: inline-block; width: 16px; text-align: center; font-size: 10px; font-weight: 700; border-radius: 3px; margin-right: 4px; background: var(--line); }
   .row.critical .name { font-weight: 600; }
-  .lane { position: relative; overflow: hidden; border-left: 1px solid var(--line); }
+  .lane { position: relative; overflow: hidden; border-left: 1px solid var(--line); cursor: grab; }
+  body.dragging, body.dragging * { cursor: grabbing !important; user-select: none; }
   .bar { position: absolute; top: 5px; height: 12px; min-width: 2px; border-radius: 2px; }
   .box { background: var(--box); }
   .st-success { background: var(--ok); }
@@ -70,7 +71,7 @@
 <body>
 <header>
   <div class="top"><h1 id="title"></h1><span id="summary" class="muted"></span><button id="back" hidden>← к агрегату</button></div>
-  <div class="grid"><div class="hint">Ctrl + колесо — масштаб, Shift + колесо — сдвиг, 0 — сброс, клик по стейджу — критический путь до его конца</div><div class="axis" id="axis"></div></div>
+  <div class="grid"><div class="hint">Перетаскивание — сдвиг, Ctrl + колесо — масштаб, Shift + колесо — сдвиг, 0 — сброс, клик по стейджу — критический путь до его конца, клик по джобе — её связи</div><div class="axis" id="axis"></div></div>
 </header>
 <main id="rows"></main>
 <aside id="panel" hidden></aside>
@@ -282,7 +283,42 @@ function drawPanel() {
     + `<table>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('')}</table>`
 }
 
+const DRAG_THRESHOLD_PX = 4
+let drag = null
+let dragEndedAt = 0
+let frame = 0
+const redraw = () => {
+  if (!frame) frame = requestAnimationFrame(() => { frame = 0; draw() })
+}
+
+$('#rows').addEventListener('mousedown', (e) => {
+  const laneEl = e.target.closest('.lane')
+  if (!laneEl || e.button !== 0) return
+  e.preventDefault()
+  drag = { x: e.clientX, view: state.view, width: laneEl.getBoundingClientRect().width, moved: false }
+})
+
+document.addEventListener('mousemove', (e) => {
+  if (!drag) return
+  const dx = e.clientX - drag.x
+  if (!drag.moved && Math.abs(dx) < DRAG_THRESHOLD_PX) return
+  drag.moved = true
+  document.body.classList.add('dragging')
+  const [a, b] = drag.view
+  const d = (-dx / drag.width) * (b - a)
+  state.view = [a + d, b + d]
+  redraw()
+})
+
+document.addEventListener('mouseup', () => {
+  if (drag?.moved) dragEndedAt = Date.now()
+  drag = null
+  document.body.classList.remove('dragging')
+})
+
 document.addEventListener('click', (e) => {
+  // отпускание кнопки после перетаскивания порождает click — он не должен менять выделение
+  if (Date.now() - dragEndedAt < 50) return
   const toggle = e.target.closest('[data-toggle]')
   if (toggle) {
     const id = toggle.dataset.toggle

@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pipeline-trace</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1f2328; --muted: #6e7781; --line: #e6e8eb; --row-alt: #f7f8fa; --hover: #eef1f6;
+    --selected: #e3e8ff; --box: #f5c518; --ok: #6c5fc7; --fail: #e5484d; --warn: #f59e0b; --run: #3b82f6;
+    --idle: #9aa4af; --queued: #cfd5dc; --critical: #111827;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16171b; --fg: #e6e7ea; --muted: #9aa0a8; --line: #2a2d33; --row-alt: #1b1d22; --hover: #23262d;
+      --selected: #2b3050; --box: #d4a90f; --ok: #8b7ff0; --fail: #f16a6e; --warn: #f5a524; --run: #5b9cf8;
+      --idle: #6b7280; --queued: #3a3f47; --critical: #f9fafb;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.4 -apple-system, system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .top { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; padding: 10px 12px 6px; }
+  .top h1 { font-size: 15px; margin: 0; }
+  .muted { color: var(--muted); }
+  a { color: var(--ok); }
+  button { font: inherit; color: inherit; background: none; border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
+  .grid { display: grid; grid-template-columns: minmax(260px, 38%) 1fr; }
+  .axis { position: relative; height: 20px; overflow: hidden; border-left: 1px solid var(--line); }
+  .tick { position: absolute; top: 3px; font-size: 11px; color: var(--muted); padding-left: 3px; border-left: 1px solid var(--line); }
+  .hint { padding: 3px 12px; font-size: 11px; color: var(--muted); }
+  .row { display: grid; grid-template-columns: minmax(260px, 38%) 1fr; height: 22px; cursor: pointer; }
+  .row:nth-child(even) { background: var(--row-alt); }
+  .row:hover { background: var(--hover); }
+  .row.selected { background: var(--selected); }
+  .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; line-height: 22px; }
+  .tg { display: inline-block; min-width: 38px; margin-right: 4px; padding: 0 3px; font-size: 11px; line-height: 16px; }
+  span.tg { border: 0; }
+  .k { display: inline-block; width: 16px; text-align: center; font-size: 10px; font-weight: 700; border-radius: 3px; margin-right: 4px; background: var(--line); }
+  .row.critical .name { font-weight: 600; }
+  .lane { position: relative; overflow: hidden; border-left: 1px solid var(--line); }
+  .bar { position: absolute; top: 5px; height: 12px; min-width: 2px; border-radius: 2px; }
+  .box { background: var(--box); }
+  .st-success { background: var(--ok); }
+  .st-failed { background: var(--fail); }
+  .st-warn { background: var(--warn); }
+  .st-running, .st-pending { background: var(--run); }
+  .st-canceled, .st-skipped, .st-manual, .st-created { background: var(--idle); }
+  .queued { background: var(--queued); }
+  .attempt { opacity: .3; background: var(--fail); }
+  .whisker { top: 10px; height: 2px; background: var(--muted); }
+  .gap { top: 10px; height: 0; border-top: 2px dashed var(--critical); }
+  .row.critical .bar.main { outline: 2px solid var(--critical); outline-offset: 1px; }
+  .label { position: absolute; top: 3px; font-size: 11px; white-space: nowrap; color: var(--muted); }
+  #panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); overflow: auto; z-index: 3;
+           background: var(--bg); border-left: 1px solid var(--line); padding: 12px 16px; box-shadow: -4px 0 16px rgb(0 0 0 / .12); }
+  #panel h2 { font-size: 15px; margin: 4px 28px 12px 0; word-break: break-all; }
+  #panel table { border-collapse: collapse; width: 100%; }
+  #panel th { text-align: left; font-weight: 400; color: var(--muted); padding: 3px 12px 3px 0; vertical-align: top; white-space: nowrap; }
+  #panel td { padding: 3px 0; word-break: break-word; }
+  #panel ol { padding-left: 20px; }
+  #close { position: absolute; top: 10px; right: 12px; width: 26px; height: 26px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><h1 id="title"></h1><span id="summary" class="muted"></span><button id="back" hidden>← к агрегату</button></div>
+  <div class="grid"><div class="hint">Ctrl + колесо — масштаб, Shift + колесо — сдвиг, 0 — сброс, клик по стейджу — критический путь до его конца</div><div class="axis" id="axis"></div></div>
+</header>
+<main id="rows"></main>
+<aside id="panel" hidden></aside>
+<script>
+/*__CRITICAL_PATH__*/
+const REPORT = /*__DATA__*/null;
+const KIND = { pipeline: 'P', stage: 'S', group: 'G', job: 'J', bridge: 'B' }
+const STEPS = [1e3, 5e3, 1e4, 3e4, 6e4, 12e4, 3e5, 6e5, 9e5, 18e5, 36e5, 72e5]
+const $ = (sel) => document.querySelector(sel)
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+
+function fmt(ms) {
+  if (ms == null) return '—'
+  if (ms < 1000) return `${Math.round(ms)}ms`
+  const s = ms / 1000
+  if (s < 60) return `${s.toFixed(1)}s`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m${String(Math.floor(s % 60)).padStart(2, '0')}s`
+  return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}m`
+}
+
+const state = { tree: null, index: new Map(), collapsed: new Set(), selected: null, scope: null, crit: { ids: new Set(), gaps: [] }, view: [0, 1] }
+const isAgg = () => state.tree === REPORT.agg
+const fullView = () => [0, (isAgg() ? state.tree.stats.end.p90 : state.tree.end) || 1]
+
+function open(tree) {
+  state.tree = tree
+  state.index = new Map()
+  state.collapsed = new Set()
+  const walk = (s) => { state.index.set(s.id, s); if (s.kind === 'group') state.collapsed.add(s.id); s.children.forEach(walk) }
+  walk(tree)
+  state.selected = null
+  state.scope = tree.id
+  state.view = fullView()
+  recompute()
+  draw()
+}
+
+function recompute() {
+  if (isAgg()) {
+    const ids = [...state.index.values()].filter((s) => s.stats.critical >= 0.5).map((s) => s.id)
+    state.crit = { ids: new Set(ids), gaps: [] }
+  } else {
+    const { ids, gaps } = criticalPath(state.tree, state.scope)
+    state.crit = { ids: new Set(ids), gaps }
+  }
+}
+
+const pos = (v) => ((v - state.view[0]) / (state.view[1] - state.view[0])) * 100
+const bar = (cls, from, to) => `<div class="bar ${cls}" style="left:${pos(from)}%;width:${Math.max(pos(to) - pos(from), 0.1)}%"></div>`
+const label = (from, to, text) => pos(to) > 80
+  ? `<span class="label" style="right:calc(${100 - pos(from)}% + 4px)">${text}</span>`
+  : `<span class="label" style="left:calc(${pos(to)}% + 4px)">${text}</span>`
+
+function mainClass(s) {
+  if (s.kind === 'pipeline' || s.kind === 'stage' || s.kind === 'group') return 'main box'
+  if (isAgg()) return 'main st-success'
+  return `main st-${s.status}${s.allowFailure && s.status === 'failed' ? ' st-warn' : ''}`
+}
+
+function lane(s) {
+  if (isAgg()) {
+    const st = s.stats
+    if (!st.present) return '<span class="label" style="left:4px">не запускалась</span>'
+    const parts = [`p50 ${fmt(st.duration.p50)} · p90 ${fmt(st.duration.p90)}`]
+    if (st.present < st.total) parts.push(`${st.present}/${st.total}`)
+    if (st.critical) parts.push(`крит. ${Math.round(st.critical * 100)}%`)
+    return bar(mainClass(s), st.start.p50, st.end.p50) + bar('whisker', st.end.p50, st.end.p90) + label(st.start.p50, st.end.p90, parts.join(' · '))
+  }
+  if (s.start == null || s.end == null) return `<span class="label" style="left:4px">не запускалась · ${esc(s.status)}</span>`
+  let html = ''
+  for (const a of s.attempts) if (a.start != null && a.end != null) html += bar('attempt', a.start, a.end)
+  if (s.queued) html += bar('queued', s.start - s.queued, s.start)
+  for (const g of state.crit.gaps) if (g.to === s.id) html += bar('gap', s.start - g.ms, s.start)
+  return html + bar(mainClass(s), s.start, s.end) + label(s.start, s.end, fmt(s.end - s.start))
+}
+
+function stageInfo(s) {
+  if (isAgg()) return `до конца p50 ${fmt(s.stats.end.p50)} · p90 ${fmt(s.stats.end.p90)}`
+  return s.end == null ? '' : `длина ${fmt(s.end - s.start)} · до конца ${fmt(s.end)}`
+}
+
+function rowHtml(s, depth) {
+  const toggle = s.children.length
+    ? `<button class="tg" data-toggle="${esc(s.id)}">${state.collapsed.has(s.id) ? '▸' : '▾'} ${s.children.length}</button>`
+    : '<span class="tg"></span>'
+  const info = s.kind === 'stage' ? ` <span class="muted">${stageInfo(s)}</span>` : ''
+  const cls = `row${state.selected === s.id ? ' selected' : ''}${state.crit.ids.has(s.id) ? ' critical' : ''}`
+  return `<div class="${cls}" data-id="${esc(s.id)}"><div class="name" style="padding-left:${depth * 14 + 6}px" title="${esc(s.name)}">`
+    + `${toggle}<span class="k">${KIND[s.kind]}</span>${esc(s.name)}${info}</div><div class="lane">${lane(s)}</div></div>`
+}
+
+function drawAxis() {
+  const [a, b] = state.view
+  const step = STEPS.find((x) => (b - a) / x <= 10) ?? STEPS[STEPS.length - 1]
+  let html = ''
+  for (let t = Math.ceil(a / step) * step; t <= b; t += step) html += `<span class="tick" style="left:${pos(t)}%">${fmt(t)}</span>`
+  $('#axis').innerHTML = html
+}
+
+function drawHeader() {
+  const { meta } = REPORT
+  const root = state.tree
+  $('#title').textContent = `${meta.project} · ${isAgg() ? meta.label : root.name}`
+  document.title = `pipeline-trace · ${$('#title').textContent}`
+  if (isAgg()) {
+    const counts = Object.entries(meta.statusCounts ?? {}).map(([k, v]) => `${v} ${k.toLowerCase()}`).join(', ')
+    $('#summary').textContent = `агрегат: ${root.stats.total} пайплайнов (${counts}) · длина p50 ${fmt(root.stats.end.p50)} · p90 ${fmt(root.stats.end.p90)}`
+  } else {
+    $('#summary').innerHTML = `<a href="${esc(root.url)}" target="_blank" rel="noopener">${esc(root.name)}</a> · ${esc(root.status)} · ${esc(root.ref)} · длина ${fmt(root.end)}`
+  }
+  $('#back').hidden = !REPORT.agg || isAgg()
+}
+
+function draw() {
+  drawHeader()
+  drawAxis()
+  const html = []
+  const walk = (s, depth) => {
+    html.push(rowHtml(s, depth))
+    if (!state.collapsed.has(s.id)) s.children.forEach((c) => walk(c, depth + 1))
+  }
+  walk(state.tree, 0)
+  $('#rows').innerHTML = html.join('')
+  drawPanel()
+}
+
+const link = (url, text) => (url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : '—')
+const p5090 = (x) => `p50 ${fmt(x.p50)} · p90 ${fmt(x.p90)}`
+
+function details(s) {
+  const rows = [['Тип', s.kind], ['Статус', esc(s.status) + (s.allowFailure ? ' (allow_failure)' : '')]]
+  if (s.stage) rows.push(['Стейдж', esc(s.stage)])
+  rows.push(['Старт', fmt(s.start)], ['Конец', fmt(s.end)], ['Длительность', s.start == null ? '—' : fmt(s.end - s.start)])
+  if (s.queued != null) rows.push(['Очередь', fmt(s.queued)])
+  if (s.deps.length) rows.push(['Зависит от', s.deps.map((id) => esc(state.index.get(id)?.name ?? id)).join('<br>')])
+  if (s.attempts.length) {
+    rows.push(['Попытки', s.attempts.map((a) => `${link(a.url, a.status)} ${a.start == null ? '' : fmt(a.end - a.start)}`).join('<br>')])
+  }
+  rows.push(['GitLab', link(s.url, 'открыть')])
+  if (s.kind === 'stage' || s.kind === 'pipeline') rows.push(['Критический путь', `до конца «${esc(s.name)}» выделен в водопаде`])
+  return rows
+}
+
+function aggDetails(s) {
+  const st = s.stats
+  const rows = [
+    ['Тип', s.kind], ['Запускалась', `${st.present} из ${st.total}`],
+    ['Старт', p5090(st.start)], ['Длительность', p5090(st.duration)], ['До конца', p5090(st.end)],
+  ]
+  if (st.queued.p50 != null) rows.push(['Очередь', p5090(st.queued)])
+  if (s.kind === 'job' || s.kind === 'bridge') {
+    rows.push(['Ретраев в среднем', st.retries.toFixed(2)], ['На критическом пути', `${Math.round(st.critical * 100)}% пайплайнов`])
+  }
+  const samples = [...st.samples].sort((a, b) => (b.end - b.start) - (a.end - a.start))
+  rows.push(['Пайплайны', `<ol>${samples.map((x) => {
+    const tree = REPORT.trees[x.tree]
+    return `<li><a href="#" data-open-tree="${x.tree}">${esc(tree.name)}</a> ${fmt(x.end - x.start)} · ${link(tree.url, 'GitLab')}</li>`
+  }).join('')}</ol>`])
+  return rows
+}
+
+function drawPanel() {
+  const s = state.selected && state.index.get(state.selected)
+  const panel = $('#panel')
+  panel.hidden = !s
+  if (!s) return
+  const rows = isAgg() ? aggDetails(s) : details(s)
+  panel.innerHTML = `<button id="close" aria-label="Закрыть">×</button><h2>${esc(s.name)}</h2>`
+    + `<table>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('')}</table>`
+}
+
+document.addEventListener('click', (e) => {
+  const toggle = e.target.closest('[data-toggle]')
+  if (toggle) {
+    const id = toggle.dataset.toggle
+    state.collapsed.has(id) ? state.collapsed.delete(id) : state.collapsed.add(id)
+    return draw()
+  }
+  const openTree = e.target.closest('[data-open-tree]')
+  if (openTree) {
+    e.preventDefault()
+    return open(REPORT.trees[Number(openTree.dataset.openTree)])
+  }
+  if (e.target.closest('#close')) { state.selected = null; return draw() }
+  if (e.target.closest('#back')) return open(REPORT.agg)
+  const row = e.target.closest('.row')
+  if (!row || e.target.closest('a')) return
+  const s = state.index.get(row.dataset.id)
+  state.selected = s.id
+  if (!isAgg() && (s.kind === 'stage' || s.kind === 'pipeline')) { state.scope = s.id; recompute() }
+  draw()
+})
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { state.selected = null; draw() }
+  if (e.key === '0' && !e.ctrlKey && !e.metaKey) { state.view = fullView(); draw() }
+})
+
+$('#rows').addEventListener('wheel', (e) => {
+  const laneEl = e.target.closest('.lane')
+  if (!laneEl || !(e.ctrlKey || e.shiftKey)) return
+  e.preventDefault()
+  const rect = laneEl.getBoundingClientRect()
+  const f = (e.clientX - rect.left) / rect.width
+  const [a, b] = state.view
+  const w = b - a
+  if (e.ctrlKey) {
+    const nw = Math.max(w * (e.deltaY > 0 ? 1.25 : 0.8), 1000)
+    const left = a + f * w - f * nw
+    state.view = [left, left + nw]
+  } else {
+    const d = ((e.deltaY || e.deltaX) / rect.width) * w
+    state.view = [a + d, b + d]
+  }
+  draw()
+}, { passive: false })
+
+open(REPORT.agg ?? REPORT.trees[0])
+</script>
+</body>
+</html>

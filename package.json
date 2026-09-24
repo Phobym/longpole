@@ -6,5 +6,5 @@
   "bin": { "pipeline-trace": "./bin/pipeline-trace.mjs" },
   "files": ["bin", "src"],
   "engines": { "node": ">=22" },
-  "scripts": { "test": "node --test" }
+  "scripts": { "test": "node --test \"test/*.test.mjs\"" }
 }

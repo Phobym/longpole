@@ -1,0 +1,20 @@
+{
+  "name": "pipeline-trace-desktop",
+  "productName": "pipeline-trace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Водопад длительности GitLab-пайплайнов",
+  "author": { "name": "pipeline-trace", "email": "noreply@pipeline-trace.invalid" },
+  "type": "module",
+  "main": "app/main.mjs",
+  "scripts": {
+    "sync-core": "node scripts/sync-core.mjs",
+    "dev": "npm run sync-core && electron .",
+    "dist": "npm run sync-core && electron-builder --publish never",
+    "test": "npm run sync-core && node --test \"test/*.test.mjs\""
+  },
+  "devDependencies": {
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3"
+  }
+}

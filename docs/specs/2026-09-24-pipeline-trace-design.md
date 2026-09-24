@@ -35,16 +35,17 @@
 
 ```
 pipeline-trace <url-пайплайна|url-MR>
-pipeline-trace --project group/name --ref master --last 50 [--status success|any]
+pipeline-trace --project group/name [--ref master] [--source merge_request_event] --last 50
+  [--status success,manual|any]
   [--host gitlab.example.com] [--out trace.html] [--no-open]
 ```
 
 - URL пайплайна (`https://<host>/<group>/<project>/-/pipelines/<id>`) открывает режим одного пайплайна.
 - URL MR открывает режим одного пайплайна для `head_pipeline` этого MR.
-- `--project` + `--ref` + `--last N` открывают агрегат по последним N пайплайнам.
+- `--project` + `--last N` открывают агрегат по последним N пайплайнам. `--ref` фильтрует по ветке, `--source` — по источнику. У MR-пайплайнов ref свой у каждого MR (`refs/merge-requests/<iid>/head`), поэтому агрегат по MR задаётся через `--source merge_request_event`.
 - Хост берётся по порядку: из URL, из `--host`, из `glab config get host`. Если ни один источник не дал хост, утилита завершается с ошибкой.
 - Токен берётся по порядку: `glab auth token --hostname <host>`, затем `GITLAB_TOKEN`. Если токена нет, ошибка объясняет оба способа его задать.
-- `--status` по умолчанию `success`. С `any` в агрегат попадают упавшие и отменённые пайплайны, а сводка показывает, сколько пайплайнов в каждом статусе.
+- `--status` — список статусов через запятую, по умолчанию `success,manual`. Пайплайн, который остановился на ручной джобе (например, `deploy_prod`), GitLab помечает `manual`. В `litres/monorepo` так заканчиваются все полные пайплайны master и MR, а `success` на master получают короткие Publish-пайплайны из одной джобы. Для агрегата по master без Publish-пайплайнов используй `--status manual`. С `any` фильтра нет. Сводка показывает, сколько пайплайнов в каждом статусе.
 - `--out` по умолчанию `pipeline-trace-<project>-<id|ref>.html` в текущем каталоге. Без `--no-open` утилита открывает файл в браузере.
 
 ## Пакет
@@ -68,7 +69,7 @@ test/*.test.mjs          node:test
 - у пайплайна: `createdAt`, `startedAt`, `finishedAt`, `status`, `ref`, `webPath`;
 - у джобы: `name`, стейдж, имя группы (для шардов `parallel`), `status`, `startedAt`, `finishedAt`, `queuedDuration`, `retried`, `webPath`, `previousStageJobsOrNeeds`, у bridge-джоб — `downstreamPipeline`.
 
-`previousStageJobsOrNeeds` возвращает `needs` джобы, если они заданы, а иначе все джобы предыдущего стейджа. Поэтому граф зависимостей получается точным для конкретного пайплайна без разбора YAML.
+`previousStageJobsOrNeeds` возвращает `needs` джобы, если они заданы, а иначе все джобы предыдущего стейджа. Поэтому граф зависимостей получается точным для конкретного пайплайна без разбора YAML. Зависимости приходят **именами** джоб. Модель сопоставляет имя с актуальной (не `retried`) попыткой джобы в том же пайплайне. Имена, которых нет в пайплайне, отбрасываются.
 
 Правила запросов:
 
@@ -77,20 +78,20 @@ test/*.test.mjs          node:test
 - downstream-пайплайны загружаются рекурсивно;
 - на 401/403/404 утилита выводит ошибку с хостом и путём проекта и завершается с ненулевым кодом.
 
-**Первый шаг реализации — пробный запрос к рабочему хосту.** Он проверяет, что `previousStageJobsOrNeeds` и `downstreamPipeline` есть в его версии GitLab. Если какого-то поля нет, запасной путь для `deps` — `needs` из конфига через REST `/projects/:id/ci/lint`.
+Проверено 2026-09-24 на `gitlab.litres.io` (GitLab 19.2.6): все перечисленные поля, `pipelines(ref, source)`, `mergeRequest.headPipeline` и `kind: BUILD | BRIDGE` работают. Несуществующий проект даёт `project: null`, неверный токен — HTTP 401. Интроспекцию (`__type`) сервер не выполняет и отдаёт кэшированную полную схему, поэтому версию поля проверяй реальным запросом.
 
 ## Модель: спан
 
 ```js
 {
-  id, kind: 'pipeline' | 'stage' | 'job' | 'bridge',
+  id, kind: 'pipeline' | 'stage' | 'group' | 'job' | 'bridge',
   name,
   start, end,        // мс от createdAt корневого пайплайна
   queued,            // мс ожидания раннера, только у job
-  status, url,
+  status, url, allowFailure,
   attempts: [{ start, end, status }],  // прошлые попытки при ретраях
   deps: [id],        // из previousStageJobsOrNeeds
-  children: [span],  // pipeline → stage → job; bridge → pipeline
+  children: [span],  // pipeline → stage → (group →) job; bridge → pipeline
 }
 ```
 
@@ -99,7 +100,9 @@ test/*.test.mjs          node:test
 - Все времена, включая время джоб downstream-пайплайнов, отсчитываются от `createdAt` корневого пайплайна.
 - У джобы `start = startedAt`, `end = finishedAt`.
 - У стейджа `start` равен минимальному `start` его джоб, `end` — максимальному `end`. Длина стейджа — `end − start`. Величина «до конца стейджа» равна `end`.
-- У bridge-джобы `end` равен `end` её downstream-пайплайна.
+- Шарды `parallel` одного стейджа (`name 3/10` или `name: [3]`) при двух и более шардах объединяются в спан `group` с именем без суффикса. Границы группы считаются так же, как у стейджа.
+- У пайплайна `end` — максимум из `finishedAt` и `end` его стейджей. У пайплайна в статусе `manual` `finishedAt` пустой, остаётся `end` стейджей.
+- У bridge-джобы `end` — максимум из её `finishedAt` и `end` downstream-пайплайна.
 - Если пайплайн ещё идёт, у незавершённых джоб `end = now`, а отчёт помечается как `running`.
 - **Ретраи.** Основной спан — попытка с `retried: false`. Прошлые попытки попадают в `attempts`.
 - **`manual`, `skipped`, `created`** без `startedAt` получают `start = end = null`. Они остаются в дереве, но в водопаде и критическом пути не участвуют.
@@ -122,7 +125,7 @@ test/*.test.mjs          node:test
 
 ## Агрегат по N пайплайнам
 
-- Ключ джобы — `стейдж + имя`. Шарды `parallel` объединяются в группу по имени группы, отдельные шарды показываются дочерними строками. Downstream-пайплайны агрегируются рекурсивно по имени bridge-джобы.
+- Узлы деревьев сливаются по ключу `kind + name` среди детей одного родителя. Так стейдж, группа шардов и джоба получают свой агрегат, а downstream-пайплайны агрегируются рекурсивно под своей bridge-джобой.
 - Метрики джобы:
   - p50 и p90 для `start`, `end − start` и `queued`;
   - присутствие: в скольких из N пайплайнов джоба запускалась;

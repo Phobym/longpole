@@ -95,20 +95,18 @@ export function aggInsights(agg) {
   return { stages, retryLoss: losses, totalRetryLoss, hotspots, saving: sum(hotspots), stability }
 }
 
+// ключ метки стабильности: имена предков-стейджей и bridge-джоб плюс имя узла,
+// одинаковый у дерева пайплайна и у агрегата
 export const stabilityKey = (names) => names.join(' / ')
 
 export function stabilityByName(agg) {
   const out = {}
-  const walkWithPath = (s, path) => {
-    const newPath = [...path]
-    if (s.kind === 'stage' || s.kind === 'bridge') {
-      newPath.push(s.name)
-    }
+  const walkWithPath = (s, ancestors) => {
     if (s.kind === 'job' || s.kind === 'bridge') {
-      const key = stabilityKey([...newPath, s.name])
-      out[key] = { retried: s.stats.retried, present: s.stats.present }
+      out[stabilityKey([...ancestors, s.name])] = { retried: s.stats.retried, present: s.stats.present }
     }
-    s.children?.forEach((c) => walkWithPath(c, newPath))
+    const next = s.kind === 'stage' || s.kind === 'bridge' ? [...ancestors, s.name] : ancestors
+    s.children.forEach((c) => walkWithPath(c, next))
   }
   walkWithPath(agg, [])
   return out

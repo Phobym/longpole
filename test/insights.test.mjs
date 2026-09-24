@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { buildTree } from '../src/model.mjs'
 import { insights, retryLoss, stageExcess, aggInsights, stabilityByName, stabilityKey } from '../src/insights.mjs'
 import { aggregate } from '../src/aggregate.mjs'
-import { job, rawPipeline } from './fixtures.mjs'
+import { at, job, rawPipeline } from './fixtures.mjs'
 
 export function samplePipeline(i = 1) {
   return rawPipeline([
@@ -105,4 +105,16 @@ test('stabilityByName: разные lint в разных стейджах не �
   const s = stabilityByName(agg)
   assert.deepEqual(s[stabilityKey(['build', 'lint'])], { retried: 1, present: 2 })
   assert.deepEqual(s[stabilityKey(['check', 'check'])], { retried: 0, present: 2 })
+})
+
+test('stabilityByName: bridge и джобы его downstream получают путь без повторов', () => {
+  const child = rawPipeline([job('lint', 'build', { start: 110, end: 200 })], {
+    id: 'gid://gitlab/Ci::Pipeline/9', iid: '9', createdAt: at(100), project: 'other/proj',
+  })
+  const bridge = job('trigger', 'deploy', {
+    kind: 'BRIDGE', start: 100, end: 150,
+    downstream: { id: 'gid://gitlab/Ci::Pipeline/9', project: { fullPath: 'other/proj' } },
+  })
+  const t = buildTree(rawPipeline([bridge], { downstream: { [bridge.id]: child } }), { baseUrl: 'https://h' })
+  assert.deepEqual(Object.keys(stabilityByName(aggregate([t]))).sort(), ['deploy / trigger', 'deploy / trigger / build / lint'])
 })

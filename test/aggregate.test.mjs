@@ -62,3 +62,21 @@ test('ретраи усредняются по запускам', () => {
   const e2e = child(child(aggregate([withRetry, clean]), 'stage:test'), 'job:e2e')
   assert.equal(e2e.stats.retries, 0.5)
 })
+
+test('агрегат: deps указывают на агрегированные узлы, порядок в стейдже по связям', () => {
+  const t = (i) => buildTree(rawPipeline([
+    job('cache', 'cache', { start: 0, end: 10 }),
+    job('server', 'build', { start: 12, end: 50, deps: ['cache'] }),
+    job('lint', 'build', { start: 20, end: 100, deps: ['cache'] }),
+    job('static', 'build', { start: 51, end: 60, deps: ['server'] }),
+  ], { id: `gid://gitlab/Ci::Pipeline/${i}`, iid: String(i) }), { baseUrl: 'https://h' })
+  const agg = aggregate([t(1), t(2)])
+  const build = child(agg, 'stage:build')
+  assert.deepEqual(build.children.map((c) => c.name), ['server', 'static', 'lint'])
+  const staticJob = child(build, 'job:static')
+  assert.deepEqual(staticJob.deps, ['agg/stage:build/job:server'])
+  assert.equal(staticJob.after, 'agg/stage:build/job:server')
+  assert.deepEqual(child(build, 'job:lint').deps, ['agg/stage:cache/job:cache'])
+  assert.equal(child(build, 'job:lint').after, null)
+  assert.deepEqual(build.deps, [])
+})

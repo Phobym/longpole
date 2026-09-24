@@ -1,4 +1,5 @@
 import { criticalPath } from './critical-path.mjs'
+import { byStart, orderByDeps } from './model.mjs'
 
 export function percentile(values, p) {
   if (values.length === 0) return null
@@ -8,14 +9,18 @@ export function percentile(values, p) {
 
 const stat = (values) => ({ p50: percentile(values, 50), p90: percentile(values, 90) })
 const keyOf = (s) => (s.kind === 'pipeline' ? 'pipeline' : `${s.kind}:${s.name}`)
-const orderKey = (s) => s.start ?? Infinity
-const byStart = (a, b) => (orderKey(a) === orderKey(b) ? 0 : orderKey(a) < orderKey(b) ? -1 : 1)
+const LINKED = new Set(['job', 'bridge', 'group'])
+const ORDERED_BY_DEPS = new Set(['stage', 'group'])
 
 export function aggregate(trees) {
   const critical = trees.map((t) => new Set(criticalPath(t).ids))
+  // id исходного спана в пайплайне → id агрегированного узла; нужен, чтобы перевести deps
+  const aggIdOf = new Map()
+  const linked = []
 
   // entries — один и тот же узел в разных пайплайнах: [{ span, tree }]
   const merge = (id, kind, name, entries) => {
+    for (const e of entries) aggIdOf.set(`${e.tree}|${e.span.id}`, id)
     const groups = new Map()
     for (const e of entries) {
       for (const c of e.span.children) {
@@ -38,13 +43,32 @@ export function aggregate(trees) {
       critical: ran.filter((e) => critical[e.tree].has(e.span.id)).length / trees.length,
       samples: ran.map((e) => ({ tree: e.tree, start: e.span.start, end: e.span.end })),
     }
-    return {
+    const node = {
       id, kind, name,
       start: stats.start.p50, end: stats.end.p50, queued: stats.queued.p50,
-      status: null, url: null, allowFailure: false, attempts: [], deps: [],
+      status: null, url: null, allowFailure: false, attempts: [], deps: [], after: null,
       children, stats,
     }
+    if (LINKED.has(kind)) linked.push({ node, entries })
+    return node
   }
 
-  return merge('agg', 'pipeline', `${trees.length} пайплайнов`, trees.map((span, tree) => ({ span, tree })))
+  const root = merge('agg', 'pipeline', `${trees.length} пайплайнов`, trees.map((span, tree) => ({ span, tree })))
+
+  for (const { node, entries } of linked) {
+    const deps = new Set()
+    for (const e of entries) {
+      for (const dep of e.span.deps) {
+        const aggId = aggIdOf.get(`${e.tree}|${dep}`)
+        if (aggId && aggId !== node.id) deps.add(aggId)
+      }
+    }
+    node.deps = [...deps]
+  }
+  const reorder = (s) => {
+    if (ORDERED_BY_DEPS.has(s.kind)) s.children = orderByDeps(s.children)
+    s.children.forEach(reorder)
+  }
+  reorder(root)
+  return root
 }

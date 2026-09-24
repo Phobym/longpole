@@ -1,0 +1,82 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f7f8fa; --card: #ffffff; --line: #e8eaee; --line-soft: #f1f2f5; --fg: #1a1b1f; --muted: #8b909a;
+  --hover: #f3f4f8; --selected: #eef0ff; --focus: #6b6ff0;
+  --pill-ok-bg: #e9f7ef; --pill-ok-fg: #1a7f45; --pill-bad-bg: #fdecec; --pill-bad-fg: #c23434;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111318; --card: #1a1c22; --line: #2a2d35; --line-soft: #22252c; --fg: #e6e7ea; --muted: #8d939e;
+    --hover: #20232a; --selected: #262a45; --focus: #9a9cf8;
+    --pill-ok-bg: #16301f; --pill-ok-fg: #6fd49a; --pill-bad-bg: #3a1a1b; --pill-bad-fg: #f58a8d;
+  }
+}
+
+* { box-sizing: border-box; }
+/* .field и fieldset.field задают свой display, у которого та же специфичность, что и у [hidden] */
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 13px/1.4 -apple-system, system-ui, sans-serif;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-radius: 4px; }
+
+#page { display: grid; grid-template-columns: 260px 1fr; gap: 20px; min-height: 100vh; padding: 20px; align-items: start; }
+
+#history-col h2 { font-size: 13px; font-weight: 600; margin: 0 0 10px 4px; color: var(--muted); }
+#history-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+#history-list button {
+  width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 10px; display: flex; flex-direction: column; gap: 2px;
+}
+#history-list button:hover { background: var(--hover); }
+.hist-label { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist-meta { color: var(--muted); font-size: 11.5px; display: flex; gap: 6px; }
+#history-empty { color: var(--muted); margin: 0 0 0 4px; font-size: 12.5px; }
+
+.card {
+  background: var(--card); border-radius: 14px; box-shadow: 0 0 0 1px var(--line), 0 8px 24px rgb(0 0 0 / .04);
+  padding: 24px; max-width: 560px;
+}
+.card h1 { font-size: 16px; margin: 0 0 16px; font-weight: 600; }
+
+.mode-switch { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 3px; margin-bottom: 18px; }
+.mode-btn {
+  border: 0; background: none; border-radius: 999px; padding: 6px 16px; color: var(--muted); font-weight: 600;
+}
+.mode-btn[aria-pressed="true"] { background: var(--card); color: var(--fg); box-shadow: 0 0 0 1px var(--line); }
+
+.field { margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+.field input, .field select {
+  border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; background: var(--bg); color: var(--fg);
+}
+.field input[aria-invalid="true"], .field select[aria-invalid="true"] { border-color: var(--pill-bad-fg); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.host-row { display: flex; gap: 8px; align-items: center; }
+.host-row select { flex: 1; }
+
+.subform { background: var(--line-soft); border-radius: 10px; padding: 12px; }
+
+fieldset.field { border: 0; padding: 0; margin: 0 0 16px; }
+fieldset legend { font-size: 12px; color: var(--muted); font-weight: 600; padding: 0 0 6px; }
+.chk { display: inline-flex; align-items: center; gap: 4px; font-weight: 400; color: var(--fg); font-size: 12.5px; margin: 0 10px 6px 0; }
+.chk input { margin: 0; }
+
+.field-error { margin: 0; color: var(--pill-bad-fg); font-size: 11.5px; }
+.form-error {
+  background: var(--pill-bad-bg); color: var(--pill-bad-fg); border-radius: 8px; padding: 8px 10px;
+  margin: 0 0 12px; font-size: 12.5px;
+}
+
+button[type="submit"], #save-token, #remove-token {
+  border: 0; border-radius: 999px; padding: 8px 18px; font-weight: 600;
+}
+button[type="submit"] { background: var(--focus); color: #fff; }
+button[type="submit"]:disabled { opacity: .6; cursor: default; }
+#save-token { background: var(--pill-ok-bg); color: var(--pill-ok-fg); }
+#remove-token { background: var(--pill-bad-bg); color: var(--pill-bad-fg); white-space: nowrap; }
+
+.muted { color: var(--muted); }

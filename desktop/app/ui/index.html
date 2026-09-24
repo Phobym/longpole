@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111318" media="(prefers-color-scheme: dark)">
+<title>pipeline-trace</title>
+<link rel="stylesheet" href="form.css">
+</head>
+<body>
+<div id="page">
+  <aside id="history-col">
+    <h2>История</h2>
+    <ul id="history-list"></ul>
+    <p id="history-empty" class="muted">Пока пусто</p>
+  </aside>
+
+  <main id="form-col">
+    <div class="card" id="form-card">
+      <h1>pipeline-trace</h1>
+
+      <div class="mode-switch" role="group" aria-label="Режим">
+        <button type="button" class="mode-btn" id="mode-link" aria-pressed="true">Ссылка</button>
+        <button type="button" class="mode-btn" id="mode-aggregate" aria-pressed="false">Агрегат</button>
+      </div>
+
+      <form id="build-form" novalidate>
+        <div class="field link-only" id="field-url">
+          <label for="url">Ссылка на пайплайн или merge request</label>
+          <input type="url" id="url" name="url" placeholder="https://gitlab.example.com/group/project/-/pipelines/123…">
+          <p class="field-error" id="error-url" role="alert" hidden></p>
+        </div>
+
+        <div class="field aggregate-only" id="field-host">
+          <label for="host-select">Хост</label>
+          <div class="host-row">
+            <select id="host-select" translate="no"></select>
+            <button type="button" id="remove-token" hidden>Удалить токен</button>
+          </div>
+          <p class="field-error" id="error-host" role="alert" hidden></p>
+        </div>
+
+        <div class="field subform aggregate-only" id="field-new-host" hidden>
+          <label for="new-host">Хост</label>
+          <input type="text" id="new-host" translate="no" placeholder="gitlab.example.com">
+          <label for="new-token">Токен</label>
+          <input type="password" id="new-token" autocomplete="off" spellcheck="false">
+          <p class="field-error" id="error-new-host" role="alert" hidden></p>
+          <button type="button" id="save-token">Сохранить токен</button>
+        </div>
+
+        <div class="field aggregate-only" id="field-project">
+          <label for="project">Проект</label>
+          <input type="text" id="project" translate="no" placeholder="group/project">
+          <p class="field-error" id="error-project" role="alert" hidden></p>
+        </div>
+
+        <div class="field-row aggregate-only" id="agg-row">
+          <div class="field" id="field-ref">
+            <label for="ref">Ref</label>
+            <input type="text" id="ref" placeholder="master">
+          </div>
+          <div class="field" id="field-source">
+            <label for="source">Source</label>
+            <select id="source">
+              <option value="">— любой —</option>
+              <option value="push">push</option>
+              <option value="merge_request_event">merge_request_event</option>
+              <option value="schedule">schedule</option>
+            </select>
+          </div>
+          <div class="field" id="field-last">
+            <label for="last">Сколько пайплайнов</label>
+            <input type="number" id="last" min="1" max="500" value="50">
+            <p class="field-error" id="error-last" role="alert" hidden></p>
+          </div>
+        </div>
+
+        <fieldset class="field aggregate-only" id="field-statuses">
+          <legend>Статусы</legend>
+          <label class="chk"><input type="checkbox" class="status-cb" value="SUCCESS" checked> SUCCESS</label>
+          <label class="chk"><input type="checkbox" class="status-cb" value="MANUAL" checked> MANUAL</label>
+          <label class="chk"><input type="checkbox" class="status-cb" value="FAILED"> FAILED</label>
+          <label class="chk"><input type="checkbox" class="status-cb" value="CANCELED"> CANCELED</label>
+          <label class="chk"><input type="checkbox" class="status-cb" value="RUNNING"> RUNNING</label>
+          <label class="chk"><input type="checkbox" id="status-any" value="ANY"> любой</label>
+          <p class="field-error" id="error-statuses" role="alert" hidden></p>
+        </fieldset>
+
+        <p class="form-error" id="form-error" role="alert" hidden></p>
+        <button type="submit" id="submit">Построить отчёт</button>
+      </form>
+    </div>
+  </main>
+</div>
+<script src="form.js"></script>
+</body>
+</html>

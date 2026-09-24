@@ -133,7 +133,9 @@ function lane(s) {
     const parts = [`p50 ${fmt(st.duration.p50)} · p90 ${fmt(st.duration.p90)}`]
     if (st.present < st.total) parts.push(`${st.present}/${st.total}`)
     if (st.critical) parts.push(`крит. ${Math.round(st.critical * 100)}%`)
-    return bar(mainClass(s), st.start.p50, st.end.p50) + bar('whisker', st.end.p50, st.end.p90) + label(st.start.p50, st.end.p90, parts.join(' · '))
+    const typicalEnd = st.start.p50 + st.duration.p50
+    const slowEnd = st.start.p50 + st.duration.p90
+    return bar(mainClass(s), st.start.p50, typicalEnd) + bar('whisker', typicalEnd, slowEnd) + label(st.start.p50, slowEnd, parts.join(' · '))
   }
   if (s.start == null || s.end == null) return `<span class="label" style="left:4px">не запускалась · ${esc(s.status)}</span>`
   let html = ''

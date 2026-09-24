@@ -15,14 +15,23 @@ export function createHistory({ file, limit = 20, now = () => new Date() }) {
     }
   }
   const key = (e) => JSON.stringify([e.host, e.request])
+  const save = async (next) => {
+    await mkdir(dirname(file), { recursive: true })
+    await writeFile(file, JSON.stringify(next, null, 2))
+    return next
+  }
   return {
     list,
     async add({ host, form, request, label }) {
       const entry = { at: now().toISOString(), host, form: pickForm(form), request, label }
       const next = [entry, ...(await list()).filter((e) => key(e) !== key(entry))].slice(0, limit)
-      await mkdir(dirname(file), { recursive: true })
-      await writeFile(file, JSON.stringify(next, null, 2))
-      return next
+      return save(next)
+    },
+    async remove(at) {
+      return save((await list()).filter((e) => e.at !== at))
+    },
+    async clear() {
+      return save([])
     },
   }
 }

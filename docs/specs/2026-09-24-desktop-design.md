@@ -32,7 +32,7 @@ desktop/
   package.json            devDependencies: electron, electron-builder; "type": "module"
   scripts/sync-core.mjs   копирует ../src в app/core перед запуском и сборкой
   app/main.mjs            главный процесс
-  app/preload.cjs         мост contextBridge: build, save, hosts, setToken, removeToken, history
+  app/preload.cjs         мост contextBridge: build, save, hosts, setToken, removeToken, history, removeHistory, clearHistory
   app/tokens.mjs          хранилище токенов (шифрование внедряется)
   app/history.mjs         история запросов
   app/request.mjs         разбор и проверка формы → запрос для buildReport
@@ -77,13 +77,14 @@ buildReport(request, { gql, host, now?, onProgress? }) → Promise<{ report, suf
 
 - Файл `userData/history.json`, последние 20 запросов, новые сверху, без токенов: `{ at: ISO-8601, host, form, request, label }`, где `form` содержит только mode, host, url, project, ref, source, last, statuses — токены никогда не сохраняются.
 - Клик по записи заполняет форму; повторный одинаковый запрос поднимается наверх.
+- У каждой записи — кнопка «×» (`removeHistory`), удаляет только её. Кнопка «Очистить» у заголовка (`clearHistory`) — с подтверждением через `confirm`, скрыта при пустой истории.
 
 ## Безопасность
 
 - Все окна: `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`.
 - Форма: CSP `default-src 'self'; style-src 'self' 'unsafe-inline'`.
 - Окно отчёта: навигация внутри окна запрещена (`will-navigate` → отмена); `window.open` и внешние ссылки открываются через `shell.openExternal`, только `https:`.
-- Мост `preload.cjs` отдаёт только функции `build`, `hosts`, `setToken`, `removeToken`, `history`, `onProgress`; других каналов нет. Сохранение отчёта — не через мост, а через пункт меню «Файл → Сохранить отчёт…» (Cmd/Ctrl+S).
+- Мост `preload.cjs` отдаёт только функции `build`, `hosts`, `setToken`, `removeToken`, `history`, `removeHistory`, `clearHistory`, `onProgress`; других каналов нет. Сохранение отчёта — не через мост, а через пункт меню «Файл → Сохранить отчёт…» (Cmd/Ctrl+S).
 
 ## Форма (стиль C)
 
@@ -112,6 +113,6 @@ buildReport(request, { gql, host, now?, onProgress? }) → Promise<{ report, suf
 
 - `test/report.test.mjs` (корень) — `buildReport` на подменённом `gql`: режимы pipeline, mr, aggregate; `onProgress`; ошибка «ни один пайплайн не подошёл».
 - `desktop/test/tokens.test.mjs` — хранение, чтение, удаление, отказ без шифрования (шифрование подменяется).
-- `desktop/test/history.test.mjs` — лимит 20, порядок, подъём повторного запроса.
+- `desktop/test/history.test.mjs` — лимит 20, порядок, подъём повторного запроса, удаление одной записи и очистка всей истории.
 - `desktop/test/request.test.mjs` — разбор формы: ссылки на пайплайн и MR, агрегат, ошибки по полям.
 - Главный процесс и окна автотестами не покрываются: ручная проверка сборки на macOS; сборки Windows и Linux — через CI.

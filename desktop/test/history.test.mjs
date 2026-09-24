@@ -20,6 +20,23 @@ test('новые сверху, лимит, повторный запрос по�
   assert.equal(list[0].at, '2026-09-24T00:04:00.000Z')
 })
 
+test('remove убирает запись по at, clear очищает список', async () => {
+  const file = await tmpFile()
+  // разные миллисекунды: иначе add() рискует дать двум записям одинаковый at на быстрой машине
+  let t = 0
+  const history = createHistory({ file, limit: 3, now: () => new Date(Date.UTC(2026, 8, 24, 0, 0, 0, t++)) })
+  await history.add(entry(1))
+  await history.add(entry(2))
+  const [second, first] = await history.list()
+  const afterRemove = await history.remove(first.at)
+  assert.deepEqual(afterRemove.map((e) => e.label), ['#2'])
+  assert.deepEqual((await history.list()).map((e) => e.label), ['#2'])
+
+  const afterClear = await history.clear()
+  assert.deepEqual(afterClear, [])
+  assert.deepEqual(await history.list(), [])
+})
+
 test('история содержит только белый список полей формы, без токенов', async () => {
   const file = await tmpFile()
   const history = createHistory({ file, limit: 3, now: () => new Date() })

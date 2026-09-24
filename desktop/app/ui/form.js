@@ -28,6 +28,7 @@ const submitBtn = $('submit')
 const formError = $('form-error')
 const historyList = $('history-list')
 const historyEmpty = $('history-empty')
+const historyClearBtn = $('history-clear')
 
 const FIELD_ERROR_IDS = { url: 'error-url', host: 'error-host', project: 'error-project', last: 'error-last', statuses: 'error-statuses' }
 const FIELD_INPUT = { url: urlInput, host: hostSelect, project: projectInput, last: lastInput, statuses: statusChecks[0] }
@@ -216,10 +217,13 @@ async function loadHistory() {
   const entries = res.ok ? res.value : []
   historyList.innerHTML = ''
   historyEmpty.hidden = entries.length > 0
+  historyClearBtn.hidden = entries.length === 0
   for (const entry of entries) {
     const li = document.createElement('li')
+    li.className = 'hist-row'
     const button = document.createElement('button')
     button.type = 'button'
+    button.className = 'hist-item'
     const label = document.createElement('span')
     label.className = 'hist-label'
     label.translate = 'no'
@@ -234,10 +238,28 @@ async function loadHistory() {
     meta.append(host, time)
     button.append(label, meta)
     button.addEventListener('click', () => fillForm(entry))
-    li.appendChild(button)
+
+    // отдельная кнопка, а не вложенная: клик по ней не должен ещё и заполнять форму
+    const remove = document.createElement('button')
+    remove.type = 'button'
+    remove.className = 'hist-remove'
+    remove.setAttribute('aria-label', `Удалить из истории: ${entry.label}`)
+    remove.textContent = '×'
+    remove.addEventListener('click', async () => {
+      const removeRes = await window.app.removeHistory(entry.at)
+      if (removeRes.ok) await loadHistory()
+    })
+
+    li.append(button, remove)
     historyList.appendChild(li)
   }
 }
+
+historyClearBtn.addEventListener('click', async () => {
+  if (!confirm('Очистить историю запросов?')) return
+  const res = await window.app.clearHistory()
+  if (res.ok) await loadHistory()
+})
 
 function setProgress(loaded, total) {
   submitBtn.textContent = total == null ? 'Загружаю…' : `Загружаю ${loaded} из ${total}…`

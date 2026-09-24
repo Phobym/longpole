@@ -95,6 +95,8 @@ function handle(channel, fn) {
 function registerIpc() {
   handle('hosts', () => tokens.hosts())
   handle('history', () => history.list())
+  handle('removeHistory', (_event, at) => history.remove(at))
+  handle('clearHistory', () => history.clear())
   handle('setToken', async (_event, host, token) => {
     let resolved
     try {

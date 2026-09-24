@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('app', {
   setToken: (host, token) => ipcRenderer.invoke('setToken', host, token),
   removeToken: (host) => ipcRenderer.invoke('removeToken', host),
   history: () => ipcRenderer.invoke('history'),
+  removeHistory: (at) => ipcRenderer.invoke('removeHistory', at),
+  clearHistory: () => ipcRenderer.invoke('clearHistory'),
   onProgress: (fn) => {
     const listener = (_event, progress) => fn(progress)
     ipcRenderer.on('progress', listener)

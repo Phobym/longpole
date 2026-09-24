@@ -91,3 +91,16 @@ test('агрегат: deps указывают на агрегированные 
   assert.equal(child(build, 'job:lint').after, null)
   assert.deepEqual(build.deps, [])
 })
+
+test('порядок стейджей в агрегате: пайплайн из одного стейджа не сдвигает его вперёд', () => {
+  const full = buildTree(rawPipeline([
+    job('prep', 'prepare', { start: 0, end: 10 }),
+    job('npm', 'cache', { start: 10, end: 20 }),
+    job('srv', 'build', { start: 20, end: 30 }),
+    job('scan', 'security', { start: 0, end: 5 }),
+  ], { id: 'gid://gitlab/Ci::Pipeline/1', iid: '1', stages: ['prepare', 'cache', 'build', 'security'] }), { baseUrl: 'https://h' })
+  const publish = buildTree(rawPipeline([job('ver', 'build', { start: 0, end: 60 })], {
+    id: 'gid://gitlab/Ci::Pipeline/2', iid: '2', stages: ['build'],
+  }), { baseUrl: 'https://h' })
+  assert.deepEqual(aggregate([publish, full, publish]).children.map((c) => c.name), ['prepare', 'cache', 'build', 'security'])
+})

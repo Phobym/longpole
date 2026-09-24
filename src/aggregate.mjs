@@ -13,6 +13,18 @@ const keyOf = (s) => (s.kind === 'pipeline' ? 'pipeline' : `${s.kind}:${s.name}`
 const LINKED = new Set(['job', 'bridge', 'group'])
 const ORDERED_BY_DEPS = new Set(['stage', 'group'])
 
+// Порядок стейджей — голосование по парам в пайплайнах, где встречаются оба стейджа.
+// Позиция в одном пайплайне не годится: в Publish-пайплайне из одного стейджа build стоит на месте 0.
+function stageVotes(entries) {
+  const votes = new Map()
+  const bump = (key) => votes.set(key, (votes.get(key) ?? 0) + 1)
+  for (const e of entries) {
+    const names = e.span.children.filter((c) => c.kind === 'stage').map((c) => c.name)
+    names.forEach((first, i) => names.slice(i + 1).forEach((second) => bump(`${first}\n${second}`)))
+  }
+  return (a, b) => (votes.get(`${a}\n${b}`) ?? 0) - (votes.get(`${b}\n${a}`) ?? 0)
+}
+
 export function aggregate(trees) {
   const critical = trees.map((t) => new Set(criticalPath(t).ids))
   // id исходного спана в пайплайне → id агрегированного узла; нужен, чтобы перевести deps
@@ -30,10 +42,12 @@ export function aggregate(trees) {
         groups.get(key).entries.push({ span: c, tree: e.tree })
       }
     }
+    const ahead = stageVotes(entries)
     const children = [...groups]
       .map(([key, g]) => merge(`${id}/${key}`, g.kind, g.name, g.entries))
-      // стейджи сортируем по объявленному в пайплайне порядку, а не по p50-старту (тот же баг, что в model.mjs)
-      .sort((a, b) => (a.kind === 'stage' && b.kind === 'stage' ? a.position - b.position : byStart(a, b)))
+      .sort((a, b) => (a.kind === 'stage' && b.kind === 'stage'
+        ? -ahead(a.name, b.name) || a.position - b.position
+        : byStart(a, b)))
 
     const ran = entries.filter((e) => e.span.start != null && e.span.end != null)
     const stats = {

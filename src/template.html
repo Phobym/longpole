@@ -8,13 +8,13 @@
   :root {
     --bg: #ffffff; --fg: #1f2328; --muted: #6e7781; --line: #e6e8eb; --row-alt: #f7f8fa; --hover: #eef1f6;
     --selected: #e3e8ff; --box: #f5c518; --ok: #6c5fc7; --fail: #e5484d; --warn: #f59e0b; --run: #3b82f6;
-    --idle: #9aa4af; --queued: #cfd5dc; --critical: #111827;
+    --idle: #9aa4af; --queued: #cfd5dc; --critical: #111827; --dep-up: #0284c7; --dep-down: #16a34a;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #16171b; --fg: #e6e7ea; --muted: #9aa0a8; --line: #2a2d33; --row-alt: #1b1d22; --hover: #23262d;
       --selected: #2b3050; --box: #d4a90f; --ok: #8b7ff0; --fail: #f16a6e; --warn: #f5a524; --run: #5b9cf8;
-      --idle: #6b7280; --queued: #3a3f47; --critical: #f9fafb;
+      --idle: #6b7280; --queued: #3a3f47; --critical: #f9fafb; --dep-up: #38bdf8; --dep-down: #4ade80;
     }
   }
   * { box-sizing: border-box; }
@@ -52,6 +52,11 @@
   .gap { top: 10px; height: 0; border-top: 2px dashed var(--critical); }
   .row.critical .bar.main { outline: 2px solid var(--critical); outline-offset: 1px; }
   .label { position: absolute; top: 3px; font-size: 11px; white-space: nowrap; color: var(--muted); }
+  .row.dep-up { box-shadow: inset 4px 0 var(--dep-up); }
+  .row.dep-down { box-shadow: inset 4px 0 var(--dep-down); }
+  .dep-tag { position: absolute; right: 6px; top: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .dep-tag.up { color: var(--dep-up); }
+  .dep-tag.down { color: var(--dep-down); }
   #panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); overflow: auto; z-index: 3;
            background: var(--bg); border-left: 1px solid var(--line); padding: 12px 16px; box-shadow: -4px 0 16px rgb(0 0 0 / .12); }
   #panel h2 { font-size: 15px; margin: 4px 28px 12px 0; word-break: break-all; }
@@ -87,16 +92,22 @@ function fmt(ms) {
   return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}m`
 }
 
-const state = { tree: null, index: new Map(), collapsed: new Set(), selected: null, scope: null, crit: { ids: new Set(), gaps: [] }, view: [0, 1] }
+const state = { tree: null, index: new Map(), parent: new Map(), collapsed: new Set(), selected: null, scope: null, crit: { ids: new Set(), gaps: [] }, rel: { up: new Set(), down: new Set(), name: '' }, view: [0, 1] }
 const isAgg = () => state.tree === REPORT.agg
 const fullView = () => [0, (isAgg() ? state.tree.stats.end.p90 : state.tree.end) || 1]
 
 function open(tree) {
   state.tree = tree
   state.index = new Map()
+  state.parent = new Map()
   state.collapsed = new Set()
-  const walk = (s) => { state.index.set(s.id, s); if (s.kind === 'group') state.collapsed.add(s.id); s.children.forEach(walk) }
-  walk(tree)
+  const walk = (s, parent) => {
+    state.index.set(s.id, s)
+    state.parent.set(s.id, parent)
+    if (s.kind === 'group') state.collapsed.add(s.id)
+    s.children.forEach((c) => walk(c, s))
+  }
+  walk(tree, null)
   state.selected = null
   state.scope = tree.id
   state.view = fullView()
@@ -112,6 +123,30 @@ function recompute() {
     const { ids, gaps } = criticalPath(state.tree, state.scope)
     state.crit = { ids: new Set(ids), gaps }
   }
+}
+
+const LINKABLE = new Set(['job', 'bridge', 'group'])
+const leafIds = (s) => (s.kind === 'group' ? s.children.flatMap(leafIds) : [s.id])
+
+// связанный узел внутри свёрнутой группы подсвечивается строкой группы
+function visibleId(id) {
+  let visible = id
+  for (let p = state.parent.get(id); p; p = state.parent.get(p.id)) if (state.collapsed.has(p.id)) visible = p.id
+  return visible
+}
+
+function relations() {
+  const sel = state.selected && state.index.get(state.selected)
+  if (!sel || !LINKABLE.has(sel.kind)) return { up: new Set(), down: new Set(), name: '' }
+  const own = new Set([sel.id, ...leafIds(sel)])
+  const up = new Set(sel.deps.map(visibleId))
+  const down = new Set()
+  for (const s of state.index.values()) {
+    if (!own.has(s.id) && s.deps.some((d) => own.has(d))) down.add(visibleId(s.id))
+  }
+  up.delete(sel.id)
+  down.delete(sel.id)
+  return { up, down, name: sel.name }
 }
 
 const pos = (v) => ((v - state.view[0]) / (state.view[1] - state.view[0])) * 100
@@ -155,9 +190,15 @@ function rowHtml(s, depth) {
     ? `<button class="tg" data-toggle="${esc(s.id)}">${state.collapsed.has(s.id) ? '▸' : '▾'} ${s.children.length}</button>`
     : '<span class="tg"></span>'
   const info = s.kind === 'stage' ? ` <span class="muted">${stageInfo(s)}</span>` : ''
-  const cls = `row${state.selected === s.id ? ' selected' : ''}${state.crit.ids.has(s.id) ? ' critical' : ''}`
+  const after = s.after ? ` <span class="muted">← ${esc(state.index.get(s.after)?.name)}</span>` : ''
+  const up = state.rel.up.has(s.id)
+  const down = state.rel.down.has(s.id)
+  const tag = up
+    ? `<span class="dep-tag up">↑ нужна для ${esc(state.rel.name)}</span>`
+    : down ? `<span class="dep-tag down">↓ ждёт ${esc(state.rel.name)}</span>` : ''
+  const cls = `row${state.selected === s.id ? ' selected' : ''}${state.crit.ids.has(s.id) ? ' critical' : ''}${up ? ' dep-up' : ''}${down ? ' dep-down' : ''}`
   return `<div class="${cls}" data-id="${esc(s.id)}"><div class="name" style="padding-left:${depth * 14 + 6}px" title="${esc(s.name)}">`
-    + `${toggle}<span class="k">${KIND[s.kind]}</span>${esc(s.name)}${info}</div><div class="lane">${lane(s)}</div></div>`
+    + `${toggle}<span class="k">${KIND[s.kind]}</span>${esc(s.name)}${after}${info}</div><div class="lane">${lane(s)}${tag}</div></div>`
 }
 
 function drawAxis() {
@@ -185,6 +226,7 @@ function drawHeader() {
 function draw() {
   drawHeader()
   drawAxis()
+  state.rel = relations()
   const html = []
   const walk = (s, depth) => {
     html.push(rowHtml(s, depth))

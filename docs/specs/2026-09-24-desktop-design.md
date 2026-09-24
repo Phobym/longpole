@@ -75,7 +75,7 @@ buildReport(request, { gql, host, now?, onProgress? }) → Promise<{ report, suf
 
 ## История
 
-- Файл `userData/history.json`, последние 20 запросов, новые сверху, без токенов: `{ at: ISO-8601, host, request, label }`.
+- Файл `userData/history.json`, последние 20 запросов, новые сверху, без токенов: `{ at: ISO-8601, host, form, request, label }`, где `form` содержит только mode, host, url, project, ref, source, last, statuses — токены никогда не сохраняются.
 - Клик по записи заполняет форму; повторный одинаковый запрос поднимается наверх.
 
 ## Безопасность

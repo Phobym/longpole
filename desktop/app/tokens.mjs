@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile, chmod } from 'node:fs/promises'
 import { dirname } from 'node:path'
 
 export function createTokenStore({ file, crypto }) {
@@ -13,6 +13,7 @@ export function createTokenStore({ file, crypto }) {
   const save = async (data) => {
     await mkdir(dirname(file), { recursive: true })
     await writeFile(file, JSON.stringify(data, null, 2), { mode: 0o600 })
+    await chmod(file, 0o600)
   }
   return {
     async hosts() {
@@ -20,7 +21,13 @@ export function createTokenStore({ file, crypto }) {
     },
     async get(host) {
       const value = (await load())[host]
-      return value ? crypto.decryptString(Buffer.from(value, 'base64')) : null
+      if (!value) return null
+      try {
+        return crypto.decryptString(Buffer.from(value, 'base64'))
+      } catch {
+        // токен зашифрован на другой машине или испорчен — считаем, что его нет
+        return null
+      }
     },
     async set(host, token) {
       if (!crypto.isEncryptionAvailable()) {

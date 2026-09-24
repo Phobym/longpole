@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp } from 'node:fs/promises'
+import { mkdtemp, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createHistory } from '../app/history.mjs'
@@ -18,4 +18,16 @@ test('новые сверху, лимит, повторный запрос по�
   const list = await history.list()
   assert.deepEqual(list.map((e) => e.label), ['#2', '#4', '#3'])
   assert.equal(list[0].at, '2026-09-24T00:04:00.000Z')
+})
+
+test('история содержит только белый список полей формы, без токенов', async () => {
+  const file = await tmpFile()
+  const history = createHistory({ file, limit: 3, now: () => new Date() })
+  const e = entry(1)
+  await history.add({ ...e, form: { mode: 'link', url: 'u', token: 'secret', extra: 'field' } })
+  const list = await history.list()
+  assert.deepEqual(list[0].form, { mode: 'link', url: 'u' })
+  const content = await readFile(file, 'utf8')
+  assert.ok(!content.includes('secret'))
+  assert.ok(!content.includes('extra'))
 })

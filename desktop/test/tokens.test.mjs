@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createTokenStore } from '../app/tokens.mjs'
@@ -32,4 +32,26 @@ test('без шифрования сохранение запрещено пон
 test('пустой токен не сохраняется', async () => {
   const store = createTokenStore({ file: await tmpFile(), crypto: fakeCrypto() })
   await assert.rejects(store.set('h.example', '   '), /Пустой токен/)
+})
+
+test('битый токен: расшифровка падает → null', async () => {
+  const file = await tmpFile()
+  await writeFile(file, JSON.stringify({ 'h.example': 'not-valid' }))
+  const brokenCrypto = {
+    isEncryptionAvailable: () => true,
+    encryptString: (s) => Buffer.from(`enc:${s}`),
+    decryptString: () => { throw new Error('decrypt failed') },
+  }
+  const store = createTokenStore({ file, crypto: brokenCrypto })
+  assert.equal(await store.get('h.example'), null)
+})
+
+test('save() устанавливает права 0o600', async () => {
+  if (process.platform === 'win32') return
+  const file = await tmpFile()
+  await writeFile(file, '{}', { mode: 0o644 })
+  const store = createTokenStore({ file, crypto: fakeCrypto() })
+  await store.set('h.example', 'token-1')
+  const mode = (await stat(file)).mode & 0o777
+  assert.equal(mode, 0o600)
 })

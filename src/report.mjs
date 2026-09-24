@@ -21,7 +21,7 @@ export async function buildReport(request, { gql, host, now = () => new Date(), 
     suffix = `mr${request.mrIid}`
   } else {
     ;({ ids, counts: statusCounts } = await listPipelines(gql, request.project, request))
-    if (ids.length === 0) throw new Error('Под фильтры не попал ни один пайплайн: проверь ref, source и статусы')
+    if (ids.length === 0) throw new Error('Под фильтры не попал ни один пайплайн: проверь ref, source и статусы (--ref, --source, --status)')
     suffix = request.ref ?? request.source ?? 'all'
   }
 

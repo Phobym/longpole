@@ -1,0 +1,10 @@
+{
+  "name": "pipeline-trace",
+  "version": "0.1.0",
+  "description": "Водопад длительности GitLab-пайплайнов в одном HTML-файле",
+  "type": "module",
+  "bin": { "pipeline-trace": "./bin/pipeline-trace.mjs" },
+  "files": ["bin", "src"],
+  "engines": { "node": ">=22" },
+  "scripts": { "test": "node --test" }
+}

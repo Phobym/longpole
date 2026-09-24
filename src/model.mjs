@@ -5,7 +5,7 @@ export function shardGroupName(name) {
 }
 
 const orderKey = (s) => s.start ?? Infinity
-const byStart = (a, b) => (orderKey(a) === orderKey(b) ? 0 : orderKey(a) < orderKey(b) ? -1 : 1)
+export const byStart = (a, b) => (orderKey(a) === orderKey(b) ? 0 : orderKey(a) < orderKey(b) ? -1 : 1)
 
 function bounds(spans) {
   let start = null
@@ -18,7 +18,48 @@ function bounds(spans) {
 }
 
 function span(fields) {
-  return { queued: null, status: null, url: null, allowFailure: false, attempts: [], deps: [], children: [], ...fields }
+  return { queued: null, status: null, url: null, allowFailure: false, attempts: [], deps: [], children: [], after: null, ...fields }
+}
+
+const leafIds = (s) => (s.kind === 'group' ? s.children.flatMap(leafIds) : [s.id])
+
+export function orderByDeps(children) {
+  const sorted = [...children].sort(byStart)
+  const rank = new Map(sorted.map((s, i) => [s, i]))
+  // зависимость может указывать на шард: владелец шарда — его группа среди соседей
+  const owner = new Map()
+  for (const s of sorted) for (const id of [s.id, ...leafIds(s)]) owner.set(id, s)
+
+  const parentOf = new Map()
+  for (const s of sorted) {
+    let parent = null
+    for (const id of s.deps) {
+      const o = owner.get(id)
+      if (!o || o === s) continue
+      const later = (o.end ?? -Infinity) > (parent?.end ?? -Infinity)
+      const tieEarlier = parent && (o.end ?? -Infinity) === (parent.end ?? -Infinity) && rank.get(o) < rank.get(parent)
+      if (parent === null || later || tieEarlier) parent = o
+    }
+    parentOf.set(s, parent)
+  }
+
+  const kids = new Map(sorted.map((s) => [s, []]))
+  const roots = []
+  for (const s of sorted) (parentOf.get(s) ? kids.get(parentOf.get(s)) : roots).push(s)
+
+  const out = []
+  const seen = new Set()
+  const visit = (s) => {
+    if (seen.has(s)) return
+    seen.add(s)
+    out.push(s)
+    kids.get(s).forEach(visit)
+  }
+  roots.forEach(visit)
+  // узлы из цикла зависимостей не достижимы от корней
+  sorted.forEach(visit)
+  for (const s of out) s.after = parentOf.get(s)?.id ?? null
+  return out
 }
 
 export function buildTree(raw, { baseUrl, origin = Date.parse(raw.pipeline.createdAt), now = Date.now() }) {
@@ -65,10 +106,14 @@ export function buildTree(raw, { baseUrl, origin = Date.parse(raw.pipeline.creat
         children.push(s)
       } else if (!seenGroups.has(group)) {
         seenGroups.add(group)
-        children.push(span({ id: `${p.id}:${stage}:${group}`, kind: 'group', name: group, ...bounds(shards), children: shards }))
+        children.push(span({
+          id: `${p.id}:${stage}:${group}`, kind: 'group', name: group, ...bounds(shards),
+          deps: [...new Set(shards.flatMap((x) => x.deps))],
+          children: orderByDeps(shards),
+        }))
       }
     }
-    return span({ id: `${p.id}:${stage}`, kind: 'stage', name: stage, ...bounds(children), children })
+    return span({ id: `${p.id}:${stage}`, kind: 'stage', name: stage, ...bounds(children), children: orderByDeps(children) })
   })
 
   const stagesEnd = bounds(stages).end

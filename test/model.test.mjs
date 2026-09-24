@@ -114,3 +114,19 @@ test('идущая джоба заканчивается в now', () => {
   })
   assert.equal(find(tree, 'a').end, 50_000)
 })
+
+test('в стейдже джоба стоит после соседа, которого ждала; группа получает deps шардов', () => {
+  const tree = buildTree(rawPipeline([
+    job('cache:npm', 'cache', { start: 0, end: 120 }),
+    job('build:server', 'build', { start: 130, end: 300, deps: ['cache:npm'] }),
+    job('lint', 'build', { start: 140, end: 200, deps: ['cache:npm'] }),
+    job('build:static', 'build', { start: 310, end: 400, deps: ['build:server'] }),
+    job('e2e: [1]', 'test', { start: 410, end: 500, deps: ['build:static'] }),
+    job('e2e: [2]', 'test', { start: 411, end: 510, deps: ['build:server'] }),
+  ]), { baseUrl })
+  const build = find(tree, 'build')
+  assert.deepEqual(build.children.map((s) => s.name), ['build:server', 'build:static', 'lint'])
+  assert.equal(find(tree, 'build:static').after, 'gid://gitlab/Ci::Build/build:server')
+  assert.equal(find(tree, 'lint').after, null)
+  assert.deepEqual(find(tree, 'e2e').deps, ['gid://gitlab/Ci::Build/build:static', 'gid://gitlab/Ci::Build/build:server'])
+})

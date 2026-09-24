@@ -40,6 +40,15 @@
   .row.critical .name { font-weight: 600; }
   .lane { position: relative; overflow: hidden; border-left: 1px solid var(--line); cursor: grab; }
   body.dragging, body.dragging * { cursor: grabbing !important; user-select: none; }
+  .track { position: absolute; top: 0; bottom: 0; left: 12px; right: 24px; }
+  #rows { position: relative; }
+  #links { position: absolute; top: 0; pointer-events: none; }
+  #links path.link { fill: none; stroke: var(--muted); stroke-width: 1; opacity: .35; }
+  #links path.link.up { stroke: var(--dep-up); stroke-width: 1.5; opacity: 1; }
+  #links path.link.down { stroke: var(--dep-down); stroke-width: 1.5; opacity: 1; }
+  #links .arrow { fill: var(--muted); }
+  #links .arrow.up { fill: var(--dep-up); }
+  #links .arrow.down { fill: var(--dep-down); }
   .bar { position: absolute; top: 5px; height: 12px; min-width: 2px; border-radius: 2px; }
   .box { background: var(--box); }
   .st-success { background: var(--ok); }
@@ -94,7 +103,7 @@ function fmt(ms) {
   return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}m`
 }
 
-const state = { tree: null, index: new Map(), parent: new Map(), collapsed: new Set(), selected: null, scope: null, crit: { ids: new Set(), gaps: [] }, rel: { up: new Set(), down: new Set(), name: '' }, view: [0, 1] }
+const state = { tree: null, index: new Map(), parent: new Map(), collapsed: new Set(), selected: null, scope: null, crit: { ids: new Set(), gaps: [] }, rel: { up: new Set(), down: new Set(), own: new Set(), name: '' }, view: [0, 1] }
 const isAgg = () => state.tree === REPORT.agg
 const fullView = () => [0, (isAgg() ? state.tree.stats.end.p90 : state.tree.end) || 1]
 
@@ -139,7 +148,7 @@ function visibleId(id) {
 
 function relations() {
   const sel = state.selected && state.index.get(state.selected)
-  if (!sel || !LINKABLE.has(sel.kind)) return { up: new Set(), down: new Set(), name: '' }
+  if (!sel || !LINKABLE.has(sel.kind)) return { up: new Set(), down: new Set(), own: new Set(), name: '' }
   const own = new Set([sel.id, ...leafIds(sel)])
   const up = new Set(sel.deps.map(visibleId))
   const down = new Set()
@@ -148,7 +157,7 @@ function relations() {
   }
   up.delete(sel.id)
   down.delete(sel.id)
-  return { up, down, name: sel.name }
+  return { up, down, own, name: sel.name }
 }
 
 // ось не уходит левее создания пайплайна: отсчёт всегда с нуля
@@ -203,7 +212,7 @@ function rowHtml(s, depth) {
     : down ? `<span class="dep-tag down">↓ ждёт ${esc(state.rel.name)}</span>` : ''
   const cls = `row${state.selected === s.id ? ' selected' : ''}${state.crit.ids.has(s.id) ? ' critical' : ''}${up ? ' dep-up' : ''}${down ? ' dep-down' : ''}`
   return `<div class="${cls}" data-id="${esc(s.id)}"><div class="name" style="padding-left:${depth * 14 + 6}px" title="${esc(s.name)}">`
-    + `${toggle}<span class="k">${KIND[s.kind]}</span>${esc(s.name)}${after}${info}</div><div class="lane">${lane(s)}${tag}</div></div>`
+    + `${toggle}<span class="k">${KIND[s.kind]}</span>${esc(s.name)}${after}${info}</div><div class="lane"><div class="track">${lane(s)}</div>${tag}</div></div>`
 }
 
 function drawAxis() {
@@ -211,7 +220,42 @@ function drawAxis() {
   const step = STEPS.find((x) => (b - a) / x <= 10) ?? STEPS[STEPS.length - 1]
   let html = ''
   for (let t = Math.ceil(a / step) * step; t <= b; t += step) html += `<span class="tick" style="left:${pos(t)}%">${fmt(t)}</span>`
-  $('#axis').innerHTML = html
+  $('#axis').innerHTML = `<div class="track">${html}</div>`
+}
+
+const barStart = (s) => (isAgg() ? (s.stats.present ? s.stats.start.p50 : null) : s.start)
+const barEnd = (s) => (isAgg() ? (s.stats.present ? s.stats.start.p50 + s.stats.duration.p50 : null) : s.end)
+const ARROWS = ['', 'up', 'down'].map((kind) => `<marker id="arrow${kind && '-' + kind}" viewBox="0 0 6 6" refX="6" refY="3" markerWidth="6" markerHeight="6" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L6,3 L0,6 z" class="arrow ${kind}"/></marker>`).join('')
+
+function drawLinks() {
+  const host = $('#rows')
+  const track = host.querySelector('.lane .track')
+  if (!track) return
+  const origin = host.getBoundingClientRect()
+  const box = track.getBoundingClientRect()
+  const rows = new Map()
+  for (const el of host.querySelectorAll('.row')) rows.set(el.dataset.id, el.offsetTop + el.offsetHeight / 2)
+  const x = (v) => (pos(v) / 100) * box.width
+  const plain = []
+  const marked = []
+  const seen = new Set()
+  for (const [id, y2] of rows) {
+    const t = state.index.get(id)
+    if (!LINKABLE.has(t.kind) || (t.kind === 'group' && !state.collapsed.has(t.id)) || barStart(t) == null) continue
+    for (const dep of t.deps) {
+      const srcId = visibleId(dep)
+      const y1 = rows.get(srcId)
+      const src = state.index.get(srcId)
+      if (y1 == null || srcId === id || barEnd(src) == null || seen.has(`${srcId}>${id}`)) continue
+      seen.add(`${srcId}>${id}`)
+      const x1 = x(barEnd(src))
+      const cls = state.rel.own.has(t.id) ? 'up' : state.rel.own.has(dep) || state.rel.own.has(srcId) ? 'down' : ''
+      const path = `<path class="link ${cls}" marker-end="url(#arrow${cls && '-' + cls})" d="M${x1},${y1} H${x1 + 6} V${y2} H${x(barStart(t))}"/>`
+      ;(cls ? marked : plain).push(path)
+    }
+  }
+  // выделенные связи рисуются последними, поверх серых
+  host.insertAdjacentHTML('beforeend', `<svg id="links" style="left:${box.left - origin.left}px;width:${box.width}px;height:${host.scrollHeight}px"><defs>${ARROWS}</defs>${plain.join('')}${marked.join('')}</svg>`)
 }
 
 function drawHeader() {
@@ -239,6 +283,7 @@ function draw() {
   }
   walk(state.tree, 0)
   $('#rows').innerHTML = html.join('')
+  drawLinks()
   drawPanel()
 }
 
@@ -300,7 +345,7 @@ $('#rows').addEventListener('mousedown', (e) => {
   const laneEl = e.target.closest('.lane')
   if (!laneEl || e.button !== 0) return
   e.preventDefault()
-  drag = { x: e.clientX, view: state.view, width: laneEl.getBoundingClientRect().width, moved: false }
+  drag = { x: e.clientX, view: state.view, width: laneEl.querySelector('.track').getBoundingClientRect().width, moved: false }
 })
 
 const endDrag = () => {
@@ -357,7 +402,7 @@ $('#rows').addEventListener('wheel', (e) => {
   const laneEl = e.target.closest('.lane')
   if (!laneEl || !(e.ctrlKey || e.shiftKey)) return
   e.preventDefault()
-  const rect = laneEl.getBoundingClientRect()
+  const rect = laneEl.querySelector('.track').getBoundingClientRect()
   const f = (e.clientX - rect.left) / rect.width
   const [a, b] = state.view
   const w = b - a

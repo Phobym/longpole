@@ -57,3 +57,48 @@ export function insights(tree) {
   const hotspots = rank(candidates)
   return { stages, retryLoss: losses, totalRetryLoss, hotspots, saving: sum(hotspots) }
 }
+
+// конец агрегированного узла совпадает с концом его сплошной полоски в отчёте
+const aggEnd = (s) => (s.stats.present ? s.stats.start.p50 + s.stats.duration.p50 : null)
+
+export function aggInsights(agg) {
+  const index = new Map()
+  walk(agg, (s) => index.set(s.id, s))
+  const stages = {}
+  const losses = {}
+  const stability = {}
+  const candidates = []
+  let totalRetryLoss = 0
+
+  walk(agg, (s) => {
+    if (s.kind === 'job' || s.kind === 'bridge') {
+      stability[s.id] = { retried: s.stats.retried, present: s.stats.present }
+      const loss = s.stats.retryLoss
+      if (loss === 0) return
+      losses[s.id] = loss
+      totalRetryLoss += loss
+      if (s.stats.critical > 0) {
+        candidates.push({ id: s.id, name: s.name, kind: 'retry', saving: loss * s.stats.critical, retried: s.stats.retried, present: s.stats.present })
+      }
+    } else if (s.kind === 'stage') {
+      const ex = stageExcess(s, aggEnd)
+      if (!ex) return
+      stages[s.id] = ex
+      const bottleneck = index.get(ex.id)
+      if (bottleneck.stats.critical === 0) return
+      const saving = Math.max(0, ex.excess - bottleneck.stats.retryLoss) * bottleneck.stats.critical
+      candidates.push({ id: ex.id, name: bottleneck.name, kind: 'excess', saving, stage: s.name, excess: ex.excess })
+    }
+  })
+
+  const hotspots = rank(candidates)
+  return { stages, retryLoss: losses, totalRetryLoss, hotspots, saving: sum(hotspots), stability }
+}
+
+export function stabilityByName(agg) {
+  const out = {}
+  walk(agg, (s) => {
+    if (s.kind === 'job' || s.kind === 'bridge') out[s.name] = { retried: s.stats.retried, present: s.stats.present }
+  })
+  return out
+}

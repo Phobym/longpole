@@ -1,4 +1,5 @@
 import { criticalPath } from './critical-path.mjs'
+import { retryLoss } from './insights.mjs'
 import { byStart, orderByDeps } from './model.mjs'
 
 export function percentile(values, p) {
@@ -40,6 +41,8 @@ export function aggregate(trees) {
       duration: stat(ran.map((e) => e.span.end - e.span.start)),
       queued: stat(ran.map((e) => e.span.queued).filter((q) => q != null)),
       retries: ran.length ? ran.reduce((n, e) => n + e.span.attempts.length, 0) / ran.length : 0,
+      retried: ran.filter((e) => e.span.attempts.length > 0).length,
+      retryLoss: ran.length ? ran.reduce((n, e) => n + retryLoss(e.span), 0) / ran.length : 0,
       critical: ran.filter((e) => critical[e.tree].has(e.span.id)).length / trees.length,
       samples: ran.map((e) => ({ tree: e.tree, start: e.span.start, end: e.span.end })),
     }

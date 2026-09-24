@@ -6,6 +6,7 @@ import { parseCliArgs } from '../src/cli-args.mjs'
 import { createClient, fetchPipeline, listPipelines, mrHeadPipeline, resolveHost, resolveToken } from '../src/gitlab.mjs'
 import { buildTree } from '../src/model.mjs'
 import { aggregate } from '../src/aggregate.mjs'
+import { aggInsights, insights, stabilityByName } from '../src/insights.mjs'
 import { render } from '../src/render.mjs'
 
 const OPENER = { darwin: 'open', win32: 'explorer' }[process.platform] ?? 'xdg-open'
@@ -49,7 +50,12 @@ async function main() {
   }
 
   const out = resolve(args.out ?? `pipeline-trace-${slug(args.project)}-${slug(suffix)}.html`)
-  await writeFile(out, await render({ meta, trees, agg: isAggregate ? aggregate(trees) : null }))
+  const agg = isAggregate ? aggregate(trees) : null
+  const report = {
+    meta, trees, agg,
+    insights: { trees: trees.map(insights), agg: agg && aggInsights(agg), stability: agg && stabilityByName(agg) },
+  }
+  await writeFile(out, await render(report))
   console.log(out)
   // браузер не открылся — путь уже напечатан, это не ошибка
   if (args.open) execFile(OPENER, [out], () => {})

@@ -34,3 +34,9 @@ test('агрегат: ошибки по полям', () => {
   assert.equal(r.ok, false)
   assert.deepEqual(Object.keys(r.errors).sort(), ['host', 'last', 'project', 'statuses'])
 })
+
+test('агрегат: путь проекта не принимает сегменты из точек', () => {
+  assert.equal(parseFormRequest(agg({ project: '../evil' })).ok, false)
+  assert.equal(parseFormRequest(agg({ project: 'g/..' })).ok, false)
+  assert.equal(parseFormRequest(agg({ project: 'g.x/p-1' })).ok, true)
+})

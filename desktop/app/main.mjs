@@ -26,10 +26,21 @@ const crypto = {
   decryptString: (b) => safeStorage.decryptString(b),
 }
 
+const isHttps = (url) => {
+  try {
+    return new URL(url).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+// каналы доступны только окну формы: окна отчётов показывают данные из GitLab
+const fromForm = (event) => formWindow && BrowserWindow.fromWebContents(event.sender) === formWindow
+
 function lockDown(win) {
   win.webContents.on('will-navigate', (event) => event.preventDefault())
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https:')) shell.openExternal(url)
+    if (isHttps(url)) shell.openExternal(url)
     return { action: 'deny' }
   })
 }
@@ -67,6 +78,7 @@ async function saveFocusedReport() {
 // ошибки возвращаются значением: иначе Electron добавляет к тексту «Error invoking remote method…»
 function handle(channel, fn) {
   ipcMain.handle(channel, async (event, ...args) => {
+    if (!fromForm(event)) return { ok: false, error: 'Запрос не из окна формы' }
     try {
       return { ok: true, value: await fn(event, ...args) }
     } catch (err) {
@@ -81,6 +93,7 @@ function registerIpc() {
   handle('setToken', async (_event, host, token) => tokens.set(await resolveHost(String(host).trim()), token))
   handle('removeToken', (_event, host) => tokens.remove(host))
   ipcMain.handle('build', async (event, form) => {
+    if (!fromForm(event)) return { ok: false, error: 'Запрос не из окна формы' }
     const parsed = parseFormRequest(form)
     if (!parsed.ok) return { ok: false, errors: parsed.errors }
     try {

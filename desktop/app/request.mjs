@@ -1,7 +1,9 @@
 import { parseCliArgs } from './core/cli-args.mjs'
 
 const HOST_RE = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(?::\d+)?$/i
-const PROJECT_RE = /^[\w.-]+(\/[\w.-]+)+$/
+// сегмент из одних точек (`..`) — не путь проекта
+const SEGMENT = '(?!\\.+(?:/|$))[\\w.-]+'
+const PROJECT_RE = new RegExp(`^${SEGMENT}(/${SEGMENT})+$`)
 const STATUSES = new Set(['SUCCESS', 'MANUAL', 'FAILED', 'CANCELED', 'RUNNING'])
 const MAX_LAST = 500
 

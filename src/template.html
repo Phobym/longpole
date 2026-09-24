@@ -164,7 +164,7 @@
     <button id="help" aria-label="Управление" aria-expanded="false" aria-controls="keys">?</button>
     <div id="keys" hidden><ul>
       <li><kbd>Перетаскивание</kbd>, <kbd>Shift</kbd> + колесо, <kbd>[</kbd> <kbd>]</kbd> — сдвиг оси</li>
-      <li><kbd>Ctrl</kbd> + колесо — масштаб, <kbd>0</kbd> — весь пайплайн</li>
+      <li><kbd>⌘</kbd>/<kbd>Ctrl</kbd> + колесо или pinch — масштаб вокруг курсора, горизонтальный свайп — сдвиг, <kbd>0</kbd> — весь пайплайн</li>
       <li><kbd>↑</kbd> <kbd>↓</kbd> — соседняя строка, <kbd>Enter</kbd> — выбрать</li>
       <li><kbd>←</kbd> <kbd>→</kbd> — свернуть и развернуть</li>
       <li>Клик по стейджу — критический путь до его конца</li>
@@ -415,6 +415,7 @@ function drawLinks() {
   const track = host.querySelector('.lane .track')
   if (!track) return
   const origin = host.getBoundingClientRect()
+  if (!state.rel.own.size) return
   const box = track.getBoundingClientRect()
   const rows = new Map()
   // строки лежат в карточках, поэтому координаты — от #rows, а не от offsetParent
@@ -423,8 +424,7 @@ function drawLinks() {
     rows.set(el.dataset.id, r.top - origin.top + r.height / 2)
   }
   const x = (v) => (pos(v) / 100) * box.width
-  const plain = []
-  const marked = []
+  const paths = []
   const seen = new Set()
   for (const [id, y2] of rows) {
     const t = state.index.get(id)
@@ -434,15 +434,14 @@ function drawLinks() {
       const y1 = rows.get(srcId)
       const src = state.index.get(srcId)
       if (y1 == null || srcId === id || barEnd(src) == null || seen.has(`${srcId}>${id}`)) continue
+      const cls = state.rel.own.has(t.id) ? 'up' : state.rel.own.has(dep) || state.rel.own.has(srcId) ? 'down' : ''
+      if (!cls) continue
       seen.add(`${srcId}>${id}`)
       const x1 = x(barEnd(src))
-      const cls = state.rel.own.has(t.id) ? 'up' : state.rel.own.has(dep) || state.rel.own.has(srcId) ? 'down' : ''
-      const path = `<path class="link ${cls}" marker-end="url(#arrow${cls && '-' + cls})" d="M${x1},${y1} H${x1 + 6} V${y2} H${x(barStart(t))}"/>`
-      ;(cls ? marked : plain).push(path)
+      paths.push(`<path class="link ${cls}" marker-end="url(#arrow-${cls})" d="M${x1},${y1} H${x1 + 6} V${y2} H${x(barStart(t))}"/>`)
     }
   }
-  // выделенные связи рисуются последними, поверх серых
-  host.insertAdjacentHTML('beforeend', `<svg id="links" style="left:${box.left - origin.left}px;width:${box.width}px;height:${host.scrollHeight}px"><defs>${ARROWS}</defs>${plain.join('')}${marked.join('')}</svg>`)
+  host.insertAdjacentHTML('beforeend', `<svg id="links" style="left:${box.left - origin.left}px;width:${box.width}px;height:${host.scrollHeight}px"><defs>${ARROWS}</defs>${paths.join('')}</svg>`)
 }
 
 const chip = (html, cls = '') => `<span class="chip ${cls}">${html}</span>`
@@ -712,23 +711,30 @@ document.addEventListener('keydown', (e) => {
   if (e.key === '[' || e.key === ']') { shiftView(e.key === ']' ? 0.1 : -0.1); draw() }
 })
 
+const MIN_VIEW_MS = 1000
+const ZOOM_SPEED = 0.004
+
 $('#rows').addEventListener('wheel', (e) => {
   const laneEl = e.target.closest('.lane')
-  if (!laneEl || !(e.ctrlKey || e.shiftKey)) return
+  // pinch на тачпаде приходит как wheel с ctrlKey
+  const zoom = e.ctrlKey || e.metaKey
+  const pan = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)
+  if (!laneEl || !(zoom || pan)) return
   e.preventDefault()
+  const unit = e.deltaMode === 1 ? 16 : 1
   const rect = laneEl.querySelector('.track').getBoundingClientRect()
   const f = (e.clientX - rect.left) / rect.width
   const [a, b] = state.view
   const w = b - a
-  if (e.ctrlKey) {
-    const nw = Math.max(w * (e.deltaY > 0 ? 1.25 : 0.8), 1000)
+  if (zoom) {
+    const nw = Math.min(Math.max(w * Math.exp(e.deltaY * unit * ZOOM_SPEED), MIN_VIEW_MS), fullView()[1])
     const left = a + f * w - f * nw
     state.view = clampView([left, left + nw])
   } else {
-    const d = ((e.deltaY || e.deltaX) / rect.width) * w
-    state.view = clampView([a + d, b + d])
+    const delta = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * unit
+    state.view = clampView([a + (delta / rect.width) * w, b + (delta / rect.width) * w])
   }
-  draw()
+  redraw()
 }, { passive: false })
 
 open(REPORT.agg ?? REPORT.trees[0])

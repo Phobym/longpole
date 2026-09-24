@@ -1337,7 +1337,7 @@ const label = (from, to, text) => pos(to) > 80
 function mainClass(s) {
   if (s.kind === 'pipeline' || s.kind === 'stage' || s.kind === 'group') return 'main box'
   if (isAgg()) return 'main st-success'
-  return `main st-${s.status}${s.allowFailure && s.status === 'failed' ? ' st-warn' : ''}`
+  return `main st-${esc(s.status)}${s.allowFailure && s.status === 'failed' ? ' st-warn' : ''}`
 }
 
 function lane(s) {
@@ -1411,7 +1411,7 @@ const link = (url, text) => (url ? `<a href="${esc(url)}" target="_blank" rel="n
 const p5090 = (x) => `p50 ${fmt(x.p50)} · p90 ${fmt(x.p90)}`
 
 function details(s) {
-  const rows = [['Тип', s.kind], ['Статус', esc(s.status) + (s.allowFailure ? ' (allow_failure)' : '')]]
+  const rows = [['Тип', esc(s.kind)], ['Статус', esc(s.status) + (s.allowFailure ? ' (allow_failure)' : '')]]
   if (s.stage) rows.push(['Стейдж', esc(s.stage)])
   rows.push(['Старт', fmt(s.start)], ['Конец', fmt(s.end)], ['Длительность', s.start == null ? '—' : fmt(s.end - s.start)])
   if (s.queued != null) rows.push(['Очередь', fmt(s.queued)])
@@ -1427,7 +1427,7 @@ function details(s) {
 function aggDetails(s) {
   const st = s.stats
   const rows = [
-    ['Тип', s.kind], ['Запускалась', `${st.present} из ${st.total}`],
+    ['Тип', esc(s.kind)], ['Запускалась', `${st.present} из ${st.total}`],
     ['Старт', p5090(st.start)], ['Длительность', p5090(st.duration)], ['До конца', p5090(st.end)],
   ]
   if (st.queued.p50 != null) rows.push(['Очередь', p5090(st.queued)])

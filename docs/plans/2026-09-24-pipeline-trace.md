@@ -15,7 +15,7 @@
 - `"engines": { "node": ">=22" }`, `"type": "module"`, без зависимостей в `package.json`.
 - Бинарь: `"bin": { "pipeline-trace": "./bin/pipeline-trace.mjs" }`.
 - Все времена спана — миллисекунды от `createdAt` корневого пайплайна.
-- Токен: `glab config get token --host <host>`, затем `GITLAB_TOKEN`. Заголовок `Authorization: Bearer <token>`.
+- Токен: `glab config get token --host <host>`, затем `GITLAB_TOKEN` — только если хост совпадает с `GITLAB_HOST` или с хостом `glab` по умолчанию. Заголовок `Authorization: Bearer <token>`.
 - GraphQL-эндпоинт: `https://<host>/api/graphql`. Идентификаторы пайплайнов — глобальные ID вида `gid://gitlab/Ci::Pipeline/<id>`; в URL пайплайна стоит числовой `id`, не `iid`.
 - `--status` по умолчанию `success,manual`; `any` — без фильтра.
 - Одновременно не больше 4 HTTP-запросов к GitLab.
@@ -1613,7 +1613,7 @@ Expected: текст, начинающийся с `Использование:`.
 git clone <url этого репозитория> && cd pipeline-trace && npm link
 ```
 
-Токен берётся из `glab` (`glab auth login --hostname <host>`) или из переменной `GITLAB_TOKEN`. Нужен доступ `read_api`.
+Токен берётся из `glab` (`glab auth login --hostname <host>`). Вместо этого можно задать `GITLAB_TOKEN` вместе с `GITLAB_HOST=<host>`: на другие хосты `GITLAB_TOKEN` не отправляется. Нужен доступ `read_api`.
 
 ## Запуск
 
@@ -1681,7 +1681,7 @@ Run:
 ```bash
 ./bin/pipeline-trace.mjs --project platform/react/monorepo --host gitlab.litres.io --ref master --status manual --last 10 --no-open --out /tmp/pt-agg.html
 ./bin/pipeline-trace.mjs --project no/such --host gitlab.litres.io --no-open; echo "exit=$?"
-GITLAB_TOKEN=bad ./bin/pipeline-trace.mjs --project g/p --host example.invalid --no-open; echo "exit=$?"
+GITLAB_TOKEN=bad GITLAB_HOST=example.invalid ./bin/pipeline-trace.mjs --project g/p --host example.invalid --no-open; echo "exit=$?"
 ```
 
 Expected:

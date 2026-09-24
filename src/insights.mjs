@@ -95,10 +95,21 @@ export function aggInsights(agg) {
   return { stages, retryLoss: losses, totalRetryLoss, hotspots, saving: sum(hotspots), stability }
 }
 
+export const stabilityKey = (names) => names.join(' / ')
+
 export function stabilityByName(agg) {
   const out = {}
-  walk(agg, (s) => {
-    if (s.kind === 'job' || s.kind === 'bridge') out[s.name] = { retried: s.stats.retried, present: s.stats.present }
-  })
+  const walkWithPath = (s, path) => {
+    const newPath = [...path]
+    if (s.kind === 'stage' || s.kind === 'bridge') {
+      newPath.push(s.name)
+    }
+    if (s.kind === 'job' || s.kind === 'bridge') {
+      const key = stabilityKey([...newPath, s.name])
+      out[key] = { retried: s.stats.retried, present: s.stats.present }
+    }
+    s.children?.forEach((c) => walkWithPath(c, newPath))
+  }
+  walkWithPath(agg, [])
   return out
 }

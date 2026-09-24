@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { buildTree } from '../src/model.mjs'
-import { insights, retryLoss, stageExcess, aggInsights, stabilityByName } from '../src/insights.mjs'
+import { insights, retryLoss, stageExcess, aggInsights, stabilityByName, stabilityKey } from '../src/insights.mjs'
 import { aggregate } from '../src/aggregate.mjs'
 import { job, rawPipeline } from './fixtures.mjs'
 
@@ -85,6 +85,24 @@ test('aggInsights: экономия взвешена долей на крити�
 
 test('stabilityByName: метки для пайплайна, открытого из агрегата', () => {
   const s = stabilityByName(aggOf())
-  assert.deepEqual(s['e2e: [3]'], { retried: 1, present: 2 })
-  assert.deepEqual(s['build:server'], { retried: 0, present: 2 })
+  assert.deepEqual(s[stabilityKey(['test', 'e2e: [3]'])], { retried: 1, present: 2 })
+  assert.deepEqual(s[stabilityKey(['build', 'build:server'])], { retried: 0, present: 2 })
+})
+
+test('stabilityByName: разные lint в разных стейджах не коллизируют', () => {
+  const withLintInCheck = rawPipeline([
+    job('build:server', 'build', { start: 0, end: 302 }),
+    job('lint', 'build', { start: 60, end: 240 }),
+    job('check', 'check', { start: 330, end: 450, deps: ['build:server'] }),
+  ], { id: 'gid://gitlab/Ci::Pipeline/3', iid: '3' })
+  const withRetries = rawPipeline([
+    job('build:server', 'build', { start: 0, end: 302 }),
+    job('lint', 'build', { start: 0, end: 50, retried: true, status: 'FAILED' }),
+    job('lint', 'build', { start: 60, end: 240 }),
+    job('check', 'check', { start: 330, end: 450, deps: ['build:server'] }),
+  ], { id: 'gid://gitlab/Ci::Pipeline/4', iid: '4' })
+  const agg = aggregate([buildTree(withLintInCheck, { baseUrl: 'https://h' }), buildTree(withRetries, { baseUrl: 'https://h' })])
+  const s = stabilityByName(agg)
+  assert.deepEqual(s[stabilityKey(['build', 'lint'])], { retried: 1, present: 2 })
+  assert.deepEqual(s[stabilityKey(['check', 'check'])], { retried: 0, present: 2 })
 })

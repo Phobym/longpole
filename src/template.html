@@ -587,6 +587,10 @@ function panelHead(s) {
   const sub = stage ? [`стейдж <span translate="no">${esc(stage)}</span>`] : []
   if (isAgg() && LINKABLE.has(s.kind)) sub.push(`запускалась в ${num(s.stats.present)} из ${num(s.stats.total)}`)
   const chips = [pill(stabilityOf(s))]
+  if (!isAgg() && LEAF.has(s.kind) && s.status) {
+    const failed = s.status === 'failed'
+    chips.push(chip(esc(s.status) + (s.allowFailure ? ' · allow_failure' : ''), failed && !s.allowFailure ? 'bad' : ''))
+  }
   if (LINKABLE.has(s.kind)) {
     const c = critShare(s)
     const text = isAgg() ? `крит. путь ${pct(c)}` : c ? 'на критическом пути' : 'не на критическом пути'

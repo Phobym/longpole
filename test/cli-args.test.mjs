@@ -46,3 +46,7 @@ test('ошибки: нет ссылки и проекта, неверная сс
 test('--help возвращает текст использования', () => {
   assert.match(parseCliArgs(['--help']).usage, /pipeline-trace <url/)
 })
+
+test('неизвестный флаг даёт русскую ошибку со справкой', () => {
+  assert.throws(() => parseCliArgs(['--projekt', 'g/p']), (err) => err instanceof Error && /Неверные аргументы/.test(err.message) && /Использование:/.test(err.message))
+})

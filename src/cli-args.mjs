@@ -8,22 +8,30 @@ const USAGE = `Использование:
 
 const URL_RE = /^https?:\/\/([^/]+)\/(.+?)\/-\/(pipelines|merge_requests)\/(\d+)/
 
+function parseStrict(argv) {
+  try {
+    return parseArgs({
+      args: argv,
+      allowPositionals: true,
+      options: {
+        project: { type: 'string' },
+        ref: { type: 'string' },
+        source: { type: 'string' },
+        last: { type: 'string', default: '50' },
+        status: { type: 'string', default: 'success,manual' },
+        host: { type: 'string' },
+        out: { type: 'string' },
+        'no-open': { type: 'boolean', default: false },
+        help: { type: 'boolean', default: false },
+      },
+    })
+  } catch (err) {
+    throw new Error(`Неверные аргументы: ${err.message}\n\n${USAGE}`)
+  }
+}
+
 export function parseCliArgs(argv) {
-  const { values, positionals } = parseArgs({
-    args: argv,
-    allowPositionals: true,
-    options: {
-      project: { type: 'string' },
-      ref: { type: 'string' },
-      source: { type: 'string' },
-      last: { type: 'string', default: '50' },
-      status: { type: 'string', default: 'success,manual' },
-      host: { type: 'string' },
-      out: { type: 'string' },
-      'no-open': { type: 'boolean', default: false },
-      help: { type: 'boolean', default: false },
-    },
-  })
+  const { values, positionals } = parseStrict(argv)
   if (values.help) return { mode: 'help', usage: USAGE }
   const common = { out: values.out ?? null, open: !values['no-open'] }
 

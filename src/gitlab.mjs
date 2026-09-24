@@ -5,6 +5,7 @@ const run = promisify(execFile)
 const MAX_PARALLEL = 4
 const MAX_DOWNSTREAM_DEPTH = 3
 const MAX_LIST_PAGES = 10
+const MAX_JOB_PAGES = 50
 
 // glab может быть не установлен: ошибка значит «переходим к следующему источнику»
 async function glabValue(exec, args) {
@@ -16,16 +17,33 @@ async function glabValue(exec, args) {
   }
 }
 
+function normalizeHost(v) {
+  if (!v) return null
+  let normalized = v.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  return normalized || null
+}
+
 export async function resolveHost(explicit, { exec = run } = {}) {
   const host = explicit ?? (await glabValue(exec, ['config', 'get', 'host']))
   if (!host) throw new Error('Не удалось определить хост GitLab: передай --host или ссылку на пайплайн')
+  if (!/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(?::\d+)?$/i.test(host)) throw new Error(`Некорректный хост GitLab: ${host}`)
   return host
 }
 
 export async function resolveToken(host, { env = process.env, exec = run } = {}) {
-  const token = (await glabValue(exec, ['config', 'get', 'token', '--host', host])) ?? env.GITLAB_TOKEN
-  if (!token) throw new Error(`Нет токена для ${host}. Выполни \`glab auth login --hostname ${host}\` или задай GITLAB_TOKEN`)
-  return token
+  const glabToken = await glabValue(exec, ['config', 'get', 'token', '--host', host])
+  if (glabToken) return glabToken
+
+  if (env.GITLAB_TOKEN) {
+    const glabHost = await glabValue(exec, ['config', 'get', 'host'])
+    const normalizedEnvHost = normalizeHost(env.GITLAB_HOST)
+    const normalizedGlabHost = normalizeHost(glabHost)
+    if (normalizeHost(host) === normalizedEnvHost || normalizeHost(host) === normalizedGlabHost) {
+      return env.GITLAB_TOKEN
+    }
+  }
+
+  throw new Error(`Нет токена для ${host}. Выполни \`glab auth login --hostname ${host}\` или задай GITLAB_TOKEN вместе с GITLAB_HOST=${host}`)
 }
 
 export function createClient({ host, token, fetch = globalThis.fetch }) {
@@ -82,7 +100,9 @@ export async function fetchPipeline(gql, project, id, depth = 0) {
   const jobs = []
   let pipeline = null
   let after = null
+  let pageCount = 0
   do {
+    if (pageCount >= MAX_JOB_PAGES) throw new Error(`Пайплайн ${id} в проекте ${project}: больше ${MAX_JOB_PAGES * 100} джоб, загрузка остановлена`)
     const data = await gql(PIPELINE_QUERY, { project, id, after })
     if (!data.project) throw new Error(`Проект ${project} на ${gql.host} не найден или нет доступа`)
     if (!data.project.pipeline) throw new Error(`Пайплайн ${id} в проекте ${project} на ${gql.host} не найден`)
@@ -90,6 +110,7 @@ export async function fetchPipeline(gql, project, id, depth = 0) {
     pipeline = rest
     jobs.push(...page.nodes)
     after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null
+    pageCount++
   } while (after)
 
   const downstream = {}

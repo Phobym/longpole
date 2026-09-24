@@ -80,6 +80,14 @@ test('shardGroupName снимает оба формата суффикса', () 
   assert.equal(shardGroupName('build:server'), 'build:server')
 })
 
+test('джоба, отменённая до старта, не получает конец и не растягивает стейдж', () => {
+  const canceled = { ...job('late', 'build', { status: 'CANCELED' }), finishedAt: at(500) }
+  const tree = buildTree(rawPipeline([job('a', 'build', { start: 0, end: 10 }), canceled]), { baseUrl })
+  assert.equal(find(tree, 'late').end, null)
+  assert.equal(find(tree, 'build').end, 10_000)
+  assert.equal(tree.end, 10_000)
+})
+
 test('downstream: вложен в bridge, время отсчитывается от корня, bridge заканчивается вместе с ним', () => {
   const child = rawPipeline([job('inner', 'test', { start: 110, end: 200 })], {
     id: 'gid://gitlab/Ci::Pipeline/2', iid: '7', createdAt: at(100), project: 'other/proj',

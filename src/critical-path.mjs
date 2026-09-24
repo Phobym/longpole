@@ -1,3 +1,4 @@
+// Без import: render.mjs встраивает этот файл в HTML как обычный скрипт
 export function criticalPath(root, scopeId = root.id) {
   const byId = new Map()
   const index = (s) => {

@@ -15,6 +15,7 @@ export async function render(report) {
     readFile(TEMPLATE_URL, 'utf8'),
     readFile(CRITICAL_PATH_URL, 'utf8'),
   ])
+  // функции-заменители: в данных могут встретиться последовательности вида $&
   return template
     .replace('/*__CRITICAL_PATH__*/', () => criticalPathSource.replace(/^export /gm, ''))
     .replace('/*__DATA__*/null', () => toScriptJson(report))

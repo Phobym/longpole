@@ -23,7 +23,7 @@ function span(fields) {
 
 export function buildTree(raw, { baseUrl, origin = Date.parse(raw.pipeline.createdAt), now = Date.now() }) {
   const at = (iso) => (iso == null ? null : Date.parse(iso) - origin)
-  const endOf = (j) => (j.finishedAt != null ? at(j.finishedAt) : j.startedAt != null ? now - origin : null)
+  const endOf = (j) => (j.startedAt == null ? null : j.finishedAt != null ? at(j.finishedAt) : now - origin)
   const ordered = [...raw.jobs].reverse()
   const current = ordered.filter((j) => !j.retried)
   const idByName = new Map(current.map((j) => [j.name, j.id]))

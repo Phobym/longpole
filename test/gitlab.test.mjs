@@ -111,6 +111,11 @@ test('resolveToken: glab, затем GITLAB_TOKEN с проверкой GITLAB_H
   assert.equal(await resolveToken('h', { env: { GITLAB_TOKEN: 'from-env', GITLAB_HOST: 'h' }, exec: async (cmd, args) => args[2] === 'host' ? { stdout: 'h\n' } : { stdout: '' } }), 'from-env')
 })
 
+test('resolveToken: GITLAB_TOKEN для хоста glab по умолчанию без GITLAB_HOST', async () => {
+  const exec = async (cmd, args) => ({ stdout: args[2] === 'host' ? 'h\n' : '' })
+  assert.equal(await resolveToken('h', { env: { GITLAB_TOKEN: 'from-env' }, exec }), 'from-env')
+})
+
 test('resolveHost: явный хост, затем glab, затем ошибка', async () => {
   assert.equal(await resolveHost('x.example', { exec: failingExec }), 'x.example')
   assert.equal(await resolveHost(null, { exec: async () => ({ stdout: 'g.example\n' }) }), 'g.example')

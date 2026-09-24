@@ -19,7 +19,7 @@ async function glabValue(exec, args) {
 
 function normalizeHost(v) {
   if (!v) return null
-  let normalized = v.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  const normalized = v.replace(/^https?:\/\//, '').replace(/\/$/, '')
   return normalized || null
 }
 

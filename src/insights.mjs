@@ -19,10 +19,13 @@ export function retryLoss(span) {
   return Math.max(0, span.start - Math.min(...starts))
 }
 
-export function stageExcess(stage, endOf = (s) => s.end) {
+const firstStart = (s) => s.start - retryLoss(s)
+
+export function stageExcess(stage, endOf = (s) => s.end, startOf = firstStart) {
   const ran = leaves(stage).filter((s) => endOf(s) != null).sort((a, b) => endOf(b) - endOf(a))
   if (ran.length < 2) return null
-  const excess = endOf(ran[0]) - endOf(ran[1])
+  // ожидание зависимостей до первой попытки — не превышение самой джобы
+  const excess = endOf(ran[0]) - Math.max(endOf(ran[1]), startOf(ran[0]))
   return excess > 0 ? { id: ran[0].id, peersEnd: endOf(ran[1]), excess } : null
 }
 
@@ -81,7 +84,7 @@ export function aggInsights(agg) {
         candidates.push({ id: s.id, name: s.name, kind: 'retry', saving: loss * s.stats.critical, retried: s.stats.retried, present: s.stats.present })
       }
     } else if (s.kind === 'stage') {
-      const ex = stageExcess(s, aggEnd)
+      const ex = stageExcess(s, aggEnd, (n) => n.stats.start.p50 - n.stats.retryLoss)
       if (!ex) return
       stages[s.id] = ex
       const bottleneck = index.get(ex.id)

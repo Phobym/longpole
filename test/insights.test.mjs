@@ -118,3 +118,11 @@ test('stabilityByName: bridge и джобы его downstream получают �
   const t = buildTree(rawPipeline([bridge], { downstream: { [bridge.id]: child } }), { baseUrl: 'https://h' })
   assert.deepEqual(Object.keys(stabilityByName(aggregate([t]))).sort(), ['deploy / trigger', 'deploy / trigger / build / lint'])
 })
+
+test('stageExcess: ожидание зависимостей до старта узкого места не входит в превышение', () => {
+  const t = buildTree(rawPipeline([
+    job('security:code', 'security', { start: 0, end: 76 }),
+    job('security:image', 'security', { start: 400, end: 468 }),
+  ]), { baseUrl: 'https://h' })
+  assert.equal(stageExcess(find(t, 'security')).excess, 68_000)
+})

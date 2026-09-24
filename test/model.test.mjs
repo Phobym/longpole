@@ -50,7 +50,7 @@ test('ретраи уходят в attempts, deps указывают на акт
   const tree = buildTree(rawPipeline([
     job('e2e', 'test', { start: 10, end: 20, status: 'FAILED', retried: true }),
     job('e2e', 'test', { start: 30, end: 40 }),
-    job('report', 'report', { start: 41, end: 45, deps: ['e2e', 'missing'] }),
+    job('report', 'reports', { start: 41, end: 45, deps: ['e2e', 'missing'] }),
   ]), { baseUrl })
   const e2e = find(tree, 'e2e')
   assert.equal(e2e.start, 30_000)

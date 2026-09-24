@@ -18,11 +18,7 @@ function bounds(spans) {
 }
 
 function span(fields) {
-  const result = { queued: null, status: null, url: null, allowFailure: false, attempts: [], deps: [], children: [], ...fields }
-  if (result.kind === 'stage' && result.children.length === 1 && result.children[0].deps.length > 0) {
-    result.deps = result.children[0].deps
-  }
-  return result
+  return { queued: null, status: null, url: null, allowFailure: false, attempts: [], deps: [], children: [], ...fields }
 }
 
 export function buildTree(raw, { baseUrl, origin = Date.parse(raw.pipeline.createdAt), now = Date.now() }) {

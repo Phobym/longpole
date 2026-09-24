@@ -8,6 +8,9 @@ contextBridge.exposeInMainWorld('app', {
   history: () => ipcRenderer.invoke('history'),
   removeHistory: (at) => ipcRenderer.invoke('removeHistory', at),
   clearHistory: () => ipcRenderer.invoke('clearHistory'),
+  projects: (args) => ipcRenderer.invoke('projects', args),
+  branches: (args) => ipcRenderer.invoke('branches', args),
+  pipelines: (args) => ipcRenderer.invoke('pipelines', args),
   onProgress: (fn) => {
     const listener = (_event, progress) => fn(progress)
     ipcRenderer.on('progress', listener)

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { createClient, resolveHost, resolveToken } from './core/gitlab.mjs'
 import { buildReport, defaultFileName } from './core/report.mjs'
 import { render } from './core/render.mjs'
+import { listProjects, listBranches, recentPipelines } from './core/browse.mjs'
 import { parseFormRequest } from './request.mjs'
 import { createTokenStore } from './tokens.mjs'
 import { createHistory } from './history.mjs'
@@ -92,6 +93,20 @@ function handle(channel, fn) {
   })
 }
 
+// токен из хранилища, иначе glab/env через resolveToken; при отсутствии — сообщение с указанием, где его добавить в форме
+async function clientFor(host) {
+  const resolvedHost = await resolveHost(host)
+  let token
+  try {
+    token = (await tokens.get(resolvedHost)) ?? (await resolveToken(resolvedHost))
+  } catch (err) {
+    // перехватываем только «нет токена» от resolveToken — остальные ошибки (сеть, glab) идут как есть
+    if (!err.message.startsWith('Нет токена для')) throw err
+    throw new Error(`Нет токена для ${resolvedHost}: добавь его в форме (поле «Токен»)`)
+  }
+  return createClient({ host: resolvedHost, token })
+}
+
 function registerIpc() {
   handle('hosts', () => tokens.hosts())
   handle('history', () => history.list())
@@ -108,20 +123,24 @@ function registerIpc() {
     return tokens.set(resolved, token)
   })
   handle('removeToken', (_event, host) => tokens.remove(host))
+  handle('projects', async (_event, { host, search, after }) => {
+    const gql = await clientFor(host)
+    return listProjects(gql, { search, after })
+  })
+  handle('branches', async (_event, { host, project, search }) => {
+    const gql = await clientFor(host)
+    return listBranches(gql, project, search)
+  })
+  handle('pipelines', async (_event, { host, project, ref, after }) => {
+    const gql = await clientFor(host)
+    return recentPipelines(gql, project, { ref, after })
+  })
   ipcMain.handle('build', async (event, form) => {
     if (!fromForm(event)) return { ok: false, error: 'Запрос не из окна формы' }
     const parsed = parseFormRequest(form)
     if (!parsed.ok) return { ok: false, errors: parsed.errors }
     try {
-      let token
-      try {
-        token = (await tokens.get(parsed.host)) ?? (await resolveToken(parsed.host))
-      } catch (err) {
-        // перехватываем только «нет токена» от resolveToken — остальные ошибки (сеть, glab) идут как есть
-        if (!err.message.startsWith('Нет токена для')) throw err
-        throw new Error(`Нет токена для ${parsed.host}: добавь его в форме (поле «Токен»)`)
-      }
-      const gql = createClient({ host: parsed.host, token })
+      const gql = await clientFor(parsed.host)
       const { report, suffix } = await buildReport(parsed.request, {
         gql, host: parsed.host,
         onProgress: (p) => { if (!event.sender.isDestroyed()) event.sender.send('progress', p) },

@@ -1,15 +1,44 @@
 const ADD_HOST = '__add__'
 const STATUS_DEFAULTS = ['SUCCESS', 'MANUAL']
+const SEARCH_DEBOUNCE = 300
 const dateFmt = new Intl.DateTimeFormat('ru', { dateStyle: 'short', timeStyle: 'short' })
-// повторяет URL_RE из src/cli-args.mjs: рендерер — обычный <script>, а не модуль,
-// импортировать оттуда напрямую нельзя
-const LINK_RE = /^https?:\/\/([^/]+)\/(.+?)\/-\/(pipelines|merge_requests)\/(\d+)/
+const rtf = new Intl.RelativeTimeFormat('ru', { numeric: 'auto' })
+const STATUS_PILL = { success: 'ok', running: 'run', pending: 'run', manual: 'mid', canceled: 'mid', skipped: 'mid', created: 'mid', failed: 'bad' }
 
 const $ = (id) => document.getElementById(id)
 
-const modeLinkBtn = $('mode-link')
-const modeAggBtn = $('mode-aggregate')
+// стандартный идиом MDN для Intl.RelativeTimeFormat: подбирает наибольшую подходящую единицу
+const RELATIVE_DIVISIONS = [
+  { amount: 60, unit: 'second' },
+  { amount: 60, unit: 'minute' },
+  { amount: 24, unit: 'hour' },
+  { amount: 7, unit: 'day' },
+  { amount: 4.34524, unit: 'week' },
+  { amount: 12, unit: 'month' },
+  { amount: Infinity, unit: 'year' },
+]
+
+function relativeTime(iso) {
+  let duration = (new Date(iso).getTime() - Date.now()) / 1000
+  for (const { amount, unit } of RELATIVE_DIVISIONS) {
+    if (Math.abs(duration) < amount) return rtf.format(Math.round(duration), unit)
+    duration /= amount
+  }
+}
+
+function formatDuration(ms) {
+  if (ms == null) return '—'
+  const s = ms / 1000
+  if (s < 60) return `${Math.round(s)}s`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m${String(Math.floor(s % 60)).padStart(2, '0')}s`
+  return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}m`
+}
+
+// элементы: экран «Проекты»
 const urlInput = $('url')
+const buildLinkBtn = $('build-link')
+const errorUrl = $('error-url')
 const fieldHost = $('field-host')
 const hostSelect = $('host-select')
 const removeTokenBtn = $('remove-token')
@@ -17,83 +46,126 @@ const fieldNewHost = $('field-new-host')
 const newHostInput = $('new-host')
 const newTokenInput = $('new-token')
 const saveTokenBtn = $('save-token')
-const projectInput = $('project')
-const refInput = $('ref')
-const sourceSelect = $('source')
-const lastInput = $('last')
+const tokenHint = $('token-hint')
+const projectsPanel = $('projects-panel')
+const projectSearchInput = $('project-search')
+const projectsStatus = $('projects-status')
+const projectsError = $('projects-error')
+const projectListEl = $('project-list')
+const projectsMoreBtn = $('projects-more')
+
+// элементы: экран «Проект»
+const screenProjects = $('screen-projects')
+const screenProject = $('screen-project')
+const backBtn = $('back-to-projects')
+const projectTitle = $('project-title')
+const branchInput = $('branch-input')
+const branchList = $('branch-list')
+const pipelinesStatus = $('pipelines-status')
+const pipelinesError = $('pipelines-error')
+const pipelineListEl = $('pipeline-list')
+const pipelinesMoreBtn = $('pipelines-more')
 const statusChecks = [...document.querySelectorAll('.status-cb')]
 const statusAny = $('status-any')
-const form = $('build-form')
-const submitBtn = $('submit')
-const formError = $('form-error')
+const lastInput = $('last')
+const buildAggBtn = $('build-aggregate')
+const errorLast = $('error-last')
+const errorStatuses = $('error-statuses')
+const aggregateError = $('aggregate-error')
+
+// история
 const historyList = $('history-list')
 const historyEmpty = $('history-empty')
 const historyClearBtn = $('history-clear')
 
-const FIELD_ERROR_IDS = { url: 'error-url', host: 'error-host', project: 'error-project', last: 'error-last', statuses: 'error-statuses' }
-const FIELD_INPUT = { url: urlInput, host: hostSelect, project: projectInput, last: lastInput, statuses: statusChecks[0] }
-
-let mode = 'link'
-let unsubscribeProgress = null
 let savedHosts = []
+let currentHost = null
 
-function setMode(next) {
-  mode = next
-  modeLinkBtn.setAttribute('aria-pressed', String(mode === 'link'))
-  modeAggBtn.setAttribute('aria-pressed', String(mode === 'aggregate'))
-  for (const node of document.querySelectorAll('.link-only')) node.hidden = mode !== 'link'
-  for (const node of document.querySelectorAll('.aggregate-only')) node.hidden = mode !== 'aggregate'
-  if (mode === 'aggregate') syncHostSubform()
-  else syncLinkHost()
-  clearErrors()
-}
+let projectsSeq = 0
+let projectsAfter = null
+let projectsSearchTimer = null
 
-modeLinkBtn.addEventListener('click', () => setMode('link'))
-modeAggBtn.addEventListener('click', () => setMode('aggregate'))
+let currentProject = null
+let currentBranch = null
+let branchSeq = 0
+let branchSearchTimer = null
+let pipelinesSeq = 0
+let pipelinesAfter = null
 
-function clearErrors() {
-  formError.hidden = true
-  formError.textContent = ''
-  for (const [field, errorId] of Object.entries(FIELD_ERROR_IDS)) {
-    const errorEl = $(errorId)
-    errorEl.hidden = true
-    errorEl.textContent = ''
-    const input = FIELD_INPUT[field]
-    if (input) { input.removeAttribute('aria-invalid'); input.removeAttribute('aria-describedby') }
+// выполняет build, транслирует прогресс через onProgress-колбэк вызывающего и обновляет историю по успеху
+async function performBuild(payload, onProgress) {
+  const unsubscribe = window.app.onProgress(({ loaded, total }) => onProgress(loaded, total))
+  try {
+    const res = await window.app.build(payload)
+    if (res.ok) await loadHistory()
+    return res
+  } finally {
+    unsubscribe()
   }
 }
 
-function showErrors(errors) {
-  let focused = null
-  for (const [field, message] of Object.entries(errors)) {
-    const errorId = FIELD_ERROR_IDS[field]
-    const errorEl = errorId && $(errorId)
-    if (!errorEl) continue
-    errorEl.hidden = false
-    errorEl.textContent = message
-    const input = FIELD_INPUT[field]
-    if (input) {
-      input.setAttribute('aria-invalid', 'true')
-      input.setAttribute('aria-describedby', errorId)
-      if (!focused) focused = input
-    }
+function progressLabel(loaded, total) {
+  return total == null ? 'Загружаю…' : `Загружаю ${loaded} из ${total}…`
+}
+
+function showProjectsScreen() {
+  screenProject.hidden = true
+  screenProjects.hidden = false
+}
+
+function showProjectScreen() {
+  screenProjects.hidden = true
+  screenProject.hidden = false
+}
+
+backBtn.addEventListener('click', showProjectsScreen)
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !screenProject.hidden) showProjectsScreen()
+})
+
+// --- ссылка на пайплайн/MR ---
+
+buildLinkBtn.addEventListener('click', async () => {
+  errorUrl.hidden = true
+  buildLinkBtn.disabled = true
+  const label = buildLinkBtn.textContent
+  const res = await performBuild({ mode: 'link', url: urlInput.value }, (loaded, total) => {
+    buildLinkBtn.textContent = progressLabel(loaded, total)
+  })
+  buildLinkBtn.disabled = false
+  buildLinkBtn.textContent = label
+  if (!res.ok) {
+    errorUrl.hidden = false
+    errorUrl.textContent = res.errors ? res.errors.url : res.error
   }
-  if (focused) focused.focus()
+})
+
+// --- хост и токен ---
+
+function hostHasToken(host) {
+  return savedHosts.includes(host)
 }
 
-function showFormError(message) {
-  formError.hidden = false
-  formError.textContent = message
-}
-
-// select показывает «+ Добавить хост…» отдельным пунктом: раскрывает поля хоста и токена
 function syncHostSubform() {
-  const isAdd = hostSelect.value === ADD_HOST
-  fieldNewHost.hidden = !isAdd
-  removeTokenBtn.hidden = isAdd || !hostSelect.value
+  const host = hostSelect.value
+  const isAdd = host === ADD_HOST
+  const noToken = isAdd || !hostHasToken(host)
+  fieldNewHost.hidden = !noToken
+  tokenHint.hidden = !noToken
+  removeTokenBtn.hidden = isAdd || noToken
+  if (noToken && !isAdd) newHostInput.value = host
+  projectsPanel.hidden = noToken
 }
 
-hostSelect.addEventListener('change', syncHostSubform)
+function refreshProjectsPanel() {
+  syncHostSubform()
+  currentHost = hostSelect.value === ADD_HOST ? null : hostSelect.value
+  if (!currentHost || !hostHasToken(currentHost)) return
+  projectSearchInput.value = ''
+  loadProjects({ reset: true })
+}
+
+hostSelect.addEventListener('change', refreshProjectsPanel)
 
 async function loadHosts(selected) {
   const res = await window.app.hosts()
@@ -112,7 +184,7 @@ async function loadHosts(selected) {
   if (selected && savedHosts.includes(selected)) {
     hostSelect.value = selected
   } else if (selected) {
-    // хост из истории, токен для него ещё не сохранён — покажем как временный пункт
+    // хост из истории или ссылки, токен для него ещё не сохранён — временный пункт списка
     const option = document.createElement('option')
     option.value = selected
     option.textContent = selected
@@ -121,25 +193,8 @@ async function loadHosts(selected) {
   } else {
     hostSelect.value = savedHosts.length ? savedHosts[0] : ADD_HOST
   }
-  // в режиме «Ссылка» видимость субформы держит syncLinkHost — синхронизация здесь её перезатирала бы
-  if (mode === 'aggregate') syncHostSubform()
+  refreshProjectsPanel()
 }
-
-// в режиме «Ссылка» хост определяется из URL, а не выбирается — своя логика вместо syncHostSubform
-async function syncLinkHost() {
-  const host = mode === 'link' ? (LINK_RE.exec(urlInput.value.trim())?.[1] ?? null) : null
-  fieldHost.hidden = !host
-  if (!host) {
-    fieldNewHost.hidden = true
-    return
-  }
-  await loadHosts(host)
-  removeTokenBtn.hidden = true
-  fieldNewHost.hidden = savedHosts.includes(host)
-  if (!fieldNewHost.hidden) newHostInput.value = host
-}
-
-urlInput.addEventListener('input', syncLinkHost)
 
 saveTokenBtn.addEventListener('click', async () => {
   $('error-new-host').hidden = true
@@ -164,6 +219,195 @@ removeTokenBtn.addEventListener('click', async () => {
   await loadHosts()
 })
 
+// --- список проектов ---
+
+function renderProjectRow(project) {
+  const li = document.createElement('li')
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'proj-row'
+
+  const name = document.createElement('span')
+  name.className = 'proj-name'
+  name.translate = 'no'
+  name.textContent = project.name
+
+  const path = document.createElement('span')
+  path.className = 'proj-path'
+  path.translate = 'no'
+  path.textContent = project.fullPath
+
+  const meta = document.createElement('span')
+  meta.className = 'proj-meta'
+  if (project.defaultBranch) {
+    const branch = document.createElement('span')
+    branch.className = 'chip'
+    branch.translate = 'no'
+    branch.textContent = project.defaultBranch
+    meta.appendChild(branch)
+  }
+  if (project.lastActivityAt) {
+    const activity = document.createElement('span')
+    activity.textContent = `активность ${relativeTime(project.lastActivityAt)}`
+    meta.appendChild(activity)
+  }
+
+  button.append(name, path, meta)
+  button.addEventListener('click', () => openProject(project))
+  li.appendChild(button)
+  return li
+}
+
+async function loadProjects({ reset }) {
+  if (reset) { projectsAfter = null; projectListEl.innerHTML = '' }
+  const seq = ++projectsSeq
+  const host = currentHost
+  projectsStatus.textContent = 'Загрузка…'
+  projectsError.hidden = true
+  const res = await window.app.projects({ host, search: projectSearchInput.value, after: reset ? null : projectsAfter })
+  if (seq !== projectsSeq || host !== currentHost) return // устарело: другой запрос или сменился хост
+  if (!res.ok) {
+    projectsStatus.textContent = ''
+    projectsError.hidden = false
+    projectsError.textContent = res.error
+    projectsMoreBtn.hidden = true
+    return
+  }
+  projectsAfter = res.value.next
+  for (const project of res.value.items) projectListEl.appendChild(renderProjectRow(project))
+  projectsMoreBtn.hidden = !projectsAfter
+  projectsStatus.textContent = projectListEl.children.length ? '' : 'Ничего не найдено'
+}
+
+projectSearchInput.addEventListener('input', () => {
+  clearTimeout(projectsSearchTimer)
+  projectsSearchTimer = setTimeout(() => loadProjects({ reset: true }), SEARCH_DEBOUNCE)
+})
+
+projectsMoreBtn.addEventListener('click', () => loadProjects({ reset: false }))
+
+// --- экран проекта: ветки и пайплайны ---
+
+function openProject(project) {
+  currentProject = project
+  currentBranch = project.defaultBranch || null
+  projectTitle.textContent = project.name
+  branchInput.value = currentBranch || ''
+  showProjectScreen()
+  loadBranches('')
+  loadPipelines({ reset: true })
+}
+
+async function loadBranches(search) {
+  if (!currentProject) return
+  const seq = ++branchSeq
+  const res = await window.app.branches({ host: currentHost, project: currentProject.fullPath, search })
+  // ошибка здесь не критична: та же причина проявится и в списке пайплайнов, с видимым сообщением
+  if (seq !== branchSeq || !res.ok) return
+  branchList.innerHTML = ''
+  for (const name of res.value) {
+    const option = document.createElement('option')
+    option.value = name
+    branchList.appendChild(option)
+  }
+}
+
+branchInput.addEventListener('input', () => {
+  clearTimeout(branchSearchTimer)
+  branchSearchTimer = setTimeout(() => loadBranches(branchInput.value), SEARCH_DEBOUNCE)
+})
+
+branchInput.addEventListener('change', () => {
+  const next = branchInput.value || null
+  if (next === currentBranch) return
+  currentBranch = next
+  loadPipelines({ reset: true })
+})
+
+function renderPipelineRow(item) {
+  const li = document.createElement('li')
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'pipe-row'
+
+  const iid = document.createElement('span')
+  iid.className = 'pipe-id'
+  iid.textContent = `#${item.iid}`
+
+  const status = document.createElement('span')
+  status.className = `pill ${STATUS_PILL[item.status] ?? 'mid'}`
+  status.textContent = item.status
+
+  const title = document.createElement('span')
+  title.className = 'pipe-title'
+  title.translate = 'no'
+  title.textContent = item.commit?.title ?? '—'
+
+  const author = document.createElement('span')
+  author.className = 'pipe-author'
+  author.translate = 'no'
+  author.textContent = item.author ?? '—'
+
+  const time = document.createElement('span')
+  time.className = 'pipe-time'
+  time.textContent = relativeTime(item.createdAt)
+
+  const duration = document.createElement('span')
+  duration.className = 'pipe-duration'
+  duration.textContent = formatDuration(item.duration)
+
+  const rowStatus = document.createElement('span')
+  rowStatus.className = 'row-status'
+  rowStatus.hidden = true
+  rowStatus.setAttribute('aria-live', 'polite')
+
+  button.append(iid, status, title, author, time, duration, rowStatus)
+  button.addEventListener('click', async () => {
+    button.disabled = true
+    rowStatus.hidden = false
+    rowStatus.classList.remove('row-error')
+    rowStatus.textContent = 'Загружаю…'
+    const url = `https://${currentHost}/${currentProject.fullPath}/-/pipelines/${item.id}`
+    const res = await performBuild({ mode: 'link', url }, (loaded, total) => {
+      rowStatus.textContent = progressLabel(loaded, total)
+    })
+    button.disabled = false
+    if (res.ok) {
+      rowStatus.hidden = true
+    } else {
+      rowStatus.classList.add('row-error')
+      rowStatus.textContent = res.error ?? 'Не удалось построить отчёт'
+    }
+  })
+  li.appendChild(button)
+  return li
+}
+
+async function loadPipelines({ reset }) {
+  if (reset) { pipelinesAfter = null; pipelineListEl.innerHTML = '' }
+  const seq = ++pipelinesSeq
+  const project = currentProject
+  pipelinesStatus.textContent = 'Загрузка…'
+  pipelinesError.hidden = true
+  const res = await window.app.pipelines({ host: currentHost, project: project.fullPath, ref: currentBranch, after: reset ? null : pipelinesAfter })
+  if (seq !== pipelinesSeq || project !== currentProject) return
+  if (!res.ok) {
+    pipelinesStatus.textContent = ''
+    pipelinesError.hidden = false
+    pipelinesError.textContent = res.error
+    pipelinesMoreBtn.hidden = true
+    return
+  }
+  pipelinesAfter = res.value.next
+  for (const item of res.value.items) pipelineListEl.appendChild(renderPipelineRow(item))
+  pipelinesMoreBtn.hidden = !pipelinesAfter
+  pipelinesStatus.textContent = pipelineListEl.children.length ? '' : 'Ничего не найдено'
+}
+
+pipelinesMoreBtn.addEventListener('click', () => loadPipelines({ reset: false }))
+
+// --- агрегат ---
+
 function setStatuses(values) {
   const any = !values || values.includes('ANY')
   statusAny.checked = any
@@ -184,32 +428,59 @@ function collectStatuses() {
   return statusAny.checked ? ['ANY'] : statusChecks.filter((cb) => cb.checked).map((cb) => cb.value)
 }
 
-function buildFormPayload() {
-  if (mode === 'link') return { mode: 'link', url: urlInput.value }
-  return {
-    mode: 'aggregate',
-    host: hostSelect.value === ADD_HOST ? '' : hostSelect.value,
-    project: projectInput.value,
-    ref: refInput.value,
-    source: sourceSelect.value,
-    last: lastInput.value,
-    statuses: collectStatuses(),
-  }
+function updateAggregateLabel() {
+  buildAggBtn.textContent = `Агрегат по ${lastInput.value || 0} пайплайнам`
 }
 
-function fillForm(entry) {
-  setMode(entry.form.mode === 'link' ? 'link' : 'aggregate')
-  if (entry.form.mode === 'link') {
-    urlInput.value = entry.form.url ?? ''
-    syncLinkHost()
-  } else {
-    projectInput.value = entry.form.project ?? ''
-    refInput.value = entry.form.ref ?? ''
-    sourceSelect.value = entry.form.source ?? ''
-    lastInput.value = entry.form.last ?? 50
-    setStatuses(entry.form.statuses ?? STATUS_DEFAULTS)
-    loadHosts(entry.host)
+lastInput.addEventListener('input', updateAggregateLabel)
+
+buildAggBtn.addEventListener('click', async () => {
+  errorLast.hidden = true
+  errorStatuses.hidden = true
+  aggregateError.hidden = true
+  buildAggBtn.disabled = true
+  const label = buildAggBtn.textContent
+  const payload = {
+    mode: 'aggregate', host: currentHost, project: currentProject.fullPath,
+    ref: currentBranch || '', source: '', last: lastInput.value, statuses: collectStatuses(),
   }
+  const res = await performBuild(payload, (loaded, total) => {
+    buildAggBtn.textContent = progressLabel(loaded, total)
+  })
+  buildAggBtn.disabled = false
+  buildAggBtn.textContent = label
+  if (!res.ok) {
+    if (res.errors) {
+      if (res.errors.last) { errorLast.hidden = false; errorLast.textContent = res.errors.last }
+      if (res.errors.statuses) { errorStatuses.hidden = false; errorStatuses.textContent = res.errors.statuses }
+    } else {
+      aggregateError.hidden = false
+      aggregateError.textContent = res.error
+    }
+  }
+})
+
+// --- история ---
+
+function openHistoryEntry(entry) {
+  if (entry.form.mode === 'link') {
+    showProjectsScreen()
+    urlInput.value = entry.form.url ?? ''
+    urlInput.focus()
+    return
+  }
+  currentHost = entry.host
+  // имя проекта в истории не хранится — путь используется и как заголовок
+  currentProject = { fullPath: entry.form.project, name: entry.form.project, defaultBranch: entry.form.ref || null }
+  currentBranch = entry.form.ref || null
+  projectTitle.textContent = currentProject.name
+  branchInput.value = currentBranch || ''
+  lastInput.value = entry.form.last ?? 50
+  updateAggregateLabel()
+  setStatuses(entry.form.statuses ?? STATUS_DEFAULTS)
+  showProjectScreen()
+  loadBranches('')
+  loadPipelines({ reset: true })
 }
 
 async function loadHistory() {
@@ -237,9 +508,9 @@ async function loadHistory() {
     time.textContent = dateFmt.format(new Date(entry.at))
     meta.append(host, time)
     button.append(label, meta)
-    button.addEventListener('click', () => fillForm(entry))
+    button.addEventListener('click', () => openHistoryEntry(entry))
 
-    // отдельная кнопка, а не вложенная: клик по ней не должен ещё и заполнять форму
+    // отдельная кнопка, а не вложенная: клик по ней не должен ещё и открывать запись
     const remove = document.createElement('button')
     remove.type = 'button'
     remove.className = 'hist-remove'
@@ -261,33 +532,6 @@ historyClearBtn.addEventListener('click', async () => {
   if (res.ok) await loadHistory()
 })
 
-function setProgress(loaded, total) {
-  submitBtn.textContent = total == null ? 'Загружаю…' : `Загружаю ${loaded} из ${total}…`
-}
-
-form.addEventListener('submit', async (event) => {
-  event.preventDefault()
-  clearErrors()
-  submitBtn.disabled = true
-  setProgress(0, null)
-  unsubscribeProgress = window.app.onProgress(({ loaded, total }) => setProgress(loaded, total))
-  try {
-    const res = await window.app.build(buildFormPayload())
-    if (res.ok) {
-      await loadHistory()
-    } else if (res.errors) {
-      showErrors(res.errors)
-    } else {
-      showFormError(res.error)
-    }
-  } finally {
-    unsubscribeProgress?.()
-    unsubscribeProgress = null
-    submitBtn.disabled = false
-    submitBtn.textContent = 'Построить отчёт'
-  }
-})
-
-setMode('link')
+updateAggregateLabel()
 loadHosts()
 loadHistory()

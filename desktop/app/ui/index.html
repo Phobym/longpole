@@ -21,67 +21,67 @@
   </aside>
 
   <main id="form-col">
-    <div class="card" id="form-card">
-      <h1>pipeline-trace</h1>
+    <section class="card" id="screen-projects">
+      <h1>Проекты</h1>
 
-      <div class="mode-switch" role="group" aria-label="Режим">
-        <button type="button" class="mode-btn" id="mode-link" aria-pressed="true">Ссылка</button>
-        <button type="button" class="mode-btn" id="mode-aggregate" aria-pressed="false">Агрегат</button>
+      <div class="field" id="field-url">
+        <label for="url">Вставь ссылку на пайплайн или MR</label>
+        <div class="host-row">
+          <input type="url" id="url" placeholder="https://gitlab.example.com/group/project/-/pipelines/123…">
+          <button type="button" id="build-link">Построить</button>
+        </div>
+        <p class="field-error" id="error-url" role="alert" hidden></p>
       </div>
 
-      <form id="build-form" novalidate>
-        <div class="field link-only" id="field-url">
-          <label for="url">Ссылка на пайплайн или merge request</label>
-          <input type="url" id="url" name="url" placeholder="https://gitlab.example.com/group/project/-/pipelines/123…">
-          <p class="field-error" id="error-url" role="alert" hidden></p>
+      <div class="field" id="field-host">
+        <label for="host-select">Хост</label>
+        <div class="host-row">
+          <select id="host-select" translate="no"></select>
+          <button type="button" id="remove-token" hidden>Удалить токен</button>
         </div>
+      </div>
 
-        <div class="field aggregate-only" id="field-host">
-          <label for="host-select">Хост</label>
-          <div class="host-row">
-            <select id="host-select" translate="no"></select>
-            <button type="button" id="remove-token" hidden>Удалить токен</button>
-          </div>
-          <p class="field-error" id="error-host" role="alert" hidden></p>
+      <p class="muted" id="token-hint" hidden>Добавь токен для этого хоста, чтобы смотреть список проектов.</p>
+      <div class="field subform" id="field-new-host" hidden>
+        <label for="new-host">Хост</label>
+        <input type="text" id="new-host" translate="no" placeholder="gitlab.example.com">
+        <label for="new-token">Токен</label>
+        <input type="password" id="new-token" autocomplete="off" spellcheck="false">
+        <p class="field-error" id="error-new-host" role="alert" hidden></p>
+        <button type="button" id="save-token">Сохранить токен</button>
+      </div>
+
+      <div id="projects-panel" hidden>
+        <div class="field">
+          <label for="project-search">Поиск проекта</label>
+          <input type="search" id="project-search" placeholder="Название или путь…">
         </div>
+        <p id="projects-status" class="muted" aria-live="polite"></p>
+        <p class="form-error" id="projects-error" role="alert" hidden></p>
+        <ul id="project-list" class="proj-list"></ul>
+        <button type="button" id="projects-more" class="text-btn" hidden>Показать ещё</button>
+      </div>
+    </section>
 
-        <div class="field subform aggregate-only" id="field-new-host" hidden>
-          <label for="new-host">Хост</label>
-          <input type="text" id="new-host" translate="no" placeholder="gitlab.example.com">
-          <label for="new-token">Токен</label>
-          <input type="password" id="new-token" autocomplete="off" spellcheck="false">
-          <p class="field-error" id="error-new-host" role="alert" hidden></p>
-          <button type="button" id="save-token">Сохранить токен</button>
-        </div>
+    <section class="card" id="screen-project" hidden>
+      <div class="project-head">
+        <button type="button" id="back-to-projects" class="text-btn">← Проекты</button>
+        <h1 id="project-title" translate="no"></h1>
+      </div>
 
-        <div class="field aggregate-only" id="field-project">
-          <label for="project">Проект</label>
-          <input type="text" id="project" translate="no" placeholder="group/project">
-          <p class="field-error" id="error-project" role="alert" hidden></p>
-        </div>
+      <div class="field">
+        <label for="branch-input">Ветка</label>
+        <input type="text" id="branch-input" list="branch-list" translate="no">
+        <datalist id="branch-list"></datalist>
+      </div>
 
-        <div class="field-row aggregate-only" id="agg-row">
-          <div class="field" id="field-ref">
-            <label for="ref">Ref</label>
-            <input type="text" id="ref" placeholder="master">
-          </div>
-          <div class="field" id="field-source">
-            <label for="source">Source</label>
-            <select id="source">
-              <option value="">— любой —</option>
-              <option value="push">push</option>
-              <option value="merge_request_event">merge_request_event</option>
-              <option value="schedule">schedule</option>
-            </select>
-          </div>
-          <div class="field" id="field-last">
-            <label for="last">Сколько пайплайнов</label>
-            <input type="number" id="last" min="1" max="500" value="50">
-            <p class="field-error" id="error-last" role="alert" hidden></p>
-          </div>
-        </div>
+      <p id="pipelines-status" class="muted" aria-live="polite"></p>
+      <p class="form-error" id="pipelines-error" role="alert" hidden></p>
+      <ul id="pipeline-list" class="pipe-list"></ul>
+      <button type="button" id="pipelines-more" class="text-btn" hidden>Показать ещё</button>
 
-        <fieldset class="field aggregate-only" id="field-statuses">
+      <div class="agg-block">
+        <fieldset class="field" id="field-statuses">
           <legend>Статусы</legend>
           <label class="chk"><input type="checkbox" class="status-cb" value="SUCCESS" checked> SUCCESS</label>
           <label class="chk"><input type="checkbox" class="status-cb" value="MANUAL" checked> MANUAL</label>
@@ -92,10 +92,16 @@
           <p class="field-error" id="error-statuses" role="alert" hidden></p>
         </fieldset>
 
-        <p class="form-error" id="form-error" role="alert" hidden></p>
-        <button type="submit" id="submit">Построить отчёт</button>
-      </form>
-    </div>
+        <div class="field" id="field-last">
+          <label for="last">Сколько пайплайнов</label>
+          <input type="number" id="last" min="1" max="500" value="50">
+          <p class="field-error" id="error-last" role="alert" hidden></p>
+        </div>
+
+        <button type="button" id="build-aggregate">Агрегат по 50 пайплайнам</button>
+        <p class="form-error" id="aggregate-error" role="alert" hidden></p>
+      </div>
+    </section>
   </main>
 </div>
 <script src="form.js"></script>

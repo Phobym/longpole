@@ -1,12 +1,16 @@
 const ADD_HOST = '__add__'
 const STATUS_DEFAULTS = ['SUCCESS', 'MANUAL']
 const dateFmt = new Intl.DateTimeFormat('ru', { dateStyle: 'short', timeStyle: 'short' })
+// повторяет URL_RE из src/cli-args.mjs: рендерер — обычный <script>, а не модуль,
+// импортировать оттуда напрямую нельзя
+const LINK_RE = /^https?:\/\/([^/]+)\/(.+?)\/-\/(pipelines|merge_requests)\/(\d+)/
 
 const $ = (id) => document.getElementById(id)
 
 const modeLinkBtn = $('mode-link')
 const modeAggBtn = $('mode-aggregate')
 const urlInput = $('url')
+const fieldHost = $('field-host')
 const hostSelect = $('host-select')
 const removeTokenBtn = $('remove-token')
 const fieldNewHost = $('field-new-host')
@@ -30,6 +34,7 @@ const FIELD_INPUT = { url: urlInput, host: hostSelect, project: projectInput, la
 
 let mode = 'link'
 let unsubscribeProgress = null
+let savedHosts = []
 
 function setMode(next) {
   mode = next
@@ -38,6 +43,7 @@ function setMode(next) {
   for (const node of document.querySelectorAll('.link-only')) node.hidden = mode !== 'link'
   for (const node of document.querySelectorAll('.aggregate-only')) node.hidden = mode !== 'aggregate'
   if (mode === 'aggregate') syncHostSubform()
+  else syncLinkHost()
   clearErrors()
 }
 
@@ -90,9 +96,9 @@ hostSelect.addEventListener('change', syncHostSubform)
 
 async function loadHosts(selected) {
   const res = await window.app.hosts()
-  const hosts = res.ok ? res.value : []
+  savedHosts = res.ok ? res.value : []
   hostSelect.innerHTML = ''
-  for (const host of hosts) {
+  for (const host of savedHosts) {
     const option = document.createElement('option')
     option.value = host
     option.textContent = `${host} — токен сохранён`
@@ -102,7 +108,7 @@ async function loadHosts(selected) {
   addOption.value = ADD_HOST
   addOption.textContent = '+ Добавить хост…'
   hostSelect.appendChild(addOption)
-  if (selected && hosts.includes(selected)) {
+  if (selected && savedHosts.includes(selected)) {
     hostSelect.value = selected
   } else if (selected) {
     // хост из истории, токен для него ещё не сохранён — покажем как временный пункт
@@ -112,10 +118,27 @@ async function loadHosts(selected) {
     hostSelect.insertBefore(option, addOption)
     hostSelect.value = selected
   } else {
-    hostSelect.value = hosts.length ? hosts[0] : ADD_HOST
+    hostSelect.value = savedHosts.length ? savedHosts[0] : ADD_HOST
   }
-  syncHostSubform()
+  // в режиме «Ссылка» видимость субформы держит syncLinkHost — синхронизация здесь её перезатирала бы
+  if (mode === 'aggregate') syncHostSubform()
 }
+
+// в режиме «Ссылка» хост определяется из URL, а не выбирается — своя логика вместо syncHostSubform
+async function syncLinkHost() {
+  const host = mode === 'link' ? (LINK_RE.exec(urlInput.value.trim())?.[1] ?? null) : null
+  fieldHost.hidden = !host
+  if (!host) {
+    fieldNewHost.hidden = true
+    return
+  }
+  await loadHosts(host)
+  removeTokenBtn.hidden = true
+  fieldNewHost.hidden = savedHosts.includes(host)
+  if (!fieldNewHost.hidden) newHostInput.value = host
+}
+
+urlInput.addEventListener('input', syncLinkHost)
 
 saveTokenBtn.addEventListener('click', async () => {
   $('error-new-host').hidden = true
@@ -177,14 +200,15 @@ function fillForm(entry) {
   setMode(entry.form.mode === 'link' ? 'link' : 'aggregate')
   if (entry.form.mode === 'link') {
     urlInput.value = entry.form.url ?? ''
+    syncLinkHost()
   } else {
     projectInput.value = entry.form.project ?? ''
     refInput.value = entry.form.ref ?? ''
     sourceSelect.value = entry.form.source ?? ''
     lastInput.value = entry.form.last ?? 50
     setStatuses(entry.form.statuses ?? STATUS_DEFAULTS)
+    loadHosts(entry.host)
   }
-  loadHosts(entry.host)
 }
 
 async function loadHistory() {

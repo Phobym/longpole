@@ -72,7 +72,12 @@ async function saveFocusedReport() {
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     defaultPath: entry.name, filters: [{ name: 'HTML', extensions: ['html'] }],
   })
-  if (!canceled && filePath) await copyFile(entry.file, filePath)
+  if (canceled || !filePath) return
+  try {
+    await copyFile(entry.file, filePath)
+  } catch (err) {
+    dialog.showErrorBox('Не удалось сохранить отчёт', err.message)
+  }
 }
 
 // ошибки возвращаются значением: иначе Electron добавляет к тексту «Error invoking remote method…»
@@ -90,17 +95,34 @@ function handle(channel, fn) {
 function registerIpc() {
   handle('hosts', () => tokens.hosts())
   handle('history', () => history.list())
-  handle('setToken', async (_event, host, token) => tokens.set(await resolveHost(String(host).trim()), token))
+  handle('setToken', async (_event, host, token) => {
+    let resolved
+    try {
+      resolved = await resolveHost(String(host).trim())
+    } catch {
+      // resolveHost говорит языком CLI (--host); в форме это поле называется «Хост»
+      throw new Error('Укажи хост GitLab, например gitlab.example.com')
+    }
+    return tokens.set(resolved, token)
+  })
   handle('removeToken', (_event, host) => tokens.remove(host))
   ipcMain.handle('build', async (event, form) => {
     if (!fromForm(event)) return { ok: false, error: 'Запрос не из окна формы' }
     const parsed = parseFormRequest(form)
     if (!parsed.ok) return { ok: false, errors: parsed.errors }
     try {
-      const token = (await tokens.get(parsed.host)) ?? (await resolveToken(parsed.host))
+      let token
+      try {
+        token = (await tokens.get(parsed.host)) ?? (await resolveToken(parsed.host))
+      } catch (err) {
+        // перехватываем только «нет токена» от resolveToken — остальные ошибки (сеть, glab) идут как есть
+        if (!err.message.startsWith('Нет токена для')) throw err
+        throw new Error(`Нет токена для ${parsed.host}: добавь его в форме (поле «Токен»)`)
+      }
       const gql = createClient({ host: parsed.host, token })
       const { report, suffix } = await buildReport(parsed.request, {
-        gql, host: parsed.host, onProgress: (p) => event.sender.send('progress', p),
+        gql, host: parsed.host,
+        onProgress: (p) => { if (!event.sender.isDestroyed()) event.sender.send('progress', p) },
       })
       const name = defaultFileName(parsed.request.project, suffix)
       const file = join(reportsDir, `${Date.now()}-${name}`)
@@ -146,7 +168,8 @@ app.whenReady().then(async () => {
       app.exit(ok ? 0 : 1)
     })
   }
-  app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createFormWindow() })
+  // formWindow может быть null и при открытых окнах отчёта — тогда getAllWindows().length само по себе не 0
+  app.on('activate', () => { if (!BrowserWindow.getAllWindows().length || !formWindow) createFormWindow() })
 })
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })

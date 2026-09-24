@@ -60,7 +60,7 @@ pipeline-trace --project group/project --source merge_request_event --last 50 --
 
 Установка без подписи:
 
-- **macOS**: перетащить `.app` в «Программы». Первый запуск — «Открыть» из контекстного меню правой кнопкой мыши; если Gatekeeper всё равно блокирует, снять карантин: `xattr -dr com.apple.quarantine "/Applications/pipeline-trace.app"`.
+- **macOS**: перетащить `.app` в «Программы». Первый запуск — «Открыть» из контекстного меню правой кнопкой мыши. Если Gatekeeper всё равно блокирует и это macOS 15 или новее — «Системные настройки» → «Конфиденциальность и безопасность» → «Всё равно открыть». Не помогло — снять карантин: `xattr -dr com.apple.quarantine "/Applications/pipeline-trace.app"`.
 - **Windows**: SmartScreen покажет предупреждение — «Подробнее» → «Выполнить в любом случае».
 - **Linux**: для AppImage — `chmod +x pipeline-trace-*.AppImage`; для deb — `sudo apt install ./pipeline-trace_*.deb`.
 

@@ -83,7 +83,7 @@ buildReport(request, { gql, host, now?, onProgress? }) → Promise<{ report, suf
 - Все окна: `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`.
 - Форма: CSP `default-src 'self'; style-src 'self' 'unsafe-inline'`.
 - Окно отчёта: навигация внутри окна запрещена (`will-navigate` → отмена); `window.open` и внешние ссылки открываются через `shell.openExternal`, только `https:`.
-- Мост `preload.cjs` отдаёт только функции `build`, `save`, `hosts`, `setToken`, `removeToken`, `history`; других каналов нет.
+- Мост `preload.cjs` отдаёт только функции `build`, `hosts`, `setToken`, `removeToken`, `history`, `onProgress`; других каналов нет. Сохранение отчёта — не через мост, а через пункт меню «Файл → Сохранить отчёт…» (Cmd/Ctrl+S).
 
 ## Форма (стиль C)
 
@@ -98,7 +98,8 @@ buildReport(request, { gql, host, now?, onProgress? }) → Promise<{ report, suf
 
 - `npm run dev` (в `desktop/`) — `sync-core` + `electron .`.
 - `npm run dist` — `sync-core` + `electron-builder` для текущей ОС.
-- Цели: macOS `dmg`, `zip` (arm64, x64); Windows `nsis`, `zip` (x64); Linux `AppImage`, `deb` (x64). `CSC_IDENTITY_AUTO_DISCOVERY=false`, подписи нет.
+- Цели: macOS `dmg`, `zip` (arm64, x64); Windows `nsis`, `zip` (x64); Linux `AppImage`, `deb` (x64). `CSC_IDENTITY_AUTO_DISCOVERY=false`.
+- macOS: подпись ad-hoc, не полноценная. `build.mac.identity: "-"` — electron-builder (26.x) поддерживает это значение напрямую и подписывает сборку ключом `-` через `codesign`. Нотаризации нет: без неё Gatekeeper всё равно требует «Открыть» через контекстное меню при первом запуске.
 - `.github/workflows/desktop.yml`: матрица `macos-14`, `windows-latest`, `ubuntu-latest`; `npm test` в корне и в `desktop/`; `npm run dist`; по тегу `v*` артефакты прикладываются к GitHub Release.
 
 ## Установка без подписи (README)

@@ -23,7 +23,7 @@
     "files": ["app/**", "package.json"],
     "directories": { "output": "dist" },
     "mac": {
-      "identity": null,
+      "identity": "-",
       "category": "public.app-category.developer-tools",
       "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }, { "target": "zip", "arch": ["arm64", "x64"] }]
     },
@@ -33,6 +33,7 @@
       "category": "Development",
       "maintainer": "pipeline-trace <noreply@pipeline-trace.invalid>",
       "target": [{ "target": "AppImage", "arch": ["x64"] }, { "target": "deb", "arch": ["x64"] }]
-    }
+    },
+    "deb": { "artifactName": "${productName}_${version}_${arch}.${ext}" }
   }
 }

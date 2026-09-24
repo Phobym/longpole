@@ -126,3 +126,12 @@ test('stageExcess: ожидание зависимостей до старта �
   ]), { baseUrl: 'https://h' })
   assert.equal(stageExcess(find(t, 'security')).excess, 68_000)
 })
+
+test('stageExcess: при позднем старте с ретраями превышение считается от первой попытки', () => {
+  const t = buildTree(rawPipeline([
+    job('security:code', 'security', { start: 0, end: 76 }),
+    job('security:image', 'security', { start: 300, end: 350, retried: true, status: 'FAILED' }),
+    job('security:image', 'security', { start: 400, end: 468 }),
+  ]), { baseUrl: 'https://h' })
+  assert.equal(stageExcess(find(t, 'security')).excess, 168_000)
+})

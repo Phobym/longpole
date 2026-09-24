@@ -684,6 +684,8 @@ document.addEventListener('click', (e) => {
   const row = e.target.closest('.row')
   if (!row || e.target.closest('a')) return
   select(row.dataset.id)
+  // mousedown отменён ради перетаскивания, поэтому фокус на строку ставится вручную
+  rowEl(row.dataset.id)?.focus({ preventScroll: true })
 })
 
 function onRowKey(e, row) {

@@ -61,6 +61,7 @@ test('ретраи усредняются по запускам', () => {
   const clean = buildTree(rawPipeline([job('e2e', 'test', { start: 0, end: 10 })]), { baseUrl: 'https://h' })
   const e2e = child(child(aggregate([withRetry, clean]), 'stage:test'), 'job:e2e')
   assert.equal(e2e.stats.retries, 0.5)
+  assert.deepEqual(e2e.stats.samples.map((s) => s.retries), [1, 0])
 })
 
 test('агрегат: deps указывают на агрегированные узлы, порядок в стейдже по связям', () => {

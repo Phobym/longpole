@@ -44,7 +44,7 @@ export function aggregate(trees) {
       retried: ran.filter((e) => e.span.attempts.length > 0).length,
       retryLoss: ran.length ? ran.reduce((n, e) => n + retryLoss(e.span), 0) / ran.length : 0,
       critical: ran.filter((e) => critical[e.tree].has(e.span.id)).length / trees.length,
-      samples: ran.map((e) => ({ tree: e.tree, start: e.span.start, end: e.span.end })),
+      samples: ran.map((e) => ({ tree: e.tree, start: e.span.start, end: e.span.end, retries: e.span.attempts.length })),
     }
     const node = {
       id, kind, name,

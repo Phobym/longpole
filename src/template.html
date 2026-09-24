@@ -142,18 +142,47 @@
   #links .arrow.down { fill: var(--dep-down); }
 
   /* панель деталей */
-  #panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); overflow: auto; overscroll-behavior: contain; z-index: 3;
-           background: var(--card); border-left: 1px solid var(--line); padding: 14px 18px; box-shadow: -4px 0 16px rgb(0 0 0 / .08); }
-  #panel h2 { font-size: 15px; margin: 4px 28px 12px 0; word-break: break-all; }
-  .kpis { display: flex; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
-  .kpis div { display: flex; flex-direction: column; }
-  .kpis b { font-size: 18px; font-weight: 600; }
-  .kpis span { color: var(--muted); font-size: 11px; }
-  #panel table { border-collapse: collapse; width: 100%; }
-  #panel th { text-align: left; font-weight: 400; color: var(--muted); padding: 3px 12px 3px 0; vertical-align: top; white-space: nowrap; }
-  #panel td { padding: 3px 0; word-break: break-word; }
-  #panel ol { padding-left: 20px; margin: 0; }
-  #panel a { color: var(--focus); }
+  #panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); overflow: hidden auto; overscroll-behavior: contain; z-index: 3;
+           background: var(--card); border-left: 1px solid var(--line); padding: 14px 18px 24px; box-shadow: -4px 0 16px rgb(0 0 0 / .08); }
+  #panel h2 { font-size: 15px; margin: 4px 28px 0 0; overflow-wrap: anywhere; }
+  #panel h3 { margin: 16px 0 6px; font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  #panel a, .lnk { color: var(--focus); }
+  .sub { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 12px; }
+  .chips:empty { display: none; }
+  .chips .chip { padding: 0 8px; font-size: 10.5px; line-height: 16px; }
+  .verdict { background: var(--line-soft); border-radius: 8px; padding: 8px 10px; margin: 0 0 12px; }
+  .verdict b { font-weight: 600; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .kpis div { background: var(--line-soft); border-radius: 8px; padding: 8px 10px; white-space: nowrap; min-width: 0; }
+  .kpis small { display: block; color: var(--muted); font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpis b { display: block; font-size: 17px; font-weight: 600; margin-top: 2px; }
+  .kpis i { font-style: normal; color: var(--muted); font-size: 11px; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+  .kv > :nth-child(odd) { color: var(--muted); }
+  .strip { position: relative; height: 50px; margin: 0 16px; }
+  .strip .ax { position: absolute; left: 0; right: 0; top: 24px; border-top: 1px solid var(--line); }
+  .strip .dot { position: absolute; top: 19px; width: 9px; height: 9px; margin-left: -4.5px; border-radius: 50%; background: var(--ok); opacity: .55; }
+  .strip .dot.r { background: var(--fail); opacity: .9; }
+  .strip .dot:hover, .strip .dot:focus-visible { opacity: 1; }
+  .strip .mark { position: absolute; top: 10px; height: 24px; border-left: 1.5px solid var(--fg); pointer-events: none; }
+  .strip .mark.p90 { border-left-style: dashed; }
+  .strip .ml { position: absolute; top: -2px; font-size: 10px; white-space: nowrap; }
+  .strip .ml.p50 { transform: translateX(calc(-100% - 3px)); }
+  .strip .ml.p90 { transform: translateX(3px); }
+  .strip .tl { position: absolute; top: 34px; font-size: 10px; color: var(--muted); transform: translateX(-50%); white-space: nowrap; }
+  .deps { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dep { border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; background: var(--card); overflow-wrap: anywhere; text-align: left; }
+  .dep:hover { background: var(--hover); }
+  .dep.up { border-left: 3px solid var(--dep-up); }
+  .dep.down { border-left: 3px solid var(--dep-down); }
+  .pl { display: grid; grid-template-columns: 64px 1fr 48px auto; align-items: center; gap: 8px; min-height: 22px; }
+  .pl .lnk { text-align: left; }
+  .plbar { display: block; height: 6px; border-radius: 3px; background: var(--ok); }
+  .plbar.r { background: var(--fail); }
+  .pl .t { text-align: right; }
+  #panel .pl a { color: var(--muted); font-size: 11px; }
+  .more { margin-top: 6px; color: var(--focus); }
   #close { position: absolute; top: 10px; right: 12px; width: 26px; height: 26px; font-size: 16px; color: var(--muted); }
 </style>
 </head>
@@ -201,7 +230,7 @@ function plural(n, one, few, many) {
   return d >= 2 && d <= 4 && (dd < 12 || dd > 14) ? few : many
 }
 
-const state = { tree: null, ins: null, index: new Map(), parent: new Map(), collapsed: new Set(), selected: null, scope: null, crit: { ids: new Set(), gaps: [] }, rel: { up: new Set(), down: new Set(), own: new Set(), name: '' }, view: [0, 1] }
+const state = { tree: null, ins: null, index: new Map(), parent: new Map(), collapsed: new Set(), selected: null, scope: null, crit: { ids: new Set(), gaps: [] }, fullCrit: new Set(), showAll: false, rel: { up: new Set(), down: new Set(), own: new Set(), name: '' }, view: [0, 1] }
 const isAgg = () => state.tree === REPORT.agg
 const fullView = () => [0, (isAgg() ? state.tree.stats.end.p90 : state.tree.end) || 1]
 const EMPTY_INSIGHTS = { stages: {}, retryLoss: {}, totalRetryLoss: 0, hotspots: [], saving: 0 }
@@ -226,7 +255,9 @@ function open(tree) {
   }
   walk(tree, null)
   state.selected = null
+  state.showAll = false
   state.scope = tree.id
+  state.fullCrit = new Set(tree === REPORT.agg ? [] : criticalPath(tree).ids)
   state.view = fullView()
   recompute()
   draw()
@@ -286,9 +317,6 @@ function pill(st) {
   const cls = st.retried / st.present < 0.3 ? 'mid' : 'bad'
   return `<span class="pill ${cls}" title="ретраи в ${esc(st.retried)} из ${esc(st.present)} пайплайнов">↻ ${esc(st.retried)} из ${esc(st.present)}</span>`
 }
-
-// превышение стейджа, для которого узел — узкое место
-const excessOf = (id) => Object.values(state.ins.stages).find((ex) => ex.id === id) ?? null
 
 // ось не уходит левее создания пайплайна: отсчёт всегда с нуля
 const clampView = ([a, b]) => (a < 0 ? [0, b - a] : [a, b])
@@ -533,59 +561,142 @@ function draw() {
 }
 
 const link = (url, text) => (url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : '—')
+const num = new Intl.NumberFormat('ru').format
+const pct = (x) => `${num(Math.round(x * 100))}%`
 const p5090 = (x) => `p50 ${fmt(x.p50)} · p90 ${fmt(x.p90)}`
-const kpi = (value, name) => `<div><b>${value}</b><span>${name}</span></div>`
+const kpi = (name, value, small) => `<div><small>${name}</small><b>${value}</b>${small ? `<i>${small}</i>` : ''}</div>`
+const section = (title, body) => (body ? `<h3>${title}</h3>${body}` : '')
+const kv = (rows) => (rows.length ? `<div class="kv">${rows.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('')}</div>` : '')
+const sampleMs = (x) => x.end - x.start
+const openTreeBtn = (i, text, extra = '') => `<button class="lnk" data-open-tree="${esc(i)}"${extra}>${esc(text)}</button>`
+const TOP_SAMPLES = 5
 
-function insightRows(s) {
-  if (!LEAF.has(s.kind)) return []
-  const loss = state.ins.retryLoss[s.id]
-  const rows = [['Потери на ретраях', loss ? fmt(loss) + (isAgg() ? ' в среднем' : '') : 'нет']]
-  const ex = excessOf(s.id)
-  if (ex) rows.push(['Превышение стейджа', `+${fmt(ex.excess)} после остальных джоб стейджа`])
-  return rows
+function stageName(s) {
+  for (let p = state.parent.get(s.id); p; p = state.parent.get(p.id)) if (p.kind === 'stage') return p.name
+  return null
 }
 
-function details(s) {
-  const rows = [['Тип', esc(s.kind)], ['Статус', esc(s.status) + (s.allowFailure ? ' (allow_failure)' : '')]]
-  if (s.stage) rows.push(['Стейдж', esc(s.stage)])
-  rows.push(['Конец', fmt(s.end)])
-  if (s.queued != null) rows.push(['Очередь', fmt(s.queued)])
-  if (s.deps.length) rows.push(['Зависит от', s.deps.map((id) => esc(state.index.get(id)?.name ?? id)).join('<br>')])
-  if (s.attempts.length) {
-    rows.push(['Попытки', s.attempts.map((a) => `${link(a.url, a.status)} ${a.start == null ? '' : fmt(a.end - a.start)}`).join('<br>')])
-  }
-  rows.push(...insightRows(s))
-  rows.push(['GitLab', link(s.url, 'открыть')])
-  if (s.kind === 'stage' || s.kind === 'pipeline') rows.push(['Критический путь', `до конца «${esc(s.name)}» выделен в водопаде`])
-  return rows
+// доля пайплайнов, где узел на критическом пути всего пайплайна; шарды группы лежат на пути по одному, поэтому доли складываются
+function critShare(s) {
+  if (isAgg()) return Math.min(1, leafIds(s).reduce((n, id) => n + (state.index.get(id)?.stats.critical ?? 0), 0))
+  return leafIds(s).some((id) => state.fullCrit.has(id)) ? 1 : 0
 }
 
-function aggDetails(s) {
-  const st = s.stats
-  const rows = [['Тип', esc(s.kind)], ['Запускалась', `${esc(st.present)} из ${esc(st.total)}`]]
-  if (st.queued.p50 != null) rows.push(['Очередь', p5090(st.queued)])
-  if (LEAF.has(s.kind)) {
-    rows.push(['Ретраи', `в ${esc(st.retried)} из ${esc(st.present)} пайплайнов, в среднем ${st.retries.toFixed(2)}`])
-    rows.push(['На критическом пути', `${Math.round(st.critical * 100)}% пайплайнов`])
+function panelHead(s) {
+  const stage = stageName(s)
+  const sub = stage ? [`стейдж <span translate="no">${esc(stage)}</span>`] : []
+  if (isAgg() && LINKABLE.has(s.kind)) sub.push(`запускалась в ${num(s.stats.present)} из ${num(s.stats.total)}`)
+  const chips = [pill(stabilityOf(s))]
+  if (LINKABLE.has(s.kind)) {
+    const c = critShare(s)
+    const text = isAgg() ? `крит. путь ${pct(c)}` : c ? 'на критическом пути' : 'не на критическом пути'
+    chips.push(chip(text, (isAgg() ? c >= 0.5 : c) ? 'crit' : ''))
   }
-  rows.push(...insightRows(s))
-  const samples = [...st.samples].sort((a, b) => (b.end - b.start) - (a.end - a.start))
-  rows.push(['Пайплайны', `<ol>${samples.map((x) => {
-    const tree = REPORT.trees[x.tree]
-    return `<li><a href="#" data-open-tree="${esc(x.tree)}">${esc(tree.name)}</a> ${fmt(x.end - x.start)} · ${link(tree.url, 'GitLab')}</li>`
-  }).join('')}</ol>`])
-  return rows
+  return `<h2 translate="no">${esc(s.name)}</h2>${sub.length ? `<div class="sub">${sub.join(' · ')}</div>` : ''}<div class="chips">${chips.join('')}</div>`
+}
+
+function verdict(s) {
+  if (s.kind === 'stage') {
+    const ex = state.ins.stages[s.id]
+    const parts = ex ? [`Держит <span translate="no">${esc(state.index.get(ex.id)?.name)}</span> <b>+${fmt(ex.excess)}</b>.`] : []
+    if (!isAgg()) parts.push('Критический путь до конца стейджа выделен в водопаде.')
+    return parts.join(' ')
+  }
+  if (s.kind === 'pipeline') return isAgg() ? '' : 'Критический путь выделен в водопаде.'
+  const c = critShare(s)
+  const parts = [!c ? 'Не на критическом пути: ускорение <b>не сократит</b> пайплайн.'
+    : !isAgg() ? 'На критическом пути: ускорение <b>сократит</b> пайплайн.'
+    : `На критическом пути в ${pct(c)} пайплайнов: ускорение <b>${c >= 0.5 ? 'сократит' : 'иногда сокращает'}</b> пайплайн.`]
+  const saving = state.ins.hotspots.filter((h) => h.id === s.id).reduce((n, h) => n + h.saving, 0)
+  if (saving) parts.push(`Экономия до <b>−${fmt(saving)}</b>.`)
+  const held = Object.entries(state.ins.stages).find(([, ex]) => ex.id === s.id)
+  if (held) parts.push(`Держит стейдж <span translate="no">${esc(state.index.get(held[0])?.name)}</span> на <b>+${fmt(held[1].excess)}</b>.`)
+  if (isAgg()) {
+    if (s.stats.retried) parts.push(`Стоит посмотреть ретраи — <b>${num(s.stats.retried)} из ${num(s.stats.present)}</b>.`)
+  } else if (s.attempts.length) {
+    const n = s.attempts.length
+    const loss = state.ins.retryLoss[s.id]
+    parts.push(`<b>${num(n)} ${plural(n, 'упавшая попытка', 'упавшие попытки', 'упавших попыток')}</b>${loss ? `, потеряно ${fmt(loss)}` : ''}.`)
+  }
+  return parts.join(' ')
 }
 
 function kpisHtml(s) {
   if (isAgg()) {
     const st = s.stats
     if (!st.present) return ''
-    const two = (x) => `${fmt(x.p50)} · ${fmt(x.p90)}`
-    return kpi(two(st.duration), 'длительность p50 · p90') + kpi(two(st.start), 'старт') + kpi(two(st.end), 'до конца')
+    const two = (name, x) => kpi(name, fmt(x.p50), `p90 ${fmt(x.p90)}`)
+    return two('Длительность', st.duration) + two('Старт', st.start) + two('До конца', st.end)
   }
-  if (s.start == null) return ''
-  return kpi(fmt(s.end - s.start), 'длительность') + kpi(fmt(s.start), 'старт') + kpi(fmt(s.end), 'до конца')
+  if (s.start == null || s.end == null) return ''
+  return kpi('Длительность', fmt(s.end - s.start)) + kpi('Старт', fmt(s.start)) + kpi('До конца', fmt(s.end))
+}
+
+// одна точка — один пайплайн; красные — с ретраями
+function stripHtml(s) {
+  const samples = s.stats.samples
+  const ds = samples.map(sampleMs)
+  let lo = Math.min(...ds)
+  let hi = Math.max(...ds)
+  if (hi === lo) { lo = Math.max(0, lo - 1000); hi += 1000 }
+  const at = (v) => ((v - lo) / (hi - lo)) * 100
+  const step = STEPS.find((x) => (hi - lo) / x <= 6) ?? STEPS[STEPS.length - 1]
+  let ticks = ''
+  for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) ticks += `<span class="tl" style="left:${at(t)}%">${fmt(t)}</span>`
+  const dots = samples.map((x) => {
+    const label = `${REPORT.trees[x.tree].name} ${fmt(sampleMs(x))}`
+    return openTreeBtn(x.tree, '', ` style="left:${at(sampleMs(x))}%" aria-label="${esc(label)}" title="${esc(label)}${x.retries ? ' · ретраи' : ''}"`)
+      .replace('class="lnk"', `class="dot${x.retries ? ' r' : ''}"`)
+  }).join('')
+  const { p50, p90 } = s.stats.duration
+  const mark = (cls, v) => `<span class="mark ${cls}" style="left:${at(v)}%"></span><span class="ml ${cls}" style="left:${at(v)}%">${cls}</span>`
+  return `<div class="strip"><div class="ax"></div>${mark('p50', p50)}${mark('p90', p90)}${dots}${ticks}</div>`
+}
+
+function stabilityRows(s) {
+  if (!LEAF.has(s.kind)) return []
+  const loss = state.ins.retryLoss[s.id]
+  if (isAgg()) {
+    const st = s.stats
+    const rows = [['Ретраи', `в ${num(st.retried)} из ${num(st.present)} ${plural(st.present, 'пайплайна', 'пайплайнов', 'пайплайнов')}`]]
+    if (loss) rows.push(['Потери', `${fmt(loss)} в среднем`])
+    if (st.queued.p50 != null) rows.push(['Очередь', p5090(st.queued)])
+    return rows
+  }
+  const rows = []
+  if (s.attempts.length) {
+    const tries = [...s.attempts].sort((a, b) => (a.start ?? 0) - (b.start ?? 0))
+    rows.push(['Попытки', tries.map((a) => `${link(a.url, a.status)} ${a.start == null || a.end == null ? '' : fmt(a.end - a.start)}`).join('<br>')])
+  }
+  if (loss) rows.push(['Потери', fmt(loss)])
+  if (s.queued != null) rows.push(['Очередь', fmt(s.queued)])
+  return rows
+}
+
+function relationsHtml() {
+  const btn = (id, dir) => {
+    const name = state.index.get(id)?.name ?? id
+    const what = dir === 'up' ? 'нужна для выбранной' : 'ждёт выбранную'
+    return `<button class="dep ${dir}" data-reveal="${esc(id)}" translate="no" aria-label="${esc(name)} — ${what}" title="${what}">${dir === 'up' ? '↑' : '↓'} ${esc(name)}</button>`
+  }
+  const chips = [...[...state.rel.up].map((id) => btn(id, 'up')), ...[...state.rel.down].map((id) => btn(id, 'down'))]
+  return chips.length ? `<div class="deps">${chips.join('')}</div>` : ''
+}
+
+function samplesHtml(s) {
+  const all = [...s.stats.samples].sort((a, b) => sampleMs(b) - sampleMs(a))
+  if (!all.length) return ''
+  const max = sampleMs(all[0]) || 1
+  const rows = (state.showAll ? all : all.slice(0, TOP_SAMPLES)).map((x) => {
+    const tree = REPORT.trees[x.tree]
+    return `<div class="pl">${openTreeBtn(x.tree, tree.name)}<span><span class="plbar${x.retries ? ' r' : ''}" style="width:${(sampleMs(x) / max) * 100}%"></span></span>`
+      + `<span class="t">${fmt(sampleMs(x))}</span>${link(tree.url, 'GitLab ↗')}</div>`
+  }).join('')
+  const n = all.length
+  const more = n > TOP_SAMPLES
+    ? `<button class="more" data-more aria-expanded="${state.showAll}">${state.showAll ? 'Свернуть ▴' : `Все ${num(n)} ${plural(n, 'пайплайн', 'пайплайна', 'пайплайнов')} ▾`}</button>`
+    : ''
+  return rows + more
 }
 
 function drawPanel() {
@@ -594,13 +705,21 @@ function drawPanel() {
   panel.hidden = !s
   document.body.classList.toggle('panel-open', Boolean(s))
   if (!s) return
-  const rows = isAgg() ? aggDetails(s) : details(s)
-  panel.innerHTML = `<button id="close" aria-label="Закрыть">×</button><h2 translate="no">${esc(s.name)}</h2><div class="kpis">${kpisHtml(s)}</div>`
-    + `<table>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('')}</table>`
+  const v = verdict(s)
+  const k = kpisHtml(s)
+  const n = isAgg() ? s.stats.samples.length : 0
+  const strip = isAgg() && LEAF.has(s.kind) && n
+    ? section(`Длительность по ${num(n)} ${plural(n, 'пайплайну', 'пайплайнам', 'пайплайнам')}`, stripHtml(s))
+    : ''
+  const tail = isAgg() ? section('Самые долгие', samplesHtml(s)) : s.url ? `<p>${link(s.url, 'Открыть в GitLab ↗')}</p>` : ''
+  panel.innerHTML = `<button id="close" aria-label="Закрыть">×</button>${panelHead(s)}`
+    + (v ? `<p class="verdict">${v}</p>` : '') + (k ? `<div class="kpis">${k}</div>` : '')
+    + strip + section('Стабильность', kv(stabilityRows(s))) + section('Связи', relationsHtml()) + tail
 }
 
 function select(id) {
   const s = state.index.get(id)
+  if (state.selected !== s.id) state.showAll = false
   state.selected = s.id
   if (!isAgg() && (s.kind === 'stage' || s.kind === 'pipeline')) { state.scope = s.id; recompute() }
   draw()
@@ -677,6 +796,13 @@ document.addEventListener('click', (e) => {
   if (openTree) {
     e.preventDefault()
     return open(REPORT.trees[Number(openTree.dataset.openTree)])
+  }
+  const dep = e.target.closest('[data-reveal]')
+  if (dep) return state.index.has(dep.dataset.reveal) && reveal(dep.dataset.reveal)
+  if (e.target.closest('[data-more]')) {
+    state.showAll = !state.showAll
+    drawPanel()
+    return $('#panel [data-more]')?.focus()
   }
   if (e.target.closest('#close')) { state.selected = null; return draw() }
   if (e.target.closest('#back')) return open(REPORT.agg)

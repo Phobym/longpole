@@ -42,7 +42,7 @@
   body.dragging, body.dragging * { cursor: grabbing !important; user-select: none; }
   .track { position: absolute; top: 0; bottom: 0; left: 12px; right: 24px; }
   #rows { position: relative; }
-  #links { position: absolute; top: 0; pointer-events: none; }
+  #links { position: absolute; top: 0; pointer-events: none; overflow: hidden; }
   #links path.link { fill: none; stroke: var(--muted); stroke-width: 1; opacity: .35; }
   #links path.link.up { stroke: var(--dep-up); stroke-width: 1.5; opacity: 1; }
   #links path.link.down { stroke: var(--dep-down); stroke-width: 1.5; opacity: 1; }
@@ -283,8 +283,9 @@ function draw() {
   }
   walk(state.tree, 0)
   $('#rows').innerHTML = html.join('')
-  drawLinks()
+  // панель меняет ширину водопада, поэтому линии меряются после неё
   drawPanel()
+  drawLinks()
 }
 
 const link = (url, text) => (url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : '—')

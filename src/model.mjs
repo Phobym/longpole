@@ -94,8 +94,11 @@ export function buildTree(raw, { baseUrl, origin = Date.parse(raw.pipeline.creat
   })
 
   const p = raw.pipeline
-  const stageNames = [...new Set(ordered.map((j) => j.stage.name))]
-  const stages = stageNames.map((stage) => {
+  const jobStageNames = [...new Set(ordered.map((j) => j.stage.name))]
+  // declared — порядок из pipeline.stages (правда GitLab); без него используем порядок появления джоб, как раньше
+  const declared = (p.stages?.nodes?.map((s) => s.name) ?? []).filter((name) => jobStageNames.includes(name))
+  const stageNames = [...declared, ...jobStageNames.filter((name) => !declared.includes(name))]
+  const stages = stageNames.map((stage, position) => {
     const members = jobs.filter((s) => s.stage === stage).sort(byStart)
     const children = []
     const seenGroups = new Set()
@@ -113,7 +116,7 @@ export function buildTree(raw, { baseUrl, origin = Date.parse(raw.pipeline.creat
         }))
       }
     }
-    return span({ id: `${p.id}:${stage}`, kind: 'stage', name: stage, ...bounds(children), children: orderByDeps(children) })
+    return span({ id: `${p.id}:${stage}`, kind: 'stage', name: stage, position, ...bounds(children), children: orderByDeps(children) })
   })
 
   const stagesEnd = bounds(stages).end

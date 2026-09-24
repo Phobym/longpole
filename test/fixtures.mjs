@@ -23,11 +23,14 @@ export function job(name, stage, {
 // jobs перечисляются в хронологическом порядке, API отдаёт их от новых к старым
 export function rawPipeline(jobs, {
   id = 'gid://gitlab/Ci::Pipeline/1', iid = '1', status = 'SUCCESS', createdAt = T0,
-  finishedAt = null, project = 'g/p', downstream = {},
+  finishedAt = null, project = 'g/p', downstream = {}, stages,
 } = {}) {
   return {
     project,
-    pipeline: { id, iid, status, createdAt, finishedAt, ref: 'master', path: `/${project}/-/pipelines/${iid}` },
+    pipeline: {
+      id, iid, status, createdAt, finishedAt, ref: 'master', path: `/${project}/-/pipelines/${iid}`,
+      ...(stages ? { stages: { nodes: stages.map((name) => ({ name })) } } : {}),
+    },
     jobs: [...jobs].reverse(),
     downstream,
   }

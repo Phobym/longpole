@@ -83,6 +83,7 @@ const PIPELINE_QUERY = `query($project: ID!, $id: CiPipelineID!, $after: String)
   project(fullPath: $project) {
     pipeline(id: $id) {
       id iid status createdAt finishedAt ref path
+      stages { nodes { name } }
       jobs(first: 100, after: $after) {
         pageInfo { hasNextPage endCursor }
         nodes {

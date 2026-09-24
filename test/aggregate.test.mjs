@@ -64,6 +64,16 @@ test('ретраи усредняются по запускам', () => {
   assert.deepEqual(e2e.stats.samples.map((s) => s.retries), [1, 0])
 })
 
+test('агрегат: порядок стейджей — по declared position (минимум среди деревьев), а не по старту', () => {
+  const t = (i) => buildTree(rawPipeline([
+    job('prepare', 'prepare', { start: 0, end: 5 }),
+    job('build', 'build', { start: 10, end: 100 }),
+    job('security:code', 'security', { start: 0, end: 20 }),
+  ], { id: `gid://gitlab/Ci::Pipeline/${i}`, iid: String(i), stages: ['prepare', 'build', 'security'] }), { baseUrl: 'https://h' })
+  const agg = aggregate([t(1), t(2)])
+  assert.deepEqual(agg.children.map((s) => s.name), ['prepare', 'build', 'security'])
+})
+
 test('агрегат: deps указывают на агрегированные узлы, порядок в стейдже по связям', () => {
   const t = (i) => buildTree(rawPipeline([
     job('cache', 'cache', { start: 0, end: 10 }),

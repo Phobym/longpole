@@ -30,7 +30,10 @@ export function aggregate(trees) {
         groups.get(key).entries.push({ span: c, tree: e.tree })
       }
     }
-    const children = [...groups].map(([key, g]) => merge(`${id}/${key}`, g.kind, g.name, g.entries)).sort(byStart)
+    const children = [...groups]
+      .map(([key, g]) => merge(`${id}/${key}`, g.kind, g.name, g.entries))
+      // стейджи сортируем по объявленному в пайплайне порядку, а не по p50-старту (тот же баг, что в model.mjs)
+      .sort((a, b) => (a.kind === 'stage' && b.kind === 'stage' ? a.position - b.position : byStart(a, b)))
 
     const ran = entries.filter((e) => e.span.start != null && e.span.end != null)
     const stats = {
@@ -52,6 +55,7 @@ export function aggregate(trees) {
       status: null, url: null, allowFailure: false, attempts: [], deps: [], after: null,
       children, stats,
     }
+    if (kind === 'stage') node.position = Math.min(...entries.map((e) => e.span.position))
     if (LINKED.has(kind)) linked.push({ node, entries })
     return node
   }

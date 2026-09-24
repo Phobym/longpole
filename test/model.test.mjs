@@ -35,6 +35,22 @@ test('стейджи идут в порядке запуска, границы �
   assert.deepEqual(server.deps, ['gid://gitlab/Ci::Build/cache:npm'])
 })
 
+test('порядок стейджей — по объявлению в пайплайне, а не по старту джоб; без stages — старый порядок', () => {
+  const withStages = buildTree(rawPipeline([
+    job('prepare', 'prepare', { start: 0, end: 5 }),
+    job('build', 'build', { start: 10, end: 100 }),
+    job('security:code', 'security', { start: 0, end: 20 }),
+  ], { stages: ['prepare', 'build', 'security'] }), { baseUrl })
+  assert.deepEqual(withStages.children.map((s) => [s.name, s.position]), [['prepare', 0], ['build', 1], ['security', 2]])
+
+  const withoutStages = buildTree(rawPipeline([
+    job('prepare', 'prepare', { start: 0, end: 5 }),
+    job('build', 'build', { start: 10, end: 100 }),
+    job('security:code', 'security', { start: 0, end: 20 }),
+  ]), { baseUrl })
+  assert.deepEqual(withoutStages.children.map((s) => s.name), ['prepare', 'build', 'security'])
+})
+
 test('manual-джоба без старта остаётся в дереве без времени и не влияет на стейдж', () => {
   const tree = buildTree(rawPipeline([
     job('a', 'build', { start: 0, end: 10 }),

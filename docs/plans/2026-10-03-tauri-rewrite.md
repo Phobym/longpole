@@ -46,9 +46,39 @@ S0 ─┬─ S1 ── S2 ─┬──────── S4 ── S5 ─┬─ 
 - `app/Cargo.toml` (workspace `core`, `src-tauri`), `app/rust-toolchain.toml`;
 - `app/core/` — пустой crate `pipeline-trace-core` с `ts-rs` 12 (`TS_RS_LARGE_INT=number`), экспорт в `app/src/shared/api/schema/`;
 - `app/src-tauri/` — `tauri.conf.json` (`productName`, identifier, `"version": "../package.json"`), окно `form`, пустой `build.rs` с `AppManifest`;
-- `app/package.json`, `tsconfig`, `vite.config.ts`, `vite.report.config.ts` (заглушка отчёта со `vite-plugin-singlefile` и плагином CSP-хешей — по образцу ветки `prototype/report-stack`);
+- `app/package.json`, `tsconfig`, `vite.config.ts`, `vite.report.config.ts` (заглушка отчёта со `vite-plugin-singlefile` и плагином CSP-хешей, см. ниже);
 - скелет FSD (`app/src/{app/form,app/report,pages,widgets,features,entities,shared}`), Steiger;
 - `.github/workflows/ci.yml` — все проверки общего критерия, включая скрипт сверки ключей `ru.json`/`en.json` и `git diff` сгенерированного.
+
+**Плагин CSP-хешей** (проверен в «Прототип отчёта: проверка стека»; ставится в `plugins` после `viteSingleFile()`). После инлайна считает sha256 каждого инлайн-`<script>` (кроме `type="application/json"` — данные не исполняются, их подставляет Rust) и каждого `<style>`, пишет `<meta>` CSP первым элементом `<head>`:
+
+```ts
+import { createHash } from 'node:crypto'
+import type { Plugin } from 'vite'
+
+const sha = (s: string) => `'sha256-${createHash('sha256').update(s, 'utf8').digest('base64')}'`
+
+export function cspHashes(): Plugin {
+  return {
+    name: 'csp-hashes',
+    enforce: 'post',
+    generateBundle: {
+      order: 'post',
+      handler(_, bundle) {
+        const html = bundle['report.html'] as { source: string }
+        let src = html.source
+        const scripts = [...src.matchAll(/<script(?![^>]*type="application\/json")[^>]*>([\s\S]*?)<\/script>/g)].map((m) => sha(m[1]))
+        const styles = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => sha(m[1]))
+        const csp = `default-src 'none'; script-src ${scripts.join(' ')}; style-src ${styles.join(' ')}; img-src data:; connect-src 'none'`
+        src = src.replace('<head>', () => `<head>\n<meta http-equiv="Content-Security-Policy" content="${csp}">`)
+        html.source = src
+      },
+    },
+  }
+}
+```
+
+Шаблон содержит пустой `<script type="application/json" id="data"></script>`; Rust (`core::render`) подставляет JSON, экранируя `<` → `<`. Хеши от данных не зависят, поэтому один шаблон годится для любого отчёта. Имя ключа в `bundle` — имя HTML-входа конфига отчёта.
 
 **Готово, когда**: `ci.yml` зелёный на пустом приложении; `tauri dev` открывает окно формы с заглушкой; сборка отчёта даёт `dist-report/report.html` с `<meta>` CSP без `unsafe-inline`.
 

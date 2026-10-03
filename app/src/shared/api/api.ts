@@ -11,7 +11,10 @@ export type ApiError = CmdError | IpcError
 export type Result<T> = { ok: true; value: T } | { ok: false; error: ApiError }
 
 const isCmdError = (e: unknown): e is CmdError =>
-  typeof e === 'object' && e !== null && 'kind' in e && (e.kind === 'message' || e.kind === 'fields')
+  typeof e === 'object' &&
+  e !== null &&
+  (('kind' in e && e.kind === 'message' && 'code' in e && typeof e.code === 'string') ||
+    ('kind' in e && e.kind === 'fields' && 'errors' in e))
 
 async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<Result<T>> {
   try {

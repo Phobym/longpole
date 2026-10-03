@@ -50,6 +50,7 @@ export function duration(ms: number | null): string {
 
 export function relativeTime(iso: string, locale: Locale): string {
   let diff = (new Date(iso).getTime() - Date.now()) / 1000
+  if (Number.isNaN(diff)) return '—' // старый код отдавал undefined; Intl на NaN бросает RangeError
   for (const { amount, unit } of RELATIVE_DIVISIONS) {
     if (Math.abs(diff) < amount) return relativeFmt(locale).format(Math.round(diff), unit)
     diff /= amount

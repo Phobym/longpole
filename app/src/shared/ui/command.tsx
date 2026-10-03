@@ -14,7 +14,7 @@ export const CommandInput = ({ className, ...props }: ComponentProps<typeof Comm
   <div className="flex h-9 items-center gap-2 border-b px-3">
     <SearchIcon className="size-4 shrink-0 opacity-50" />
     <CommandPrimitive.Input
-      className={cn('flex h-10 w-full bg-transparent py-3 text-sm outline-hidden placeholder:text-muted-foreground disabled:opacity-50', className)}
+      className={cn('flex h-full w-full bg-transparent py-3 text-sm outline-hidden placeholder:text-muted-foreground disabled:opacity-50', className)}
       {...props}
     />
   </div>
@@ -24,8 +24,8 @@ export const CommandList = ({ className, ...props }: ComponentProps<typeof Comma
   <CommandPrimitive.List className={cn('max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto', className)} {...props} />
 )
 
-export const CommandEmpty = (props: ComponentProps<typeof CommandPrimitive.Empty>) => (
-  <CommandPrimitive.Empty className="py-6 text-center text-sm" {...props} />
+export const CommandEmpty = ({ className, ...props }: ComponentProps<typeof CommandPrimitive.Empty>) => (
+  <CommandPrimitive.Empty className={cn('py-6 text-center text-sm', className)} {...props} />
 )
 
 export const CommandGroup = ({ className, ...props }: ComponentProps<typeof CommandPrimitive.Group>) => (

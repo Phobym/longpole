@@ -1,8 +1,6 @@
 @import 'tailwindcss';
 
-/* Тёмная тема — по системе, переключателя нет. */
-@custom-variant dark (@media (prefers-color-scheme: dark));
-
+/* Тёмная тема — по системе, переключателя нет: переменные ниже переопределяются в @media. */
 :root {
   color-scheme: light dark;
   --radius: 0.625rem;

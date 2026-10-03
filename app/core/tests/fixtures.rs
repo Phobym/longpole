@@ -130,3 +130,69 @@ pub fn raw_pipeline(mut jobs: Vec<RawJob>, o: PipelineOpts) -> RawPipeline {
         downstream: o.downstream,
     }
 }
+
+fn ran(start: i64, end: i64, deps: &[&'static str]) -> JobOpts {
+    JobOpts {
+        start: Some(start),
+        end: Some(end),
+        deps: deps.to_vec(),
+        ..Default::default()
+    }
+}
+
+fn failed(start: i64, end: i64, deps: &[&'static str]) -> JobOpts {
+    JobOpts {
+        retried: true,
+        status: "FAILED",
+        ..ran(start, end, deps)
+    }
+}
+
+pub fn pipeline_opts(i: usize) -> PipelineOpts {
+    PipelineOpts {
+        id: format!("gid://gitlab/Ci::Pipeline/{i}").leak(),
+        iid: i.to_string().leak(),
+        ..Default::default()
+    }
+}
+
+/// Пайплайн из `insights.test`: ретраи lint и `e2e: [3]`, узкое место build:server.
+pub fn sample_pipeline(i: usize) -> RawPipeline {
+    raw_pipeline(
+        vec![
+            job("build:server", "build", ran(0, 302, &[])),
+            job("build:static", "build", ran(10, 242, &[])),
+            job("lint", "build", failed(0, 50, &[])),
+            job("lint", "build", ran(60, 240, &[])),
+            job("e2e: [1]", "test", ran(330, 780, &["build:server"])),
+            job("e2e: [3]", "test", failed(331, 590, &["build:server"])),
+            job("e2e: [3]", "test", failed(600, 850, &["build:server"])),
+            job("e2e: [3]", "test", ran(860, 1318, &["build:server"])),
+            job(
+                "report",
+                "report",
+                ran(1320, 1400, &["e2e: [1]", "e2e: [3]"]),
+            ),
+        ],
+        pipeline_opts(i),
+    )
+}
+
+/// Тот же пайплайн без ретраев.
+pub fn clean_pipeline(i: usize) -> RawPipeline {
+    raw_pipeline(
+        vec![
+            job("build:server", "build", ran(0, 302, &[])),
+            job("build:static", "build", ran(10, 242, &[])),
+            job("lint", "build", ran(60, 240, &[])),
+            job("e2e: [1]", "test", ran(330, 780, &["build:server"])),
+            job("e2e: [3]", "test", ran(860, 1318, &["build:server"])),
+            job(
+                "report",
+                "report",
+                ran(1320, 1400, &["e2e: [1]", "e2e: [3]"]),
+            ),
+        ],
+        pipeline_opts(i),
+    )
+}

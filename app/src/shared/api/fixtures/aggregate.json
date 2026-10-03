@@ -1,0 +1,4054 @@
+{
+  "mode": "aggregate",
+  "meta": {
+    "host": "gitlab.example.com",
+    "project": "g/p",
+    "label": null,
+    "locale": "ru",
+    "statusCounts": {
+      "FAILED": 1,
+      "SUCCESS": 4
+    },
+    "generatedAt": "2026-09-24T07:30:00.000Z"
+  },
+  "agg": {
+    "root": "agg",
+    "nodes": {
+      "agg": {
+        "id": "agg",
+        "kind": "pipeline",
+        "name": "",
+        "parent": null,
+        "children": [
+          "agg/stage:build",
+          "agg/stage:test",
+          "agg/stage:report",
+          "agg/stage:deploy"
+        ],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 0,
+          "end": 1560000
+        },
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 0,
+            "p90": 0
+          },
+          "end": {
+            "p50": 1560000,
+            "p90": 1560000
+          },
+          "duration": {
+            "p50": 1560000,
+            "p90": 1560000
+          },
+          "queued": {
+            "p50": null,
+            "p90": null
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 0,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 1,
+              "start": 0,
+              "end": 1400000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 0,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 3,
+              "start": 0,
+              "end": 1400000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 0,
+              "end": 1560000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:build": {
+        "id": "agg/stage:build",
+        "kind": "stage",
+        "name": "build",
+        "parent": "agg",
+        "children": [
+          "agg/stage:build/job:build:server",
+          "agg/stage:build/job:build:static",
+          "agg/stage:build/job:lint"
+        ],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 0,
+          "end": 302000
+        },
+        "excess": {
+          "id": "agg/stage:build/job:build:server",
+          "peersEnd": 242000,
+          "excess": 60000.0
+        },
+        "position": 0,
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 0,
+            "p90": 0
+          },
+          "end": {
+            "p50": 302000,
+            "p90": 302000
+          },
+          "duration": {
+            "p50": 302000,
+            "p90": 302000
+          },
+          "queued": {
+            "p50": null,
+            "p90": null
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 0,
+              "end": 302000,
+              "retries": 0
+            },
+            {
+              "tree": 1,
+              "start": 0,
+              "end": 302000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 0,
+              "end": 302000,
+              "retries": 0
+            },
+            {
+              "tree": 3,
+              "start": 0,
+              "end": 302000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 0,
+              "end": 302000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:build/job:build:server": {
+        "id": "agg/stage:build/job:build:server",
+        "kind": "job",
+        "name": "build:server",
+        "parent": "agg/stage:build",
+        "children": [],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 0,
+          "end": 302000
+        },
+        "dependents": [
+          "agg/stage:test/group:e2e",
+          "agg/stage:test/group:e2e/job:e2e: [1]",
+          "agg/stage:test/group:e2e/job:e2e: [3]"
+        ],
+        "critShare": 1.0,
+        "holds": {
+          "stage": "agg/stage:build",
+          "excess": 60000.0
+        },
+        "stability": {
+          "retried": 0,
+          "present": 5
+        },
+        "saving": 60000.0,
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 0,
+            "p90": 0
+          },
+          "end": {
+            "p50": 302000,
+            "p90": 302000
+          },
+          "duration": {
+            "p50": 302000,
+            "p90": 302000
+          },
+          "queued": {
+            "p50": 1000,
+            "p90": 1000
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 1.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 0,
+              "end": 302000,
+              "retries": 0
+            },
+            {
+              "tree": 1,
+              "start": 0,
+              "end": 302000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 0,
+              "end": 302000,
+              "retries": 0
+            },
+            {
+              "tree": 3,
+              "start": 0,
+              "end": 302000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 0,
+              "end": 302000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:build/job:build:static": {
+        "id": "agg/stage:build/job:build:static",
+        "kind": "job",
+        "name": "build:static",
+        "parent": "agg/stage:build",
+        "children": [],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 10000,
+          "end": 242000
+        },
+        "dependents": [],
+        "critShare": 0.0,
+        "stability": {
+          "retried": 0,
+          "present": 5
+        },
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 10000,
+            "p90": 10000
+          },
+          "end": {
+            "p50": 242000,
+            "p90": 242000
+          },
+          "duration": {
+            "p50": 232000,
+            "p90": 232000
+          },
+          "queued": {
+            "p50": 1000,
+            "p90": 1000
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 10000,
+              "end": 242000,
+              "retries": 0
+            },
+            {
+              "tree": 1,
+              "start": 10000,
+              "end": 242000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 10000,
+              "end": 242000,
+              "retries": 0
+            },
+            {
+              "tree": 3,
+              "start": 10000,
+              "end": 242000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 10000,
+              "end": 242000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:build/job:lint": {
+        "id": "agg/stage:build/job:lint",
+        "kind": "job",
+        "name": "lint",
+        "parent": "agg/stage:build",
+        "children": [],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 60000,
+          "end": 240000
+        },
+        "dependents": [],
+        "critShare": 0.0,
+        "retryLoss": 36000.0,
+        "stability": {
+          "retried": 3,
+          "present": 5
+        },
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 60000,
+            "p90": 60000
+          },
+          "end": {
+            "p50": 240000,
+            "p90": 240000
+          },
+          "duration": {
+            "p50": 180000,
+            "p90": 180000
+          },
+          "queued": {
+            "p50": 1000,
+            "p90": 1000
+          },
+          "retries": 0.6,
+          "retried": 3,
+          "retryLoss": 36000.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 60000,
+              "end": 240000,
+              "retries": 1
+            },
+            {
+              "tree": 1,
+              "start": 60000,
+              "end": 240000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 60000,
+              "end": 240000,
+              "retries": 1
+            },
+            {
+              "tree": 3,
+              "start": 60000,
+              "end": 240000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 60000,
+              "end": 240000,
+              "retries": 1
+            }
+          ]
+        }
+      },
+      "agg/stage:deploy": {
+        "id": "agg/stage:deploy",
+        "kind": "stage",
+        "name": "deploy",
+        "parent": "agg",
+        "children": [
+          "agg/stage:deploy/bridge:trigger"
+        ],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 1400000,
+          "end": 1560000
+        },
+        "position": 3,
+        "stats": {
+          "present": 3,
+          "total": 5,
+          "start": {
+            "p50": 1400000,
+            "p90": 1400000
+          },
+          "end": {
+            "p50": 1560000,
+            "p90": 1560000
+          },
+          "duration": {
+            "p50": 160000,
+            "p90": 160000
+          },
+          "queued": {
+            "p50": null,
+            "p90": null
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 1400000,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 1400000,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 1400000,
+              "end": 1560000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:deploy/bridge:trigger": {
+        "id": "agg/stage:deploy/bridge:trigger",
+        "kind": "bridge",
+        "name": "trigger",
+        "parent": "agg/stage:deploy",
+        "children": [
+          "agg/stage:deploy/bridge:trigger/pipeline"
+        ],
+        "deps": [
+          "agg/stage:report/job:report"
+        ],
+        "after": null,
+        "bar": {
+          "start": 1400000,
+          "end": 1560000
+        },
+        "dependents": [],
+        "critShare": 0.6,
+        "stability": {
+          "retried": 0,
+          "present": 3
+        },
+        "stats": {
+          "present": 3,
+          "total": 5,
+          "start": {
+            "p50": 1400000,
+            "p90": 1400000
+          },
+          "end": {
+            "p50": 1560000,
+            "p90": 1560000
+          },
+          "duration": {
+            "p50": 160000,
+            "p90": 160000
+          },
+          "queued": {
+            "p50": 1000,
+            "p90": 1000
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.6,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 1400000,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 1400000,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 1400000,
+              "end": 1560000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:deploy/bridge:trigger/pipeline": {
+        "id": "agg/stage:deploy/bridge:trigger/pipeline",
+        "kind": "pipeline",
+        "name": "#101",
+        "parent": "agg/stage:deploy/bridge:trigger",
+        "children": [
+          "agg/stage:deploy/bridge:trigger/pipeline/stage:release"
+        ],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 1400000,
+          "end": 1560000
+        },
+        "stats": {
+          "present": 3,
+          "total": 5,
+          "start": {
+            "p50": 1400000,
+            "p90": 1400000
+          },
+          "end": {
+            "p50": 1560000,
+            "p90": 1560000
+          },
+          "duration": {
+            "p50": 160000,
+            "p90": 160000
+          },
+          "queued": {
+            "p50": null,
+            "p90": null
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 1400000,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 1400000,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 1400000,
+              "end": 1560000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:deploy/bridge:trigger/pipeline/stage:release": {
+        "id": "agg/stage:deploy/bridge:trigger/pipeline/stage:release",
+        "kind": "stage",
+        "name": "release",
+        "parent": "agg/stage:deploy/bridge:trigger/pipeline",
+        "children": [
+          "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:migrate",
+          "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:smoke"
+        ],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 1410000,
+          "end": 1560000
+        },
+        "excess": {
+          "id": "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:smoke",
+          "peersEnd": 1500000,
+          "excess": 60000.0
+        },
+        "position": 0,
+        "stats": {
+          "present": 3,
+          "total": 5,
+          "start": {
+            "p50": 1410000,
+            "p90": 1410000
+          },
+          "end": {
+            "p50": 1560000,
+            "p90": 1560000
+          },
+          "duration": {
+            "p50": 150000,
+            "p90": 150000
+          },
+          "queued": {
+            "p50": null,
+            "p90": null
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 1410000,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 1410000,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 1410000,
+              "end": 1560000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:migrate": {
+        "id": "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:migrate",
+        "kind": "job",
+        "name": "migrate",
+        "parent": "agg/stage:deploy/bridge:trigger/pipeline/stage:release",
+        "children": [],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 1410000,
+          "end": 1500000
+        },
+        "dependents": [
+          "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:smoke"
+        ],
+        "critShare": 0.6,
+        "stability": {
+          "retried": 0,
+          "present": 3
+        },
+        "stats": {
+          "present": 3,
+          "total": 5,
+          "start": {
+            "p50": 1410000,
+            "p90": 1410000
+          },
+          "end": {
+            "p50": 1500000,
+            "p90": 1500000
+          },
+          "duration": {
+            "p50": 90000,
+            "p90": 90000
+          },
+          "queued": {
+            "p50": 1000,
+            "p90": 1000
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.6,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 1410000,
+              "end": 1500000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 1410000,
+              "end": 1500000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 1410000,
+              "end": 1500000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:smoke": {
+        "id": "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:smoke",
+        "kind": "job",
+        "name": "smoke",
+        "parent": "agg/stage:deploy/bridge:trigger/pipeline/stage:release",
+        "children": [],
+        "deps": [
+          "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:migrate"
+        ],
+        "after": "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:migrate",
+        "bar": {
+          "start": 1500000,
+          "end": 1560000
+        },
+        "dependents": [],
+        "critShare": 0.6,
+        "holds": {
+          "stage": "agg/stage:deploy/bridge:trigger/pipeline/stage:release",
+          "excess": 60000.0
+        },
+        "stability": {
+          "retried": 0,
+          "present": 3
+        },
+        "stats": {
+          "present": 3,
+          "total": 5,
+          "start": {
+            "p50": 1500000,
+            "p90": 1500000
+          },
+          "end": {
+            "p50": 1560000,
+            "p90": 1560000
+          },
+          "duration": {
+            "p50": 60000,
+            "p90": 60000
+          },
+          "queued": {
+            "p50": 1000,
+            "p90": 1000
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.6,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 1500000,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 1500000,
+              "end": 1560000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 1500000,
+              "end": 1560000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:report": {
+        "id": "agg/stage:report",
+        "kind": "stage",
+        "name": "report",
+        "parent": "agg",
+        "children": [
+          "agg/stage:report/job:report"
+        ],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 1320000,
+          "end": 1400000
+        },
+        "position": 2,
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 1320000,
+            "p90": 1320000
+          },
+          "end": {
+            "p50": 1400000,
+            "p90": 1400000
+          },
+          "duration": {
+            "p50": 80000,
+            "p90": 80000
+          },
+          "queued": {
+            "p50": null,
+            "p90": null
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 1320000,
+              "end": 1400000,
+              "retries": 0
+            },
+            {
+              "tree": 1,
+              "start": 1320000,
+              "end": 1400000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 1320000,
+              "end": 1400000,
+              "retries": 0
+            },
+            {
+              "tree": 3,
+              "start": 1320000,
+              "end": 1400000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 1320000,
+              "end": 1400000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:report/job:report": {
+        "id": "agg/stage:report/job:report",
+        "kind": "job",
+        "name": "report",
+        "parent": "agg/stage:report",
+        "children": [],
+        "deps": [
+          "agg/stage:test/group:e2e/job:e2e: [1]",
+          "agg/stage:test/group:e2e/job:e2e: [3]"
+        ],
+        "after": null,
+        "bar": {
+          "start": 1320000,
+          "end": 1400000
+        },
+        "dependents": [
+          "agg/stage:deploy/bridge:trigger"
+        ],
+        "critShare": 1.0,
+        "stability": {
+          "retried": 0,
+          "present": 5
+        },
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 1320000,
+            "p90": 1320000
+          },
+          "end": {
+            "p50": 1400000,
+            "p90": 1400000
+          },
+          "duration": {
+            "p50": 80000,
+            "p90": 80000
+          },
+          "queued": {
+            "p50": 1000,
+            "p90": 1000
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 1.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 1320000,
+              "end": 1400000,
+              "retries": 0
+            },
+            {
+              "tree": 1,
+              "start": 1320000,
+              "end": 1400000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 1320000,
+              "end": 1400000,
+              "retries": 0
+            },
+            {
+              "tree": 3,
+              "start": 1320000,
+              "end": 1400000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 1320000,
+              "end": 1400000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:test": {
+        "id": "agg/stage:test",
+        "kind": "stage",
+        "name": "test",
+        "parent": "agg",
+        "children": [
+          "agg/stage:test/group:e2e"
+        ],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 330000,
+          "end": 1318000
+        },
+        "excess": {
+          "id": "agg/stage:test/group:e2e/job:e2e: [3]",
+          "peersEnd": 780000,
+          "excess": 538000.0
+        },
+        "position": 1,
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 330000,
+            "p90": 330000
+          },
+          "end": {
+            "p50": 1318000,
+            "p90": 1318000
+          },
+          "duration": {
+            "p50": 988000,
+            "p90": 988000
+          },
+          "queued": {
+            "p50": null,
+            "p90": null
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 330000,
+              "end": 1318000,
+              "retries": 0
+            },
+            {
+              "tree": 1,
+              "start": 330000,
+              "end": 1318000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 330000,
+              "end": 1318000,
+              "retries": 0
+            },
+            {
+              "tree": 3,
+              "start": 330000,
+              "end": 1318000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 330000,
+              "end": 1318000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:test/group:e2e": {
+        "id": "agg/stage:test/group:e2e",
+        "kind": "group",
+        "name": "e2e",
+        "parent": "agg/stage:test",
+        "children": [
+          "agg/stage:test/group:e2e/job:e2e: [1]",
+          "agg/stage:test/group:e2e/job:e2e: [3]"
+        ],
+        "deps": [
+          "agg/stage:build/job:build:server"
+        ],
+        "after": null,
+        "bar": {
+          "start": 330000,
+          "end": 1318000
+        },
+        "dependents": [
+          "agg/stage:report/job:report"
+        ],
+        "critShare": 1.0,
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 330000,
+            "p90": 330000
+          },
+          "end": {
+            "p50": 1318000,
+            "p90": 1318000
+          },
+          "duration": {
+            "p50": 988000,
+            "p90": 988000
+          },
+          "queued": {
+            "p50": null,
+            "p90": null
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 330000,
+              "end": 1318000,
+              "retries": 0
+            },
+            {
+              "tree": 1,
+              "start": 330000,
+              "end": 1318000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 330000,
+              "end": 1318000,
+              "retries": 0
+            },
+            {
+              "tree": 3,
+              "start": 330000,
+              "end": 1318000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 330000,
+              "end": 1318000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:test/group:e2e/job:e2e: [1]": {
+        "id": "agg/stage:test/group:e2e/job:e2e: [1]",
+        "kind": "job",
+        "name": "e2e: [1]",
+        "parent": "agg/stage:test/group:e2e",
+        "children": [],
+        "deps": [
+          "agg/stage:build/job:build:server"
+        ],
+        "after": null,
+        "bar": {
+          "start": 330000,
+          "end": 780000
+        },
+        "dependents": [
+          "agg/stage:report/job:report"
+        ],
+        "critShare": 0.0,
+        "stability": {
+          "retried": 0,
+          "present": 5
+        },
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 330000,
+            "p90": 330000
+          },
+          "end": {
+            "p50": 780000,
+            "p90": 780000
+          },
+          "duration": {
+            "p50": 450000,
+            "p90": 450000
+          },
+          "queued": {
+            "p50": 1000,
+            "p90": 1000
+          },
+          "retries": 0.0,
+          "retried": 0,
+          "retryLoss": 0.0,
+          "critical": 0.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 330000,
+              "end": 780000,
+              "retries": 0
+            },
+            {
+              "tree": 1,
+              "start": 330000,
+              "end": 780000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 330000,
+              "end": 780000,
+              "retries": 0
+            },
+            {
+              "tree": 3,
+              "start": 330000,
+              "end": 780000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 330000,
+              "end": 780000,
+              "retries": 0
+            }
+          ]
+        }
+      },
+      "agg/stage:test/group:e2e/job:e2e: [3]": {
+        "id": "agg/stage:test/group:e2e/job:e2e: [3]",
+        "kind": "job",
+        "name": "e2e: [3]",
+        "parent": "agg/stage:test/group:e2e",
+        "children": [],
+        "deps": [
+          "agg/stage:build/job:build:server"
+        ],
+        "after": null,
+        "bar": {
+          "start": 860000,
+          "end": 1318000
+        },
+        "dependents": [
+          "agg/stage:report/job:report"
+        ],
+        "critShare": 1.0,
+        "holds": {
+          "stage": "agg/stage:test",
+          "excess": 538000.0
+        },
+        "retryLoss": 317400.0,
+        "stability": {
+          "retried": 3,
+          "present": 5
+        },
+        "saving": 538000.0,
+        "stats": {
+          "present": 5,
+          "total": 5,
+          "start": {
+            "p50": 860000,
+            "p90": 860000
+          },
+          "end": {
+            "p50": 1318000,
+            "p90": 1318000
+          },
+          "duration": {
+            "p50": 458000,
+            "p90": 458000
+          },
+          "queued": {
+            "p50": 1000,
+            "p90": 1000
+          },
+          "retries": 1.2,
+          "retried": 3,
+          "retryLoss": 317400.0,
+          "critical": 1.0,
+          "samples": [
+            {
+              "tree": 0,
+              "start": 860000,
+              "end": 1318000,
+              "retries": 2
+            },
+            {
+              "tree": 1,
+              "start": 860000,
+              "end": 1318000,
+              "retries": 0
+            },
+            {
+              "tree": 2,
+              "start": 860000,
+              "end": 1318000,
+              "retries": 2
+            },
+            {
+              "tree": 3,
+              "start": 860000,
+              "end": 1318000,
+              "retries": 0
+            },
+            {
+              "tree": 4,
+              "start": 860000,
+              "end": 1318000,
+              "retries": 2
+            }
+          ]
+        }
+      }
+    },
+    "critical": {
+      "agg": {
+        "ids": [
+          "agg/stage:build/job:build:server",
+          "agg/stage:test/group:e2e/job:e2e: [3]",
+          "agg/stage:report/job:report",
+          "agg/stage:deploy/bridge:trigger",
+          "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:migrate",
+          "agg/stage:deploy/bridge:trigger/pipeline/stage:release/job:smoke",
+          "agg/stage:test/group:e2e"
+        ],
+        "gaps": []
+      }
+    },
+    "hotspots": [
+      {
+        "id": "agg/stage:test/group:e2e/job:e2e: [3]",
+        "name": "e2e: [3]",
+        "saving": 317400.0,
+        "kind": "retry",
+        "retried": 3,
+        "present": 5
+      },
+      {
+        "id": "agg/stage:test/group:e2e/job:e2e: [3]",
+        "name": "e2e: [3]",
+        "saving": 220600.0,
+        "kind": "excess",
+        "stage": "test",
+        "excess": 538000.0
+      },
+      {
+        "id": "agg/stage:build/job:build:server",
+        "name": "build:server",
+        "saving": 60000.0,
+        "kind": "excess",
+        "stage": "build",
+        "excess": 60000.0
+      }
+    ],
+    "totalRetryLoss": 353400.0,
+    "saving": 598000.0
+  },
+  "trees": [
+    {
+      "root": "gid://gitlab/Ci::Pipeline/1",
+      "nodes": {
+        "gid://gitlab/Ci::Build/build:server": {
+          "id": "gid://gitlab/Ci::Build/build:server",
+          "kind": "job",
+          "name": "build:server",
+          "parent": "gid://gitlab/Ci::Pipeline/1:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 302000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Pipeline/1:test:e2e",
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/1:build",
+            "excess": 60000.0
+          },
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "saving": 60000.0,
+          "start": 0,
+          "end": 302000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/build%3Aserver",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/build:static": {
+          "id": "gid://gitlab/Ci::Build/build:static",
+          "kind": "job",
+          "name": "build:static",
+          "parent": "gid://gitlab/Ci::Pipeline/1:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 10000,
+            "end": 242000
+          },
+          "dependents": [],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 10000,
+          "end": 242000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/build%3Astatic",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/e2e: [1]": {
+          "id": "gid://gitlab/Ci::Build/e2e: [1]",
+          "kind": "job",
+          "name": "e2e: [1]",
+          "parent": "gid://gitlab/Ci::Pipeline/1:test:e2e",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 780000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 330000,
+          "end": 780000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/e2e%3A%20%5B1%5D",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/e2e: [3]": {
+          "id": "gid://gitlab/Ci::Build/e2e: [3]",
+          "kind": "job",
+          "name": "e2e: [3]",
+          "parent": "gid://gitlab/Ci::Pipeline/1:test:e2e",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 860000,
+            "end": 1318000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/1:test",
+            "excess": 538000.0
+          },
+          "retryLoss": 529000.0,
+          "stability": {
+            "retried": 3,
+            "present": 5
+          },
+          "saving": 529000.0,
+          "start": 860000,
+          "end": 1318000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D",
+          "attempts": [
+            {
+              "start": 331000,
+              "end": 590000,
+              "status": "failed",
+              "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D"
+            },
+            {
+              "start": 600000,
+              "end": 850000,
+              "status": "failed",
+              "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D"
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Build/lint": {
+          "id": "gid://gitlab/Ci::Build/lint",
+          "kind": "job",
+          "name": "lint",
+          "parent": "gid://gitlab/Ci::Pipeline/1:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 60000,
+            "end": 240000
+          },
+          "dependents": [],
+          "critShare": 0.0,
+          "retryLoss": 60000.0,
+          "stability": {
+            "retried": 3,
+            "present": 5
+          },
+          "start": 60000,
+          "end": 240000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/lint",
+          "attempts": [
+            {
+              "start": 0,
+              "end": 50000,
+              "status": "failed",
+              "url": "https://h/g/p/-/jobs/lint"
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Build/migrate": {
+          "id": "gid://gitlab/Ci::Build/migrate",
+          "kind": "job",
+          "name": "migrate",
+          "parent": "gid://gitlab/Ci::Pipeline/101:release",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1410000,
+            "end": 1500000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 3
+          },
+          "start": 1410000,
+          "end": 1500000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/migrate",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/report": {
+          "id": "gid://gitlab/Ci::Build/report",
+          "kind": "job",
+          "name": "report",
+          "parent": "gid://gitlab/Ci::Pipeline/1:report",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "after": null,
+          "bar": {
+            "start": 1320000,
+            "end": 1400000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/trigger"
+          ],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 1320000,
+          "end": 1400000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/report",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/smoke": {
+          "id": "gid://gitlab/Ci::Build/smoke",
+          "kind": "job",
+          "name": "smoke",
+          "parent": "gid://gitlab/Ci::Pipeline/101:release",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/migrate"
+          ],
+          "after": "gid://gitlab/Ci::Build/migrate",
+          "bar": {
+            "start": 1500000,
+            "end": 1560000
+          },
+          "dependents": [],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/101:release",
+            "excess": 60000.0
+          },
+          "stability": {
+            "retried": 0,
+            "present": 3
+          },
+          "saving": 60000.0,
+          "start": 1500000,
+          "end": 1560000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/smoke",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/trigger": {
+          "id": "gid://gitlab/Ci::Build/trigger",
+          "kind": "bridge",
+          "name": "trigger",
+          "parent": "gid://gitlab/Ci::Pipeline/1:deploy",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/101"
+          ],
+          "deps": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "after": null,
+          "bar": {
+            "start": 1400000,
+            "end": 1560000
+          },
+          "dependents": [],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 3
+          },
+          "start": 1400000,
+          "end": 1560000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/trigger",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/1": {
+          "id": "gid://gitlab/Ci::Pipeline/1",
+          "kind": "pipeline",
+          "name": "#1",
+          "parent": null,
+          "children": [
+            "gid://gitlab/Ci::Pipeline/1:build",
+            "gid://gitlab/Ci::Pipeline/1:test",
+            "gid://gitlab/Ci::Pipeline/1:report",
+            "gid://gitlab/Ci::Pipeline/1:deploy"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 1560000
+          },
+          "start": 0,
+          "end": 1560000,
+          "queued": null,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/pipelines/1",
+          "attempts": [],
+          "project": "g/p",
+          "ref": "master"
+        },
+        "gid://gitlab/Ci::Pipeline/101": {
+          "id": "gid://gitlab/Ci::Pipeline/101",
+          "kind": "pipeline",
+          "name": "#101",
+          "parent": "gid://gitlab/Ci::Build/trigger",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/101:release"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1400000,
+            "end": 1560000
+          },
+          "start": 1400000,
+          "end": 1560000,
+          "queued": null,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/infra/-/pipelines/101",
+          "attempts": [],
+          "project": "g/infra",
+          "ref": "master"
+        },
+        "gid://gitlab/Ci::Pipeline/101:release": {
+          "id": "gid://gitlab/Ci::Pipeline/101:release",
+          "kind": "stage",
+          "name": "release",
+          "parent": "gid://gitlab/Ci::Pipeline/101",
+          "children": [
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1410000,
+            "end": 1560000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/smoke",
+            "peersEnd": 1500000,
+            "excess": 60000.0
+          },
+          "start": 1410000,
+          "end": 1560000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/1:build": {
+          "id": "gid://gitlab/Ci::Pipeline/1:build",
+          "kind": "stage",
+          "name": "build",
+          "parent": "gid://gitlab/Ci::Pipeline/1",
+          "children": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/build:static",
+            "gid://gitlab/Ci::Build/lint"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 302000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/build:server",
+            "peersEnd": 242000,
+            "excess": 60000.0
+          },
+          "start": 0,
+          "end": 302000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/1:deploy": {
+          "id": "gid://gitlab/Ci::Pipeline/1:deploy",
+          "kind": "stage",
+          "name": "deploy",
+          "parent": "gid://gitlab/Ci::Pipeline/1",
+          "children": [
+            "gid://gitlab/Ci::Build/trigger"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1400000,
+            "end": 1560000
+          },
+          "start": 1400000,
+          "end": 1560000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/1:report": {
+          "id": "gid://gitlab/Ci::Pipeline/1:report",
+          "kind": "stage",
+          "name": "report",
+          "parent": "gid://gitlab/Ci::Pipeline/1",
+          "children": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1320000,
+            "end": 1400000
+          },
+          "start": 1320000,
+          "end": 1400000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/1:test": {
+          "id": "gid://gitlab/Ci::Pipeline/1:test",
+          "kind": "stage",
+          "name": "test",
+          "parent": "gid://gitlab/Ci::Pipeline/1",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/1:test:e2e"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 1318000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/e2e: [3]",
+            "peersEnd": 780000,
+            "excess": 538000.0
+          },
+          "start": 330000,
+          "end": 1318000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/1:test:e2e": {
+          "id": "gid://gitlab/Ci::Pipeline/1:test:e2e",
+          "kind": "group",
+          "name": "e2e",
+          "parent": "gid://gitlab/Ci::Pipeline/1:test",
+          "children": [
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 1318000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 1.0,
+          "start": 330000,
+          "end": 1318000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        }
+      },
+      "critical": {
+        "gid://gitlab/Ci::Pipeline/1": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke",
+            "gid://gitlab/Ci::Build/trigger",
+            "gid://gitlab/Ci::Pipeline/1:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/report",
+              "to": "gid://gitlab/Ci::Build/migrate",
+              "ms": 10000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/101": {
+          "ids": [
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/101:release": {
+          "ids": [
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/1:build": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/1:deploy": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke",
+            "gid://gitlab/Ci::Build/trigger",
+            "gid://gitlab/Ci::Pipeline/1:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/report",
+              "to": "gid://gitlab/Ci::Build/migrate",
+              "ms": 10000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/1:report": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Pipeline/1:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/1:test": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Pipeline/1:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            }
+          ]
+        }
+      },
+      "hotspots": [
+        {
+          "id": "gid://gitlab/Ci::Build/e2e: [3]",
+          "name": "e2e: [3]",
+          "saving": 529000.0,
+          "kind": "retry",
+          "retries": 2
+        },
+        {
+          "id": "gid://gitlab/Ci::Build/build:server",
+          "name": "build:server",
+          "saving": 60000.0,
+          "kind": "excess",
+          "stage": "build",
+          "excess": 60000.0
+        },
+        {
+          "id": "gid://gitlab/Ci::Build/smoke",
+          "name": "smoke",
+          "saving": 60000.0,
+          "kind": "excess",
+          "stage": "release",
+          "excess": 60000.0
+        }
+      ],
+      "totalRetryLoss": 589000.0,
+      "saving": 649000.0
+    },
+    {
+      "root": "gid://gitlab/Ci::Pipeline/2",
+      "nodes": {
+        "gid://gitlab/Ci::Build/build:server": {
+          "id": "gid://gitlab/Ci::Build/build:server",
+          "kind": "job",
+          "name": "build:server",
+          "parent": "gid://gitlab/Ci::Pipeline/2:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 302000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Pipeline/2:test:e2e",
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/2:build",
+            "excess": 60000.0
+          },
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "saving": 60000.0,
+          "start": 0,
+          "end": 302000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/build%3Aserver",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/build:static": {
+          "id": "gid://gitlab/Ci::Build/build:static",
+          "kind": "job",
+          "name": "build:static",
+          "parent": "gid://gitlab/Ci::Pipeline/2:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 10000,
+            "end": 242000
+          },
+          "dependents": [],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 10000,
+          "end": 242000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/build%3Astatic",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/e2e: [1]": {
+          "id": "gid://gitlab/Ci::Build/e2e: [1]",
+          "kind": "job",
+          "name": "e2e: [1]",
+          "parent": "gid://gitlab/Ci::Pipeline/2:test:e2e",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 780000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 330000,
+          "end": 780000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/e2e%3A%20%5B1%5D",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/e2e: [3]": {
+          "id": "gid://gitlab/Ci::Build/e2e: [3]",
+          "kind": "job",
+          "name": "e2e: [3]",
+          "parent": "gid://gitlab/Ci::Pipeline/2:test:e2e",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 860000,
+            "end": 1318000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/2:test",
+            "excess": 458000.0
+          },
+          "stability": {
+            "retried": 3,
+            "present": 5
+          },
+          "saving": 458000.0,
+          "start": 860000,
+          "end": 1318000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/lint": {
+          "id": "gid://gitlab/Ci::Build/lint",
+          "kind": "job",
+          "name": "lint",
+          "parent": "gid://gitlab/Ci::Pipeline/2:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 60000,
+            "end": 240000
+          },
+          "dependents": [],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 3,
+            "present": 5
+          },
+          "start": 60000,
+          "end": 240000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/lint",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/report": {
+          "id": "gid://gitlab/Ci::Build/report",
+          "kind": "job",
+          "name": "report",
+          "parent": "gid://gitlab/Ci::Pipeline/2:report",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "after": null,
+          "bar": {
+            "start": 1320000,
+            "end": 1400000
+          },
+          "dependents": [],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 1320000,
+          "end": 1400000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/report",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/2": {
+          "id": "gid://gitlab/Ci::Pipeline/2",
+          "kind": "pipeline",
+          "name": "#2",
+          "parent": null,
+          "children": [
+            "gid://gitlab/Ci::Pipeline/2:build",
+            "gid://gitlab/Ci::Pipeline/2:test",
+            "gid://gitlab/Ci::Pipeline/2:report"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 1400000
+          },
+          "start": 0,
+          "end": 1400000,
+          "queued": null,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/pipelines/2",
+          "attempts": [],
+          "project": "g/p",
+          "ref": "master"
+        },
+        "gid://gitlab/Ci::Pipeline/2:build": {
+          "id": "gid://gitlab/Ci::Pipeline/2:build",
+          "kind": "stage",
+          "name": "build",
+          "parent": "gid://gitlab/Ci::Pipeline/2",
+          "children": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/build:static",
+            "gid://gitlab/Ci::Build/lint"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 302000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/build:server",
+            "peersEnd": 242000,
+            "excess": 60000.0
+          },
+          "start": 0,
+          "end": 302000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/2:report": {
+          "id": "gid://gitlab/Ci::Pipeline/2:report",
+          "kind": "stage",
+          "name": "report",
+          "parent": "gid://gitlab/Ci::Pipeline/2",
+          "children": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1320000,
+            "end": 1400000
+          },
+          "start": 1320000,
+          "end": 1400000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/2:test": {
+          "id": "gid://gitlab/Ci::Pipeline/2:test",
+          "kind": "stage",
+          "name": "test",
+          "parent": "gid://gitlab/Ci::Pipeline/2",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/2:test:e2e"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 1318000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/e2e: [3]",
+            "peersEnd": 780000,
+            "excess": 458000.0
+          },
+          "start": 330000,
+          "end": 1318000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/2:test:e2e": {
+          "id": "gid://gitlab/Ci::Pipeline/2:test:e2e",
+          "kind": "group",
+          "name": "e2e",
+          "parent": "gid://gitlab/Ci::Pipeline/2:test",
+          "children": [
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 1318000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 1.0,
+          "start": 330000,
+          "end": 1318000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        }
+      },
+      "critical": {
+        "gid://gitlab/Ci::Pipeline/2": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Pipeline/2:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/2:build": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/2:report": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Pipeline/2:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/2:test": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Pipeline/2:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            }
+          ]
+        }
+      },
+      "hotspots": [
+        {
+          "id": "gid://gitlab/Ci::Build/e2e: [3]",
+          "name": "e2e: [3]",
+          "saving": 458000.0,
+          "kind": "excess",
+          "stage": "test",
+          "excess": 458000.0
+        },
+        {
+          "id": "gid://gitlab/Ci::Build/build:server",
+          "name": "build:server",
+          "saving": 60000.0,
+          "kind": "excess",
+          "stage": "build",
+          "excess": 60000.0
+        }
+      ],
+      "totalRetryLoss": 0.0,
+      "saving": 518000.0
+    },
+    {
+      "root": "gid://gitlab/Ci::Pipeline/3",
+      "nodes": {
+        "gid://gitlab/Ci::Build/build:server": {
+          "id": "gid://gitlab/Ci::Build/build:server",
+          "kind": "job",
+          "name": "build:server",
+          "parent": "gid://gitlab/Ci::Pipeline/3:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 302000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Pipeline/3:test:e2e",
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/3:build",
+            "excess": 60000.0
+          },
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "saving": 60000.0,
+          "start": 0,
+          "end": 302000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/build%3Aserver",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/build:static": {
+          "id": "gid://gitlab/Ci::Build/build:static",
+          "kind": "job",
+          "name": "build:static",
+          "parent": "gid://gitlab/Ci::Pipeline/3:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 10000,
+            "end": 242000
+          },
+          "dependents": [],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 10000,
+          "end": 242000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/build%3Astatic",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/e2e: [1]": {
+          "id": "gid://gitlab/Ci::Build/e2e: [1]",
+          "kind": "job",
+          "name": "e2e: [1]",
+          "parent": "gid://gitlab/Ci::Pipeline/3:test:e2e",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 780000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 330000,
+          "end": 780000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/e2e%3A%20%5B1%5D",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/e2e: [3]": {
+          "id": "gid://gitlab/Ci::Build/e2e: [3]",
+          "kind": "job",
+          "name": "e2e: [3]",
+          "parent": "gid://gitlab/Ci::Pipeline/3:test:e2e",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 860000,
+            "end": 1318000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/3:test",
+            "excess": 538000.0
+          },
+          "retryLoss": 529000.0,
+          "stability": {
+            "retried": 3,
+            "present": 5
+          },
+          "saving": 529000.0,
+          "start": 860000,
+          "end": 1318000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D",
+          "attempts": [
+            {
+              "start": 331000,
+              "end": 590000,
+              "status": "failed",
+              "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D"
+            },
+            {
+              "start": 600000,
+              "end": 850000,
+              "status": "failed",
+              "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D"
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Build/lint": {
+          "id": "gid://gitlab/Ci::Build/lint",
+          "kind": "job",
+          "name": "lint",
+          "parent": "gid://gitlab/Ci::Pipeline/3:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 60000,
+            "end": 240000
+          },
+          "dependents": [],
+          "critShare": 0.0,
+          "retryLoss": 60000.0,
+          "stability": {
+            "retried": 3,
+            "present": 5
+          },
+          "start": 60000,
+          "end": 240000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/lint",
+          "attempts": [
+            {
+              "start": 0,
+              "end": 50000,
+              "status": "failed",
+              "url": "https://h/g/p/-/jobs/lint"
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Build/migrate": {
+          "id": "gid://gitlab/Ci::Build/migrate",
+          "kind": "job",
+          "name": "migrate",
+          "parent": "gid://gitlab/Ci::Pipeline/103:release",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1410000,
+            "end": 1500000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 3
+          },
+          "start": 1410000,
+          "end": 1500000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/migrate",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/report": {
+          "id": "gid://gitlab/Ci::Build/report",
+          "kind": "job",
+          "name": "report",
+          "parent": "gid://gitlab/Ci::Pipeline/3:report",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "after": null,
+          "bar": {
+            "start": 1320000,
+            "end": 1400000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/trigger"
+          ],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 1320000,
+          "end": 1400000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/report",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/smoke": {
+          "id": "gid://gitlab/Ci::Build/smoke",
+          "kind": "job",
+          "name": "smoke",
+          "parent": "gid://gitlab/Ci::Pipeline/103:release",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/migrate"
+          ],
+          "after": "gid://gitlab/Ci::Build/migrate",
+          "bar": {
+            "start": 1500000,
+            "end": 1560000
+          },
+          "dependents": [],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/103:release",
+            "excess": 60000.0
+          },
+          "stability": {
+            "retried": 0,
+            "present": 3
+          },
+          "saving": 60000.0,
+          "start": 1500000,
+          "end": 1560000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/smoke",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/trigger": {
+          "id": "gid://gitlab/Ci::Build/trigger",
+          "kind": "bridge",
+          "name": "trigger",
+          "parent": "gid://gitlab/Ci::Pipeline/3:deploy",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/103"
+          ],
+          "deps": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "after": null,
+          "bar": {
+            "start": 1400000,
+            "end": 1560000
+          },
+          "dependents": [],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 3
+          },
+          "start": 1400000,
+          "end": 1560000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/trigger",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/103": {
+          "id": "gid://gitlab/Ci::Pipeline/103",
+          "kind": "pipeline",
+          "name": "#103",
+          "parent": "gid://gitlab/Ci::Build/trigger",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/103:release"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1400000,
+            "end": 1560000
+          },
+          "start": 1400000,
+          "end": 1560000,
+          "queued": null,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/infra/-/pipelines/103",
+          "attempts": [],
+          "project": "g/infra",
+          "ref": "master"
+        },
+        "gid://gitlab/Ci::Pipeline/103:release": {
+          "id": "gid://gitlab/Ci::Pipeline/103:release",
+          "kind": "stage",
+          "name": "release",
+          "parent": "gid://gitlab/Ci::Pipeline/103",
+          "children": [
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1410000,
+            "end": 1560000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/smoke",
+            "peersEnd": 1500000,
+            "excess": 60000.0
+          },
+          "start": 1410000,
+          "end": 1560000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/3": {
+          "id": "gid://gitlab/Ci::Pipeline/3",
+          "kind": "pipeline",
+          "name": "#3",
+          "parent": null,
+          "children": [
+            "gid://gitlab/Ci::Pipeline/3:build",
+            "gid://gitlab/Ci::Pipeline/3:test",
+            "gid://gitlab/Ci::Pipeline/3:report",
+            "gid://gitlab/Ci::Pipeline/3:deploy"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 1560000
+          },
+          "start": 0,
+          "end": 1560000,
+          "queued": null,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/pipelines/3",
+          "attempts": [],
+          "project": "g/p",
+          "ref": "master"
+        },
+        "gid://gitlab/Ci::Pipeline/3:build": {
+          "id": "gid://gitlab/Ci::Pipeline/3:build",
+          "kind": "stage",
+          "name": "build",
+          "parent": "gid://gitlab/Ci::Pipeline/3",
+          "children": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/build:static",
+            "gid://gitlab/Ci::Build/lint"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 302000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/build:server",
+            "peersEnd": 242000,
+            "excess": 60000.0
+          },
+          "start": 0,
+          "end": 302000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/3:deploy": {
+          "id": "gid://gitlab/Ci::Pipeline/3:deploy",
+          "kind": "stage",
+          "name": "deploy",
+          "parent": "gid://gitlab/Ci::Pipeline/3",
+          "children": [
+            "gid://gitlab/Ci::Build/trigger"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1400000,
+            "end": 1560000
+          },
+          "start": 1400000,
+          "end": 1560000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/3:report": {
+          "id": "gid://gitlab/Ci::Pipeline/3:report",
+          "kind": "stage",
+          "name": "report",
+          "parent": "gid://gitlab/Ci::Pipeline/3",
+          "children": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1320000,
+            "end": 1400000
+          },
+          "start": 1320000,
+          "end": 1400000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/3:test": {
+          "id": "gid://gitlab/Ci::Pipeline/3:test",
+          "kind": "stage",
+          "name": "test",
+          "parent": "gid://gitlab/Ci::Pipeline/3",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/3:test:e2e"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 1318000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/e2e: [3]",
+            "peersEnd": 780000,
+            "excess": 538000.0
+          },
+          "start": 330000,
+          "end": 1318000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/3:test:e2e": {
+          "id": "gid://gitlab/Ci::Pipeline/3:test:e2e",
+          "kind": "group",
+          "name": "e2e",
+          "parent": "gid://gitlab/Ci::Pipeline/3:test",
+          "children": [
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 1318000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 1.0,
+          "start": 330000,
+          "end": 1318000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        }
+      },
+      "critical": {
+        "gid://gitlab/Ci::Pipeline/103": {
+          "ids": [
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/103:release": {
+          "ids": [
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/3": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke",
+            "gid://gitlab/Ci::Build/trigger",
+            "gid://gitlab/Ci::Pipeline/3:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/report",
+              "to": "gid://gitlab/Ci::Build/migrate",
+              "ms": 10000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/3:build": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/3:deploy": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke",
+            "gid://gitlab/Ci::Build/trigger",
+            "gid://gitlab/Ci::Pipeline/3:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/report",
+              "to": "gid://gitlab/Ci::Build/migrate",
+              "ms": 10000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/3:report": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Pipeline/3:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/3:test": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Pipeline/3:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            }
+          ]
+        }
+      },
+      "hotspots": [
+        {
+          "id": "gid://gitlab/Ci::Build/e2e: [3]",
+          "name": "e2e: [3]",
+          "saving": 529000.0,
+          "kind": "retry",
+          "retries": 2
+        },
+        {
+          "id": "gid://gitlab/Ci::Build/build:server",
+          "name": "build:server",
+          "saving": 60000.0,
+          "kind": "excess",
+          "stage": "build",
+          "excess": 60000.0
+        },
+        {
+          "id": "gid://gitlab/Ci::Build/smoke",
+          "name": "smoke",
+          "saving": 60000.0,
+          "kind": "excess",
+          "stage": "release",
+          "excess": 60000.0
+        }
+      ],
+      "totalRetryLoss": 589000.0,
+      "saving": 649000.0
+    },
+    {
+      "root": "gid://gitlab/Ci::Pipeline/4",
+      "nodes": {
+        "gid://gitlab/Ci::Build/build:server": {
+          "id": "gid://gitlab/Ci::Build/build:server",
+          "kind": "job",
+          "name": "build:server",
+          "parent": "gid://gitlab/Ci::Pipeline/4:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 302000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Pipeline/4:test:e2e",
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/4:build",
+            "excess": 60000.0
+          },
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "saving": 60000.0,
+          "start": 0,
+          "end": 302000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/build%3Aserver",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/build:static": {
+          "id": "gid://gitlab/Ci::Build/build:static",
+          "kind": "job",
+          "name": "build:static",
+          "parent": "gid://gitlab/Ci::Pipeline/4:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 10000,
+            "end": 242000
+          },
+          "dependents": [],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 10000,
+          "end": 242000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/build%3Astatic",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/e2e: [1]": {
+          "id": "gid://gitlab/Ci::Build/e2e: [1]",
+          "kind": "job",
+          "name": "e2e: [1]",
+          "parent": "gid://gitlab/Ci::Pipeline/4:test:e2e",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 780000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 330000,
+          "end": 780000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/e2e%3A%20%5B1%5D",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/e2e: [3]": {
+          "id": "gid://gitlab/Ci::Build/e2e: [3]",
+          "kind": "job",
+          "name": "e2e: [3]",
+          "parent": "gid://gitlab/Ci::Pipeline/4:test:e2e",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 860000,
+            "end": 1318000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/4:test",
+            "excess": 458000.0
+          },
+          "stability": {
+            "retried": 3,
+            "present": 5
+          },
+          "saving": 458000.0,
+          "start": 860000,
+          "end": 1318000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/lint": {
+          "id": "gid://gitlab/Ci::Build/lint",
+          "kind": "job",
+          "name": "lint",
+          "parent": "gid://gitlab/Ci::Pipeline/4:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 60000,
+            "end": 240000
+          },
+          "dependents": [],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 3,
+            "present": 5
+          },
+          "start": 60000,
+          "end": 240000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/lint",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/report": {
+          "id": "gid://gitlab/Ci::Build/report",
+          "kind": "job",
+          "name": "report",
+          "parent": "gid://gitlab/Ci::Pipeline/4:report",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "after": null,
+          "bar": {
+            "start": 1320000,
+            "end": 1400000
+          },
+          "dependents": [],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 1320000,
+          "end": 1400000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/report",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/4": {
+          "id": "gid://gitlab/Ci::Pipeline/4",
+          "kind": "pipeline",
+          "name": "#4",
+          "parent": null,
+          "children": [
+            "gid://gitlab/Ci::Pipeline/4:build",
+            "gid://gitlab/Ci::Pipeline/4:test",
+            "gid://gitlab/Ci::Pipeline/4:report"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 1400000
+          },
+          "start": 0,
+          "end": 1400000,
+          "queued": null,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/pipelines/4",
+          "attempts": [],
+          "project": "g/p",
+          "ref": "master"
+        },
+        "gid://gitlab/Ci::Pipeline/4:build": {
+          "id": "gid://gitlab/Ci::Pipeline/4:build",
+          "kind": "stage",
+          "name": "build",
+          "parent": "gid://gitlab/Ci::Pipeline/4",
+          "children": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/build:static",
+            "gid://gitlab/Ci::Build/lint"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 302000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/build:server",
+            "peersEnd": 242000,
+            "excess": 60000.0
+          },
+          "start": 0,
+          "end": 302000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/4:report": {
+          "id": "gid://gitlab/Ci::Pipeline/4:report",
+          "kind": "stage",
+          "name": "report",
+          "parent": "gid://gitlab/Ci::Pipeline/4",
+          "children": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1320000,
+            "end": 1400000
+          },
+          "start": 1320000,
+          "end": 1400000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/4:test": {
+          "id": "gid://gitlab/Ci::Pipeline/4:test",
+          "kind": "stage",
+          "name": "test",
+          "parent": "gid://gitlab/Ci::Pipeline/4",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/4:test:e2e"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 1318000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/e2e: [3]",
+            "peersEnd": 780000,
+            "excess": 458000.0
+          },
+          "start": 330000,
+          "end": 1318000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/4:test:e2e": {
+          "id": "gid://gitlab/Ci::Pipeline/4:test:e2e",
+          "kind": "group",
+          "name": "e2e",
+          "parent": "gid://gitlab/Ci::Pipeline/4:test",
+          "children": [
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 1318000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 1.0,
+          "start": 330000,
+          "end": 1318000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        }
+      },
+      "critical": {
+        "gid://gitlab/Ci::Pipeline/4": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Pipeline/4:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/4:build": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/4:report": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Pipeline/4:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/4:test": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Pipeline/4:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            }
+          ]
+        }
+      },
+      "hotspots": [
+        {
+          "id": "gid://gitlab/Ci::Build/e2e: [3]",
+          "name": "e2e: [3]",
+          "saving": 458000.0,
+          "kind": "excess",
+          "stage": "test",
+          "excess": 458000.0
+        },
+        {
+          "id": "gid://gitlab/Ci::Build/build:server",
+          "name": "build:server",
+          "saving": 60000.0,
+          "kind": "excess",
+          "stage": "build",
+          "excess": 60000.0
+        }
+      ],
+      "totalRetryLoss": 0.0,
+      "saving": 518000.0
+    },
+    {
+      "root": "gid://gitlab/Ci::Pipeline/5",
+      "nodes": {
+        "gid://gitlab/Ci::Build/build:server": {
+          "id": "gid://gitlab/Ci::Build/build:server",
+          "kind": "job",
+          "name": "build:server",
+          "parent": "gid://gitlab/Ci::Pipeline/5:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 302000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Pipeline/5:test:e2e",
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/5:build",
+            "excess": 60000.0
+          },
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "saving": 60000.0,
+          "start": 0,
+          "end": 302000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/build%3Aserver",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/build:static": {
+          "id": "gid://gitlab/Ci::Build/build:static",
+          "kind": "job",
+          "name": "build:static",
+          "parent": "gid://gitlab/Ci::Pipeline/5:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 10000,
+            "end": 242000
+          },
+          "dependents": [],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 10000,
+          "end": 242000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/build%3Astatic",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/e2e: [1]": {
+          "id": "gid://gitlab/Ci::Build/e2e: [1]",
+          "kind": "job",
+          "name": "e2e: [1]",
+          "parent": "gid://gitlab/Ci::Pipeline/5:test:e2e",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 780000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 0.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 330000,
+          "end": 780000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/e2e%3A%20%5B1%5D",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/e2e: [3]": {
+          "id": "gid://gitlab/Ci::Build/e2e: [3]",
+          "kind": "job",
+          "name": "e2e: [3]",
+          "parent": "gid://gitlab/Ci::Pipeline/5:test:e2e",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 860000,
+            "end": 1318000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/5:test",
+            "excess": 538000.0
+          },
+          "retryLoss": 529000.0,
+          "stability": {
+            "retried": 3,
+            "present": 5
+          },
+          "saving": 529000.0,
+          "start": 860000,
+          "end": 1318000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D",
+          "attempts": [
+            {
+              "start": 331000,
+              "end": 590000,
+              "status": "failed",
+              "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D"
+            },
+            {
+              "start": 600000,
+              "end": 850000,
+              "status": "failed",
+              "url": "https://h/g/p/-/jobs/e2e%3A%20%5B3%5D"
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Build/lint": {
+          "id": "gid://gitlab/Ci::Build/lint",
+          "kind": "job",
+          "name": "lint",
+          "parent": "gid://gitlab/Ci::Pipeline/5:build",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 60000,
+            "end": 240000
+          },
+          "dependents": [],
+          "critShare": 0.0,
+          "retryLoss": 60000.0,
+          "stability": {
+            "retried": 3,
+            "present": 5
+          },
+          "start": 60000,
+          "end": 240000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/lint",
+          "attempts": [
+            {
+              "start": 0,
+              "end": 50000,
+              "status": "failed",
+              "url": "https://h/g/p/-/jobs/lint"
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Build/migrate": {
+          "id": "gid://gitlab/Ci::Build/migrate",
+          "kind": "job",
+          "name": "migrate",
+          "parent": "gid://gitlab/Ci::Pipeline/105:release",
+          "children": [],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1410000,
+            "end": 1500000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 3
+          },
+          "start": 1410000,
+          "end": 1500000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/migrate",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/report": {
+          "id": "gid://gitlab/Ci::Build/report",
+          "kind": "job",
+          "name": "report",
+          "parent": "gid://gitlab/Ci::Pipeline/5:report",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "after": null,
+          "bar": {
+            "start": 1320000,
+            "end": 1400000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/trigger"
+          ],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 5
+          },
+          "start": 1320000,
+          "end": 1400000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/report",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/smoke": {
+          "id": "gid://gitlab/Ci::Build/smoke",
+          "kind": "job",
+          "name": "smoke",
+          "parent": "gid://gitlab/Ci::Pipeline/105:release",
+          "children": [],
+          "deps": [
+            "gid://gitlab/Ci::Build/migrate"
+          ],
+          "after": "gid://gitlab/Ci::Build/migrate",
+          "bar": {
+            "start": 1500000,
+            "end": 1560000
+          },
+          "dependents": [],
+          "critShare": 1.0,
+          "holds": {
+            "stage": "gid://gitlab/Ci::Pipeline/105:release",
+            "excess": 60000.0
+          },
+          "stability": {
+            "retried": 0,
+            "present": 3
+          },
+          "saving": 60000.0,
+          "start": 1500000,
+          "end": 1560000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/smoke",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Build/trigger": {
+          "id": "gid://gitlab/Ci::Build/trigger",
+          "kind": "bridge",
+          "name": "trigger",
+          "parent": "gid://gitlab/Ci::Pipeline/5:deploy",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/105"
+          ],
+          "deps": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "after": null,
+          "bar": {
+            "start": 1400000,
+            "end": 1560000
+          },
+          "dependents": [],
+          "critShare": 1.0,
+          "stability": {
+            "retried": 0,
+            "present": 3
+          },
+          "start": 1400000,
+          "end": 1560000,
+          "queued": 1000,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/jobs/trigger",
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/105": {
+          "id": "gid://gitlab/Ci::Pipeline/105",
+          "kind": "pipeline",
+          "name": "#105",
+          "parent": "gid://gitlab/Ci::Build/trigger",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/105:release"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1400000,
+            "end": 1560000
+          },
+          "start": 1400000,
+          "end": 1560000,
+          "queued": null,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/infra/-/pipelines/105",
+          "attempts": [],
+          "project": "g/infra",
+          "ref": "master"
+        },
+        "gid://gitlab/Ci::Pipeline/105:release": {
+          "id": "gid://gitlab/Ci::Pipeline/105:release",
+          "kind": "stage",
+          "name": "release",
+          "parent": "gid://gitlab/Ci::Pipeline/105",
+          "children": [
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1410000,
+            "end": 1560000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/smoke",
+            "peersEnd": 1500000,
+            "excess": 60000.0
+          },
+          "start": 1410000,
+          "end": 1560000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/5": {
+          "id": "gid://gitlab/Ci::Pipeline/5",
+          "kind": "pipeline",
+          "name": "#5",
+          "parent": null,
+          "children": [
+            "gid://gitlab/Ci::Pipeline/5:build",
+            "gid://gitlab/Ci::Pipeline/5:test",
+            "gid://gitlab/Ci::Pipeline/5:report",
+            "gid://gitlab/Ci::Pipeline/5:deploy"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 1560000
+          },
+          "start": 0,
+          "end": 1560000,
+          "queued": null,
+          "status": "success",
+          "allowFailure": false,
+          "url": "https://h/g/p/-/pipelines/5",
+          "attempts": [],
+          "project": "g/p",
+          "ref": "master"
+        },
+        "gid://gitlab/Ci::Pipeline/5:build": {
+          "id": "gid://gitlab/Ci::Pipeline/5:build",
+          "kind": "stage",
+          "name": "build",
+          "parent": "gid://gitlab/Ci::Pipeline/5",
+          "children": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/build:static",
+            "gid://gitlab/Ci::Build/lint"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 0,
+            "end": 302000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/build:server",
+            "peersEnd": 242000,
+            "excess": 60000.0
+          },
+          "start": 0,
+          "end": 302000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/5:deploy": {
+          "id": "gid://gitlab/Ci::Pipeline/5:deploy",
+          "kind": "stage",
+          "name": "deploy",
+          "parent": "gid://gitlab/Ci::Pipeline/5",
+          "children": [
+            "gid://gitlab/Ci::Build/trigger"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1400000,
+            "end": 1560000
+          },
+          "start": 1400000,
+          "end": 1560000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/5:report": {
+          "id": "gid://gitlab/Ci::Pipeline/5:report",
+          "kind": "stage",
+          "name": "report",
+          "parent": "gid://gitlab/Ci::Pipeline/5",
+          "children": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 1320000,
+            "end": 1400000
+          },
+          "start": 1320000,
+          "end": 1400000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/5:test": {
+          "id": "gid://gitlab/Ci::Pipeline/5:test",
+          "kind": "stage",
+          "name": "test",
+          "parent": "gid://gitlab/Ci::Pipeline/5",
+          "children": [
+            "gid://gitlab/Ci::Pipeline/5:test:e2e"
+          ],
+          "deps": [],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 1318000
+          },
+          "excess": {
+            "id": "gid://gitlab/Ci::Build/e2e: [3]",
+            "peersEnd": 780000,
+            "excess": 538000.0
+          },
+          "start": 330000,
+          "end": 1318000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        },
+        "gid://gitlab/Ci::Pipeline/5:test:e2e": {
+          "id": "gid://gitlab/Ci::Pipeline/5:test:e2e",
+          "kind": "group",
+          "name": "e2e",
+          "parent": "gid://gitlab/Ci::Pipeline/5:test",
+          "children": [
+            "gid://gitlab/Ci::Build/e2e: [1]",
+            "gid://gitlab/Ci::Build/e2e: [3]"
+          ],
+          "deps": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "after": null,
+          "bar": {
+            "start": 330000,
+            "end": 1318000
+          },
+          "dependents": [
+            "gid://gitlab/Ci::Build/report"
+          ],
+          "critShare": 1.0,
+          "start": 330000,
+          "end": 1318000,
+          "queued": null,
+          "status": null,
+          "allowFailure": false,
+          "url": null,
+          "attempts": []
+        }
+      },
+      "critical": {
+        "gid://gitlab/Ci::Pipeline/105": {
+          "ids": [
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/105:release": {
+          "ids": [
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/5": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke",
+            "gid://gitlab/Ci::Build/trigger",
+            "gid://gitlab/Ci::Pipeline/5:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/report",
+              "to": "gid://gitlab/Ci::Build/migrate",
+              "ms": 10000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/5:build": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server"
+          ],
+          "gaps": []
+        },
+        "gid://gitlab/Ci::Pipeline/5:deploy": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Build/migrate",
+            "gid://gitlab/Ci::Build/smoke",
+            "gid://gitlab/Ci::Build/trigger",
+            "gid://gitlab/Ci::Pipeline/5:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/report",
+              "to": "gid://gitlab/Ci::Build/migrate",
+              "ms": 10000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/5:report": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Build/report",
+            "gid://gitlab/Ci::Pipeline/5:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            },
+            {
+              "from": "gid://gitlab/Ci::Build/e2e: [3]",
+              "to": "gid://gitlab/Ci::Build/report",
+              "ms": 2000
+            }
+          ]
+        },
+        "gid://gitlab/Ci::Pipeline/5:test": {
+          "ids": [
+            "gid://gitlab/Ci::Build/build:server",
+            "gid://gitlab/Ci::Build/e2e: [3]",
+            "gid://gitlab/Ci::Pipeline/5:test:e2e"
+          ],
+          "gaps": [
+            {
+              "from": "gid://gitlab/Ci::Build/build:server",
+              "to": "gid://gitlab/Ci::Build/e2e: [3]",
+              "ms": 558000
+            }
+          ]
+        }
+      },
+      "hotspots": [
+        {
+          "id": "gid://gitlab/Ci::Build/e2e: [3]",
+          "name": "e2e: [3]",
+          "saving": 529000.0,
+          "kind": "retry",
+          "retries": 2
+        },
+        {
+          "id": "gid://gitlab/Ci::Build/build:server",
+          "name": "build:server",
+          "saving": 60000.0,
+          "kind": "excess",
+          "stage": "build",
+          "excess": 60000.0
+        },
+        {
+          "id": "gid://gitlab/Ci::Build/smoke",
+          "name": "smoke",
+          "saving": 60000.0,
+          "kind": "excess",
+          "stage": "release",
+          "excess": 60000.0
+        }
+      ],
+      "totalRetryLoss": 589000.0,
+      "saving": 649000.0
+    }
+  ]
+}

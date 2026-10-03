@@ -2,7 +2,11 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use regex::Regex;
+use serde::Serialize;
 use time::OffsetDateTime;
+use ts_rs::TS;
+
+use crate::aggregate::Stats;
 
 static SHARD_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?:\s+[0-9]+/[0-9]+|:\s*\[[^\]]*\])$").expect("static regex"));
@@ -59,7 +63,9 @@ pub struct RawJob {
 }
 
 /// Вид узла дерева.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "lowercase")]
+#[ts(export)]
 pub enum Kind {
     Pipeline,
     Stage,
@@ -69,7 +75,8 @@ pub enum Kind {
 }
 
 /// Прошлая попытка ретраенной джобы.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
 pub struct Attempt {
     pub start: Option<Ms>,
     pub end: Option<Ms>,
@@ -101,6 +108,15 @@ pub struct Span {
     pub children: Vec<Span>,
     /// сосед, после которого узел стоит в родителе
     pub after: Option<String>,
+    /// узел агрегата
+    pub stats: Option<Stats>,
+}
+
+impl Span {
+    /// Узел без времени, статуса и связей.
+    pub fn new(id: impl Into<String>, kind: Kind, name: impl Into<String>) -> Span {
+        span(id.into(), kind, name.into())
+    }
 }
 
 fn span(id: String, kind: Kind, name: String) -> Span {
@@ -122,11 +138,12 @@ fn span(id: String, kind: Kind, name: String) -> Span {
         deps: vec![],
         children: vec![],
         after: None,
+        stats: None,
     }
 }
 
 /// Без старта — в конец.
-fn by_start(s: &Span) -> (bool, Option<Ms>) {
+pub fn by_start(s: &Span) -> (bool, Option<Ms>) {
     (s.start.is_none(), s.start)
 }
 
@@ -136,7 +153,8 @@ fn bounds(spans: &[Span]) -> (Option<Ms>, Option<Ms>) {
     (start, end)
 }
 
-fn leaf_ids(s: &Span) -> Vec<&str> {
+/// Листья группы шардов; любой другой узел — сам себе лист.
+pub fn leaf_ids(s: &Span) -> Vec<&str> {
     match s.kind {
         Kind::Group => s.children.iter().flat_map(leaf_ids).collect(),
         Kind::Pipeline | Kind::Stage | Kind::Job | Kind::Bridge => vec![&s.id],
@@ -145,7 +163,7 @@ fn leaf_ids(s: &Span) -> Vec<&str> {
 
 /// Порядок соседей: узел встаёт сразу за соседом, которого ждал дольше всех
 /// (он же — `after`), остальные — по старту.
-fn order_by_deps(mut children: Vec<Span>) -> Vec<Span> {
+pub fn order_by_deps(mut children: Vec<Span>) -> Vec<Span> {
     children.sort_by_key(by_start);
     // зависимость может указывать на шард: владелец шарда — его группа среди соседей
     let mut owner: HashMap<&str, usize> = HashMap::new();

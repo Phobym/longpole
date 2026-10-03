@@ -1,0 +1,30 @@
+{
+  "name": "pipeline-trace",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vite build -c vite.report.config.ts",
+    "typecheck": "tsc --noEmit",
+    "lint:fsd": "steiger ./src",
+    "check:locales": "node scripts/check-locales.mjs",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@feature-sliced/steiger-plugin": "^0.8.0",
+    "@tauri-apps/cli": "^2.12.1",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "steiger": "^0.7.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.2",
+    "vite-plugin-singlefile": "^2.3.3"
+  }
+}

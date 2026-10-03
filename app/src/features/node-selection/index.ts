@@ -1,1 +1,1 @@
-export { rowAttrs, useNodeSelection } from './model/useNodeSelection'
+export { rowAttrs, useNodeSelection, useRevealNode } from './model/useNodeSelection'

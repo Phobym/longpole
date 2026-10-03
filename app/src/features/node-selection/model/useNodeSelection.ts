@@ -1,9 +1,11 @@
 import { useCallback, type KeyboardEvent, type MouseEvent } from 'react'
+import { flushSync } from 'react-dom'
 import { useReportView } from '../../../entities/report'
 import type { ReportNode } from '../../../shared/api'
 
 const ROW_SELECTOR = '[data-row]'
 export const rowAttrs = { 'data-row': '', tabIndex: 0 }
+const rowById = (id: string) => document.querySelector<HTMLElement>(`${ROW_SELECTOR}[data-id="${CSS.escape(id)}"]`)
 
 /** Выбор строки мышью и клавишами. */
 export function useNodeSelection() {
@@ -35,4 +37,19 @@ export function useNodeSelection() {
   )
 
   return { onRowClick, onRowKeyDown }
+}
+
+/** Выделить узел из панели или «Куда направить силы»: группы над ним развёрнуты, строка в центре и в фокусе. */
+export function useRevealNode() {
+  const { dispatch } = useReportView()
+  return useCallback(
+    (id: string) => {
+      // строка появляется в DOM только после рендера, поэтому он синхронный
+      flushSync(() => dispatch({ type: 'reveal', id }))
+      const row = rowById(id)
+      row?.scrollIntoView({ block: 'center' })
+      row?.focus({ preventScroll: true })
+    },
+    [dispatch],
+  )
 }

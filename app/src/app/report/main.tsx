@@ -36,6 +36,7 @@ async function main() {
   const locale = inApp ? report.meta.locale : browserLocale()
   await initI18n(locale)
   document.documentElement.lang = locale
+  i18next.on('languageChanged', (lng) => (document.documentElement.lang = lng))
   createRoot(root).render(
     <StrictMode>
       <ReportPage report={report} />

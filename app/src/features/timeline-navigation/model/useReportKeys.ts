@@ -10,11 +10,15 @@ export function useReportKeys() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      // строка могла обработать клавишу сама (стрелки, Enter)
-      if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      // Esc снимает выделение и вместе с ним закрывает подсказку «?», которая гасит событие до нас
       if (e.key === 'Escape') {
         dispatch({ type: 'close' })
-      } else if (e.key === '0') {
+        return
+      }
+      // строка могла обработать клавишу сама (стрелки, Enter)
+      if (e.defaultPrevented) return
+      if (e.key === '0') {
         setView(fullView)
       } else if (e.key === '[' || e.key === ']') {
         const [a, b] = getView()

@@ -1,4 +1,4 @@
-import type { ReportNode, Tree } from '../../../shared/api'
+import type { Report, ReportNode, SingleNode, Tree } from '../../../shared/api'
 
 type Nodes = Tree<ReportNode>['nodes']
 
@@ -72,4 +72,17 @@ export function cards(tree: Tree<ReportNode>, collapsed: ReadonlySet<string>): C
   }
   walk(tree.nodes[tree.root], 0, null)
   return blocks
+}
+
+/** Стейдж, в котором лежит узел. */
+export function stageOf(tree: Tree<ReportNode>, id: string): ReportNode | null {
+  for (let p = tree.nodes[id]?.parent; p; p = tree.nodes[p]?.parent) if (tree.nodes[p].kind === 'stage') return tree.nodes[p]
+  return null
+}
+
+/** Корень пайплайна из `trees` агрегата: имя `#iid` и ссылка на GitLab. */
+export function pipelineOf(report: Report, index: number): SingleNode {
+  if (report.mode !== 'aggregate') throw new Error('pipelineOf: отчёт не агрегат')
+  const tree = report.trees[index]
+  return tree.nodes[tree.root]
 }

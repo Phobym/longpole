@@ -5,7 +5,7 @@ use regex::Regex;
 use time::OffsetDateTime;
 
 static SHARD_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?:\s+[0-9]+/[0-9]+|:\s*\[[^\]]*\])$").unwrap());
+    LazyLock::new(|| Regex::new(r"(?:\s+[0-9]+/[0-9]+|:\s*\[[^\]]*\])$").expect("static regex"));
 
 /// Имя без суффикса шарда: `rspec 3/10` и `e2e: [1]` → `rspec`, `e2e`.
 pub fn shard_group_name(name: &str) -> &str {
@@ -134,7 +134,7 @@ fn bounds(spans: &[Span]) -> (Option<Ms>, Option<Ms>) {
 fn leaf_ids(s: &Span) -> Vec<&str> {
     match s.kind {
         Kind::Group => s.children.iter().flat_map(leaf_ids).collect(),
-        _ => vec![&s.id],
+        Kind::Pipeline | Kind::Stage | Kind::Job | Kind::Bridge => vec![&s.id],
     }
 }
 

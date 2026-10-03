@@ -3,7 +3,10 @@
 
 use std::collections::HashMap;
 
+use pipeline_trace_core::error::Error;
+use pipeline_trace_core::gitlab::Gql;
 use pipeline_trace_core::model::{RawJob, RawPipeline, RawPipelineInfo, Span};
+use serde_json::Value;
 use time::{Duration, OffsetDateTime, macros::datetime};
 
 pub const T0: OffsetDateTime = datetime!(2026-09-24 10:00:00 +03:00);
@@ -237,4 +240,32 @@ pub fn try_find<'a>(span: &'a Span, name: &str) -> Option<&'a Span> {
 /// Имена детей узла.
 pub fn names(span: &Span) -> Vec<&str> {
     span.children.iter().map(|s| s.name.as_str()).collect()
+}
+
+/// Аналог `fakeGql`: `handler` получает переменные запроса и отдаёт `data`.
+pub struct FakeGql<F>(pub F);
+
+pub fn fake_gql<F: Fn(&Value) -> Value + Sync>(handler: F) -> FakeGql<F> {
+    FakeGql(handler)
+}
+
+impl<F: Fn(&Value) -> Value + Sync> Gql for FakeGql<F> {
+    fn host(&self) -> &str {
+        "h.example"
+    }
+
+    async fn query(&self, _query: &str, variables: Value) -> Result<Value, Error> {
+        Ok((self.0)(&variables))
+    }
+}
+
+/// Ожидаемая ошибка: код и параметры, не текст.
+pub fn assert_error<T: std::fmt::Debug>(
+    result: Result<T, Error>,
+    code: pipeline_trace_core::error::ErrorCode,
+    params: &[(&'static str, &str)],
+) {
+    let err = result.expect_err("ждали ошибку");
+    let expected = params.iter().map(|&(k, v)| (k, v.to_string())).collect();
+    assert_eq!((err.code, err.params), (code, expected));
 }

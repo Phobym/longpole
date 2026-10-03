@@ -18,7 +18,7 @@ pub fn shard_group_name(name: &str) -> &str {
 pub type Ms = i64;
 
 /// Пайплайн, как его отдаёт GitLab: джобы — от новых к старым.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct RawPipeline {
     pub project: String,
     pub pipeline: RawPipelineInfo,
@@ -28,7 +28,7 @@ pub struct RawPipeline {
 }
 
 /// Поля самого пайплайна.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct RawPipelineInfo {
     pub id: String,
     pub iid: String,
@@ -42,7 +42,7 @@ pub struct RawPipelineInfo {
 }
 
 /// Джоба или bridge, включая ретраенные попытки.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct RawJob {
     pub id: String,
     pub name: String,

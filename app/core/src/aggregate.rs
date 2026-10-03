@@ -199,7 +199,7 @@ impl<'a> Merger<'a> {
                 .iter()
                 .filter(|e| self.critical[e.tree].contains(&e.span.id))
                 .count() as f64
-                / self.total as f64,
+                / self.total.max(1) as f64,
             samples: ran
                 .iter()
                 .map(|e| Sample {

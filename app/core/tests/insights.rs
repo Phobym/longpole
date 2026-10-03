@@ -1,8 +1,8 @@
 mod fixtures;
 
 use fixtures::{
-    JobOpts, PipelineOpts, T0, at, clean_pipeline, job, pipeline_opts, raw_pipeline,
-    sample_pipeline,
+    JobOpts, PipelineOpts, T0, at, clean_pipeline, failed, find, job, pipeline_opts, raw_pipeline,
+    run, sample_pipeline,
 };
 use pipeline_trace_core::aggregate::aggregate;
 use pipeline_trace_core::insights::{
@@ -17,15 +17,6 @@ fn build(raw: &RawPipeline) -> Span {
 fn tree() -> Span {
     build(&sample_pipeline(1))
 }
-fn find<'a>(s: &'a Span, name: &str) -> &'a Span {
-    try_find(s, name).unwrap_or_else(|| panic!("нет узла {name}"))
-}
-fn try_find<'a>(s: &'a Span, name: &str) -> Option<&'a Span> {
-    if s.name == name {
-        return Some(s);
-    }
-    s.children.iter().find_map(|c| try_find(c, name))
-}
 fn summary(hotspots: &[Hotspot]) -> Vec<(&'static str, &str, f64)> {
     hotspots
         .iter()
@@ -37,20 +28,6 @@ fn summary(hotspots: &[Hotspot]) -> Vec<(&'static str, &str, f64)> {
             (kind, h.name.as_str(), h.saving)
         })
         .collect()
-}
-fn run(start: i64, end: i64) -> JobOpts {
-    JobOpts {
-        start: Some(start),
-        end: Some(end),
-        ..Default::default()
-    }
-}
-fn failed(start: i64, end: i64) -> JobOpts {
-    JobOpts {
-        retried: true,
-        status: "FAILED",
-        ..run(start, end)
-    }
 }
 fn stability(retried: u32, present: u32) -> Stability {
     Stability { retried, present }

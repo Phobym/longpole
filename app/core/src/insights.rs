@@ -143,10 +143,6 @@ pub fn agg_end(s: &Span) -> Option<Ms> {
     Some(st.start.p50? + st.duration.p50?)
 }
 
-fn stats(s: &Span) -> &crate::aggregate::Stats {
-    s.stats.as_ref().expect("узел агрегата")
-}
-
 /// Выводы по пайплайну: в hotspots только узлы его критического пути.
 pub fn insights(tree: &Span) -> Insights {
     let crit: HashSet<String> = critical_path(tree, &tree.id).ids.into_iter().collect();
@@ -203,7 +199,7 @@ pub fn agg_insights(agg: &Span) -> Insights {
     let mut candidates = vec![];
     walk(agg, &mut |s| match s.kind {
         Kind::Job | Kind::Bridge => {
-            let st = stats(s);
+            let st = s.stats();
             out.stability.insert(
                 s.id.clone(),
                 Stability {
@@ -231,14 +227,14 @@ pub fn agg_insights(agg: &Span) -> Insights {
         }
         Kind::Stage => {
             let first_start = |n: &Span| {
-                let st = stats(n);
+                let st = n.stats();
                 st.start.p50.unwrap_or_default() as f64 - st.retry_loss
             };
             let Some(ex) = excess_by(s, agg_end, first_start) else {
                 return;
             };
             let bottleneck = by_id[ex.id.as_str()];
-            let st = stats(bottleneck);
+            let st = bottleneck.stats();
             if st.critical != 0.0 {
                 candidates.push(Hotspot {
                     id: ex.id.clone(),
@@ -270,7 +266,7 @@ pub fn stability_by_name(agg: &Span) -> HashMap<String, Stability> {
     fn go<'a>(s: &'a Span, ancestors: &mut Vec<&'a str>, out: &mut HashMap<String, Stability>) {
         let leaf = matches!(s.kind, Kind::Job | Kind::Bridge);
         if leaf {
-            let st = stats(s);
+            let st = s.stats();
             ancestors.push(&s.name);
             out.insert(
                 stability_key(ancestors),

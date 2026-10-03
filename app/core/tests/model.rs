@@ -2,28 +2,13 @@ mod fixtures;
 
 use std::collections::HashMap;
 
-use fixtures::{JobOpts, PipelineOpts, T0, at, job, raw_pipeline};
+use fixtures::{JobOpts, PipelineOpts, T0, at, find, job, names, raw_pipeline};
 use pipeline_trace_core::model::{
     Attempt, Kind, RawJob, RawPipeline, Span, build_tree, shard_group_name,
 };
 use time::{Duration, OffsetDateTime};
 
 const BASE_URL: &str = "https://h";
-
-fn find<'a>(span: &'a Span, name: &str) -> &'a Span {
-    try_find(span, name).unwrap_or_else(|| panic!("нет узла {name}"))
-}
-
-fn try_find<'a>(span: &'a Span, name: &str) -> Option<&'a Span> {
-    if span.name == name {
-        return Some(span);
-    }
-    span.children.iter().find_map(|c| try_find(c, name))
-}
-
-fn names(span: &Span) -> Vec<&str> {
-    span.children.iter().map(|s| s.name.as_str()).collect()
-}
 
 fn build(raw: &RawPipeline) -> Span {
     build_tree(raw, BASE_URL, OffsetDateTime::now_utc())

@@ -1,6 +1,6 @@
 mod fixtures;
 
-use fixtures::{JobOpts, PipelineOpts, T0, job, pipeline_opts, raw_pipeline};
+use fixtures::{JobOpts, PipelineOpts, T0, job, names, pipeline_opts, raw_pipeline, run};
 use pipeline_trace_core::aggregate::{P, aggregate, percentile};
 use pipeline_trace_core::model::{Kind, RawPipeline, Span, build_tree, order_by_deps};
 
@@ -9,13 +9,6 @@ fn build(raw: &RawPipeline) -> Span {
 }
 fn opts(i: usize) -> PipelineOpts {
     pipeline_opts(i)
-}
-fn run(start: i64, end: i64) -> JobOpts {
-    JobOpts {
-        start: Some(start),
-        end: Some(end),
-        ..Default::default()
-    }
 }
 fn after(start: i64, end: i64, deps: &[&'static str]) -> JobOpts {
     JobOpts {
@@ -37,9 +30,6 @@ fn child<'a>(span: &'a Span, key: &str) -> &'a Span {
         .iter()
         .find(|c| format!("{}:{}", kind(c.kind), c.name) == key)
         .unwrap_or_else(|| panic!("нет узла {key}"))
-}
-fn names(span: &Span) -> Vec<&str> {
-    span.children.iter().map(|c| c.name.as_str()).collect()
 }
 fn p(p50: i64, p90: i64) -> P {
     P {

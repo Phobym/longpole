@@ -117,6 +117,11 @@ impl Span {
     pub fn new(id: impl Into<String>, kind: Kind, name: impl Into<String>) -> Span {
         span(id.into(), kind, name.into())
     }
+
+    /// Статистика узла агрегата; у узла одиночного пайплайна её нет.
+    pub fn stats(&self) -> &Stats {
+        self.stats.as_ref().expect("узел агрегата")
+    }
 }
 
 fn span(id: String, kind: Kind, name: String) -> Span {

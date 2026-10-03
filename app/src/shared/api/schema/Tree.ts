@@ -4,6 +4,7 @@ import type { Hotspot } from "./Hotspot";
 
 export type Tree<N> = { root: string, nodes: { [key in string]: N }, 
 /**
- * по scope: в single — пайплайны и стейджи, в агрегате — только корень
+ * По scope: в single — пайплайн, его стейджи, downstream-пайплайны и их стейджи,
+ * в агрегате — только корень
  */
 critical: { [key in string]: Critical }, hotspots: Array<Hotspot>, totalRetryLoss: number, saving: number, };

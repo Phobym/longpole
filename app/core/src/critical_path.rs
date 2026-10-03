@@ -6,6 +6,8 @@ use ts_rs::TS;
 use crate::model::{Kind, Ms, Span};
 
 /// Критический путь scope: джобы в хронологическом порядке и ожидания между ними.
+/// Группа, на пути которой лежит шард, дописывается в `ids` после джоб, поэтому `ids` —
+/// множество для подсветки, а не цепочка.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 #[ts(export)]
 pub struct Critical {

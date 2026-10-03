@@ -59,7 +59,8 @@ pub struct Meta {
 pub struct Tree<N> {
     pub root: String,
     pub nodes: BTreeMap<String, N>,
-    /// по scope: в single — пайплайны и стейджи, в агрегате — только корень
+    /// По scope: в single — пайплайн, его стейджи, downstream-пайплайны и их стейджи,
+    /// в агрегате — только корень
     pub critical: BTreeMap<String, Critical>,
     pub hotspots: Vec<Hotspot>,
     pub total_retry_loss: f64,
@@ -188,10 +189,6 @@ impl Report {
                 .collect(),
         }
     }
-}
-
-fn stats(s: &Span) -> &Stats {
-    s.stats.as_ref().expect("узел агрегата")
 }
 
 fn is_leaf(s: &Span) -> bool {
@@ -405,7 +402,7 @@ fn agg_tree(root: &Span) -> Tree<AggNode> {
     let ids = c
         .visits
         .iter()
-        .filter(|v| stats(v.span).critical >= AGG_CRITICAL)
+        .filter(|v| v.span.stats().critical >= AGG_CRITICAL)
         .map(|v| v.span.id.clone())
         .collect();
     let crit = with_groups(Critical { ids, gaps: vec![] }, &c.visits);
@@ -423,9 +420,10 @@ fn agg_tree(root: &Span) -> Tree<AggNode> {
             let share: f64 = leaf_ids(s)
                 .iter()
                 .filter_map(|id| index.get(id))
-                .map(|n| stats(n).critical)
+                .map(|n| n.stats().critical)
                 .sum();
-            let bar = stats(s)
+            let bar = s
+                .stats()
                 .start
                 .p50
                 .zip(agg_end(s))
@@ -434,7 +432,7 @@ fn agg_tree(root: &Span) -> Tree<AggNode> {
             let node = AggNode {
                 base: c.base(v, Some(share.min(1.0)), bar, stability),
                 position: s.position,
-                stats: stats(s).clone(),
+                stats: s.stats().clone(),
             };
             (s.id.clone(), node)
         })

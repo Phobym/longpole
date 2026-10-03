@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use pipeline_trace_core::model::{RawJob, RawPipeline, RawPipelineInfo};
+use pipeline_trace_core::model::{RawJob, RawPipeline, RawPipelineInfo, Span};
 use time::{Duration, OffsetDateTime, macros::datetime};
 
 pub const T0: OffsetDateTime = datetime!(2026-09-24 10:00:00 +03:00);
@@ -140,7 +140,7 @@ fn ran(start: i64, end: i64, deps: &[&'static str]) -> JobOpts {
     }
 }
 
-fn failed(start: i64, end: i64, deps: &[&'static str]) -> JobOpts {
+fn failed_after(start: i64, end: i64, deps: &[&'static str]) -> JobOpts {
     JobOpts {
         retried: true,
         status: "FAILED",
@@ -162,11 +162,19 @@ pub fn sample_pipeline(i: usize) -> RawPipeline {
         vec![
             job("build:server", "build", ran(0, 302, &[])),
             job("build:static", "build", ran(10, 242, &[])),
-            job("lint", "build", failed(0, 50, &[])),
+            job("lint", "build", failed_after(0, 50, &[])),
             job("lint", "build", ran(60, 240, &[])),
             job("e2e: [1]", "test", ran(330, 780, &["build:server"])),
-            job("e2e: [3]", "test", failed(331, 590, &["build:server"])),
-            job("e2e: [3]", "test", failed(600, 850, &["build:server"])),
+            job(
+                "e2e: [3]",
+                "test",
+                failed_after(331, 590, &["build:server"]),
+            ),
+            job(
+                "e2e: [3]",
+                "test",
+                failed_after(600, 850, &["build:server"]),
+            ),
             job("e2e: [3]", "test", ran(860, 1318, &["build:server"])),
             job(
                 "report",
@@ -195,4 +203,38 @@ pub fn clean_pipeline(i: usize) -> RawPipeline {
         ],
         pipeline_opts(i),
     )
+}
+
+/// Отработавшая джоба без зависимостей.
+pub fn run(start: i64, end: i64) -> JobOpts {
+    JobOpts {
+        start: Some(start),
+        end: Some(end),
+        ..Default::default()
+    }
+}
+
+/// Упавшая попытка, заменённая ретраем.
+pub fn failed(start: i64, end: i64) -> JobOpts {
+    JobOpts {
+        retried: true,
+        status: "FAILED",
+        ..run(start, end)
+    }
+}
+
+pub fn find<'a>(span: &'a Span, name: &str) -> &'a Span {
+    try_find(span, name).unwrap_or_else(|| panic!("нет узла {name}"))
+}
+
+pub fn try_find<'a>(span: &'a Span, name: &str) -> Option<&'a Span> {
+    if span.name == name {
+        return Some(span);
+    }
+    span.children.iter().find_map(|c| try_find(c, name))
+}
+
+/// Имена детей узла.
+pub fn names(span: &Span) -> Vec<&str> {
+    span.children.iter().map(|s| s.name.as_str()).collect()
 }

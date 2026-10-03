@@ -3,4 +3,4 @@
 /**
  * Код ошибки: перевод и подстановка `params` — на фронтенде.
  */
-export type ErrorCode = "unauthorized" | "httpStatus" | "graphql" | "network" | "projectNotFound" | "pipelineNotFound" | "tooManyJobs" | "mrHasNoPipeline";
+export type ErrorCode = "unauthorized" | "httpStatus" | "graphql" | "network" | "projectNotFound" | "pipelineNotFound" | "tooManyJobs" | "mrHasNoPipeline" | "noPipelines" | "noToken" | "emptyToken" | "keychainUnavailable" | "storage" | "invalidLink" | "invalidHost" | "invalidProject" | "invalidLast" | "invalidStatuses";

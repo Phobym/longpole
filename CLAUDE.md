@@ -13,3 +13,7 @@
 ### Domain docs
 
 Single-context: `CONTEXT.md` и `docs/adr/` в корне. See `docs/agents/domain.md`.
+
+### Code smells
+
+Перед коммитом кода и при ревью диффа — проход по каталогу запахов с правилом «пиши так». See `docs/agents/code-smells.md`.

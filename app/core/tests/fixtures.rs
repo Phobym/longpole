@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use pipeline_trace_core::model::{RawJob, RawPipeline, RawPipelineInfo};
+use pipeline_trace_core::model::{RawJob, RawPipeline, RawPipelineInfo, Span};
 use time::{Duration, OffsetDateTime, macros::datetime};
 
 pub const T0: OffsetDateTime = datetime!(2026-09-24 10:00:00 +03:00);
@@ -129,4 +129,112 @@ pub fn raw_pipeline(mut jobs: Vec<RawJob>, o: PipelineOpts) -> RawPipeline {
         jobs,
         downstream: o.downstream,
     }
+}
+
+fn ran(start: i64, end: i64, deps: &[&'static str]) -> JobOpts {
+    JobOpts {
+        start: Some(start),
+        end: Some(end),
+        deps: deps.to_vec(),
+        ..Default::default()
+    }
+}
+
+fn failed_after(start: i64, end: i64, deps: &[&'static str]) -> JobOpts {
+    JobOpts {
+        retried: true,
+        status: "FAILED",
+        ..ran(start, end, deps)
+    }
+}
+
+pub fn pipeline_opts(i: usize) -> PipelineOpts {
+    PipelineOpts {
+        id: format!("gid://gitlab/Ci::Pipeline/{i}").leak(),
+        iid: i.to_string().leak(),
+        ..Default::default()
+    }
+}
+
+/// Пайплайн из `insights.test`: ретраи lint и `e2e: [3]`, узкое место build:server.
+pub fn sample_pipeline(i: usize) -> RawPipeline {
+    raw_pipeline(
+        vec![
+            job("build:server", "build", ran(0, 302, &[])),
+            job("build:static", "build", ran(10, 242, &[])),
+            job("lint", "build", failed_after(0, 50, &[])),
+            job("lint", "build", ran(60, 240, &[])),
+            job("e2e: [1]", "test", ran(330, 780, &["build:server"])),
+            job(
+                "e2e: [3]",
+                "test",
+                failed_after(331, 590, &["build:server"]),
+            ),
+            job(
+                "e2e: [3]",
+                "test",
+                failed_after(600, 850, &["build:server"]),
+            ),
+            job("e2e: [3]", "test", ran(860, 1318, &["build:server"])),
+            job(
+                "report",
+                "report",
+                ran(1320, 1400, &["e2e: [1]", "e2e: [3]"]),
+            ),
+        ],
+        pipeline_opts(i),
+    )
+}
+
+/// Тот же пайплайн без ретраев.
+pub fn clean_pipeline(i: usize) -> RawPipeline {
+    raw_pipeline(
+        vec![
+            job("build:server", "build", ran(0, 302, &[])),
+            job("build:static", "build", ran(10, 242, &[])),
+            job("lint", "build", ran(60, 240, &[])),
+            job("e2e: [1]", "test", ran(330, 780, &["build:server"])),
+            job("e2e: [3]", "test", ran(860, 1318, &["build:server"])),
+            job(
+                "report",
+                "report",
+                ran(1320, 1400, &["e2e: [1]", "e2e: [3]"]),
+            ),
+        ],
+        pipeline_opts(i),
+    )
+}
+
+/// Отработавшая джоба без зависимостей.
+pub fn run(start: i64, end: i64) -> JobOpts {
+    JobOpts {
+        start: Some(start),
+        end: Some(end),
+        ..Default::default()
+    }
+}
+
+/// Упавшая попытка, заменённая ретраем.
+pub fn failed(start: i64, end: i64) -> JobOpts {
+    JobOpts {
+        retried: true,
+        status: "FAILED",
+        ..run(start, end)
+    }
+}
+
+pub fn find<'a>(span: &'a Span, name: &str) -> &'a Span {
+    try_find(span, name).unwrap_or_else(|| panic!("нет узла {name}"))
+}
+
+pub fn try_find<'a>(span: &'a Span, name: &str) -> Option<&'a Span> {
+    if span.name == name {
+        return Some(span);
+    }
+    span.children.iter().find_map(|c| try_find(c, name))
+}
+
+/// Имена детей узла.
+pub fn names(span: &Span) -> Vec<&str> {
+    span.children.iter().map(|s| s.name.as_str()).collect()
 }

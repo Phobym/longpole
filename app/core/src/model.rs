@@ -2,7 +2,9 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use regex::Regex;
+use serde::Serialize;
 use time::OffsetDateTime;
+use ts_rs::TS;
 
 static SHARD_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?:\s+[0-9]+/[0-9]+|:\s*\[[^\]]*\])$").expect("static regex"));
@@ -59,7 +61,9 @@ pub struct RawJob {
 }
 
 /// Вид узла дерева.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "lowercase")]
+#[ts(export)]
 pub enum Kind {
     Pipeline,
     Stage,
@@ -68,8 +72,49 @@ pub enum Kind {
     Bridge,
 }
 
+/// p50 и p90; `null` — узел не запускался ни разу.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
+pub struct P {
+    pub p50: Option<Ms>,
+    pub p90: Option<Ms>,
+}
+
+/// Один запуск узла: `tree` — индекс пайплайна в агрегате.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
+pub struct Sample {
+    pub tree: usize,
+    pub start: Ms,
+    pub end: Ms,
+    pub retries: u32,
+}
+
+/// Статистика узла агрегата по пайплайнам, где он запускался.
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct Stats {
+    pub present: u32,
+    pub total: u32,
+    pub start: P,
+    pub end: P,
+    pub duration: P,
+    pub queued: P,
+    /// среднее число ретраев на запуск
+    pub retries: f64,
+    /// запусков с ретраями
+    pub retried: u32,
+    /// средняя потеря на ретраях, мс
+    pub retry_loss: f64,
+    /// доля пайплайнов, где узел на критическом пути; у стейджа и группы всегда 0
+    pub critical: f64,
+    pub samples: Vec<Sample>,
+}
+
 /// Прошлая попытка ретраенной джобы.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
 pub struct Attempt {
     pub start: Option<Ms>,
     pub end: Option<Ms>,
@@ -101,6 +146,37 @@ pub struct Span {
     pub children: Vec<Span>,
     /// сосед, после которого узел стоит в родителе
     pub after: Option<String>,
+    /// узел агрегата
+    pub stats: Option<Stats>,
+}
+
+impl Span {
+    /// Узел без времени, статуса и связей.
+    pub fn new(id: impl Into<String>, kind: Kind, name: impl Into<String>) -> Span {
+        span(id.into(), kind, name.into())
+    }
+
+    /// Обход в глубину: узел раньше своих детей.
+    pub fn walk<'a>(&'a self, f: &mut impl FnMut(&'a Span)) {
+        f(self);
+        for c in &self.children {
+            c.walk(f);
+        }
+    }
+
+    /// Узлы поддерева по id.
+    pub fn index(&self) -> HashMap<&str, &Span> {
+        let mut by_id = HashMap::new();
+        self.walk(&mut |s| {
+            by_id.insert(s.id.as_str(), s);
+        });
+        by_id
+    }
+
+    /// Статистика узла агрегата; у узла одиночного пайплайна её нет.
+    pub fn stats(&self) -> &Stats {
+        self.stats.as_ref().expect("узел агрегата")
+    }
 }
 
 fn span(id: String, kind: Kind, name: String) -> Span {
@@ -122,11 +198,12 @@ fn span(id: String, kind: Kind, name: String) -> Span {
         deps: vec![],
         children: vec![],
         after: None,
+        stats: None,
     }
 }
 
 /// Без старта — в конец.
-fn by_start(s: &Span) -> (bool, Option<Ms>) {
+pub fn by_start(s: &Span) -> (bool, Option<Ms>) {
     (s.start.is_none(), s.start)
 }
 
@@ -136,7 +213,8 @@ fn bounds(spans: &[Span]) -> (Option<Ms>, Option<Ms>) {
     (start, end)
 }
 
-fn leaf_ids(s: &Span) -> Vec<&str> {
+/// Листья группы шардов; любой другой узел — сам себе лист.
+pub fn leaf_ids(s: &Span) -> Vec<&str> {
     match s.kind {
         Kind::Group => s.children.iter().flat_map(leaf_ids).collect(),
         Kind::Pipeline | Kind::Stage | Kind::Job | Kind::Bridge => vec![&s.id],
@@ -145,7 +223,7 @@ fn leaf_ids(s: &Span) -> Vec<&str> {
 
 /// Порядок соседей: узел встаёт сразу за соседом, которого ждал дольше всех
 /// (он же — `after`), остальные — по старту.
-fn order_by_deps(mut children: Vec<Span>) -> Vec<Span> {
+pub fn order_by_deps(mut children: Vec<Span>) -> Vec<Span> {
     children.sort_by_key(by_start);
     // зависимость может указывать на шард: владелец шарда — его группа среди соседей
     let mut owner: HashMap<&str, usize> = HashMap::new();

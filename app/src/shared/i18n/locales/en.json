@@ -1,1 +1,13 @@
-{}
+{
+  "errors": {
+    "unauthorized": "GitLab {{host}} responded {{status}}: the token is invalid or access is denied",
+    "httpStatus": "GitLab {{host}} responded {{status}}",
+    "graphql": "GraphQL {{host}}: {{detail}}",
+    "network": "Could not reach GitLab {{host}}: {{detail}}",
+    "projectNotFound": "Project {{project}} on {{host}} not found or access denied",
+    "pipelineNotFound": "Pipeline {{pipeline}} in project {{project}} on {{host}} not found",
+    "tooManyJobs": "Pipeline {{pipeline}} in project {{project}}: more than {{limit}} jobs, loading stopped",
+    "mrHasNoPipeline": "MR !{{iid}} in project {{project}} has no pipeline",
+    "ipc": "Could not run the command: {{detail}}"
+  }
+}

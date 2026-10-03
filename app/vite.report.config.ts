@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
 const sha = (s: string) => `'sha256-${createHash('sha256').update(s, 'utf8').digest('base64')}'`
@@ -31,7 +32,7 @@ function cspHashes(): Plugin {
 
 // Отчёт → dist-report/report.html, один файл; Rust встраивает его как шаблон.
 export default defineConfig({
-  plugins: [react(), viteSingleFile({ removeViteModuleLoader: true }), cspHashes()],
+  plugins: [react(), tailwindcss(), viteSingleFile({ removeViteModuleLoader: true }), cspHashes()],
   build: {
     outDir: 'dist-report',
     rolldownOptions: { input: 'report.html' },

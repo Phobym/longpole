@@ -1,1 +1,13 @@
-{}
+{
+  "errors": {
+    "unauthorized": "GitLab {{host}} ответил {{status}}: токен недействителен или нет доступа",
+    "httpStatus": "GitLab {{host}} ответил {{status}}",
+    "graphql": "GraphQL {{host}}: {{detail}}",
+    "network": "Не удалось связаться с GitLab {{host}}: {{detail}}",
+    "projectNotFound": "Проект {{project}} на {{host}} не найден или нет доступа",
+    "pipelineNotFound": "Пайплайн {{pipeline}} в проекте {{project}} на {{host}} не найден",
+    "tooManyJobs": "Пайплайн {{pipeline}} в проекте {{project}}: больше {{limit}} джоб, загрузка остановлена",
+    "mrHasNoPipeline": "У MR !{{iid}} в проекте {{project}} нет пайплайна",
+    "ipc": "Не удалось выполнить команду: {{detail}}"
+  }
+}

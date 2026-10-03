@@ -1,0 +1,125 @@
+@import 'tailwindcss';
+
+/*
+ * Тёмная тема — по системе, переключателя нет: те же переменные переопределяются в @media.
+ * Палитра — из старых form.css и template.html; primary и muted-foreground затемнены ради контраста AA (≥ 4,5:1).
+ * `static`: переменные нужны и без утилит (inline-стили, var(--color-*)).
+ */
+@theme static {
+  --color-background: #f7f8fa;
+  --color-foreground: #1a1b1f;
+  --color-card: #ffffff;
+  --color-card-foreground: #1a1b1f;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1a1b1f;
+  --color-primary: #5b5fe8;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f2f5;
+  --color-secondary-foreground: #1a1b1f;
+  --color-muted: #f1f2f5;
+  --color-muted-foreground: #656a7a;
+  --color-accent: #f3f4f8;
+  --color-accent-foreground: #1a1b1f;
+  --color-destructive: #c23434;
+  --color-border: #e8eaee;
+  --color-input: #e8eaee;
+  --color-ring: #5b5fe8;
+  --color-selected: #eef0ff;
+
+  /* домен: статусы, критический путь, повторы и превышения, связи */
+  --color-ok: #8b8ff6;
+  --color-fail: #f06262;
+  --color-warn: #f2b33d;
+  --color-run: #5b9cf8;
+  --color-idle: #b4b9c2;
+  --color-queued: #dfe2e7;
+  --color-thin: #c9ccd3;
+  --color-wait: #e3e5e9;
+  --color-crit: #f59a3c;
+  --color-crit-fg: #b65c0c;
+  --color-crit-soft: #fbd3a8;
+  --color-crit-bg: #fffaf4;
+  --color-over-a: var(--color-crit);
+  --color-over-b: #fde0c7;
+  --color-retry-a: var(--color-fail);
+  --color-retry-b: #fbd0d0;
+  --color-retry-fg: #c23434;
+  --color-dep-up: #0284c7;
+  --color-dep-down: #16a34a;
+  --color-pill-ok-bg: #e9f7ef;
+  --color-pill-ok-fg: #1a7f45;
+  --color-pill-mid-bg: #fff3dc;
+  --color-pill-mid-fg: #9a6200;
+  --color-pill-bad-bg: #fdecec;
+  --color-pill-bad-fg: #c23434;
+  --color-pill-run-bg: #eaf1fe;
+  --color-pill-run-fg: #2f5fc4;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  color-scheme: light dark;
+  --radius: 0.625rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #111318;
+    --color-foreground: #e6e7ea;
+    --color-card: #1a1c22;
+    --color-card-foreground: #e6e7ea;
+    --color-popover: #1a1c22;
+    --color-popover-foreground: #e6e7ea;
+    --color-primary: #9a9cf8;
+    --color-primary-foreground: #111318;
+    --color-secondary: #22252c;
+    --color-secondary-foreground: #e6e7ea;
+    --color-muted: #22252c;
+    --color-muted-foreground: #8d939e;
+    --color-accent: #20232a;
+    --color-accent-foreground: #e6e7ea;
+    --color-destructive: #f58a8d;
+    --color-border: #2a2d35;
+    --color-input: #2a2d35;
+    --color-ring: #9a9cf8;
+    --color-selected: #262a45;
+    --color-ok: #9a9cf8;
+    --color-fail: #f16a6e;
+    --color-warn: #f5b041;
+    --color-idle: #5b616b;
+    --color-queued: #343842;
+    --color-thin: #4a4f59;
+    --color-wait: #3a3e47;
+    --color-crit: #f5a04a;
+    --color-crit-fg: #f7b26a;
+    --color-crit-soft: #5a3b1c;
+    --color-crit-bg: #241c14;
+    --color-over-b: #4a3320;
+    --color-retry-b: #4a2426;
+    --color-retry-fg: #f58a8d;
+    --color-dep-up: #38bdf8;
+    --color-dep-down: #4ade80;
+    --color-pill-ok-bg: #16301f;
+    --color-pill-ok-fg: #6fd49a;
+    --color-pill-mid-bg: #33280f;
+    --color-pill-mid-fg: #f0c060;
+    --color-pill-bad-bg: #3a1a1b;
+    --color-pill-bad-fg: #f58a8d;
+    --color-pill-run-bg: #1b2a44;
+    --color-pill-run-fg: #8ab4f8;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-variant-numeric: tabular-nums;
+  }
+}

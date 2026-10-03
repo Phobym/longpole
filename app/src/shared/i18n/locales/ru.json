@@ -8,6 +8,16 @@
     "pipelineNotFound": "Пайплайн {{pipeline}} в проекте {{project}} на {{host}} не найден",
     "tooManyJobs": "Пайплайн {{pipeline}} в проекте {{project}}: больше {{limit}} джоб, загрузка остановлена",
     "mrHasNoPipeline": "У MR !{{iid}} в проекте {{project}} нет пайплайна",
+    "noPipelines": "Под фильтры не попал ни один пайплайн: проверь ветку и статусы",
+    "noToken": "Нет токена для {{host}}: добавь его в форме (поле «Токен»)",
+    "emptyToken": "Пустой токен",
+    "keychainUnavailable": "Системная связка ключей недоступна: задай GITLAB_TOKEN и GITLAB_HOST или установи libsecret",
+    "storage": "Не удалось прочитать или записать данные приложения: {{detail}}",
+    "invalidLink": "Нужна ссылка вида https://<хост>/<группа>/<проект>/-/pipelines/<id> или …/-/merge_requests/<iid>",
+    "invalidHost": "Укажи хост GitLab, например gitlab.example.com",
+    "invalidProject": "Укажи путь проекта, например group/project",
+    "invalidLast": "Число пайплайнов — от 1 до {{max}}",
+    "invalidStatuses": "Выбери хотя бы один статус или «любой»",
     "ipc": "Не удалось выполнить команду: {{detail}}"
   }
 }

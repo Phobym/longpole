@@ -2,7 +2,7 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::aggregate::aggregate;
@@ -31,12 +31,27 @@ pub enum Report {
     },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 #[ts(export)]
 pub enum Locale {
     Ru,
     En,
+}
+
+impl Locale {
+    /// Тег системной локали (`ru-RU`, `en_US`): русский для `ru*`, иначе английский.
+    pub fn from_tag(tag: &str) -> Locale {
+        if tag.to_ascii_lowercase().starts_with("ru") {
+            Locale::Ru
+        } else {
+            Locale::En
+        }
+    }
+
+    pub fn system() -> Locale {
+        Self::from_tag(&sys_locale::get_locale().unwrap_or_default())
+    }
 }
 
 #[derive(Debug, Serialize, TS)]
@@ -170,6 +185,12 @@ impl AsRef<BaseNode> for AggNode {
 }
 
 impl Report {
+    pub fn meta(&self) -> &Meta {
+        match self {
+            Report::Single { meta, .. } | Report::Aggregate { meta, .. } => meta,
+        }
+    }
+
     pub fn single(meta: Meta, tree: &Span) -> Report {
         Report::Single {
             meta,

@@ -1,9 +1,12 @@
 import { Channel, invoke } from '@tauri-apps/api/core'
+import type { CmdError } from './schema/CmdError'
+import type { Form } from './schema/Form'
+import type { HistoryEntry } from './schema/HistoryEntry'
 import type { Locale } from './schema/Locale'
 import type { Page } from './schema/Page'
 import type { Pipeline } from './schema/Pipeline'
+import type { Progress } from './schema/Progress'
 import type { Project } from './schema/Project'
-import type { BuildForm, CmdError, HistoryEntry, Progress } from './types'
 
 /** Отказ самого `invoke` (нет команды, запрет ACL, нет моста) — не ответ ядра, кода в `ErrorCode` у него нет. */
 export type IpcError = { kind: 'message'; code: 'ipc'; params: { detail: string } }
@@ -37,7 +40,7 @@ export const branches = (host: string, project: string, search: string) =>
 export const pipelines = (host: string, project: string, ref: string | null, after: string | null) =>
   call<Page<Pipeline>>('pipelines', { host, project, ref, after })
 /** Открывает окно отчёта; `onProgress` получает `{ loaded, total }` только от этой сборки. */
-export const build = (form: BuildForm, onProgress: (p: Progress) => void) => {
+export const build = (form: Form, onProgress: (p: Progress) => void) => {
   const channel = new Channel<Progress>(onProgress)
   return call<null>('build', { form, onProgress: channel })
 }

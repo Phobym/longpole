@@ -5,11 +5,17 @@ edition = "2024"
 publish = false
 
 [dependencies]
+futures = "0.3"
 regex = "1"
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "json"] }
 serde = { version = "1", features = ["derive"] }
-time = "0.3"
+serde_json = "1"
+thiserror = "2"
+time = { version = "0.3", features = ["serde-well-known"] }
+tokio = { version = "1", features = ["sync"] }
 ts-rs = "12"
 
 [dev-dependencies]
-serde_json = "1"
 time = { version = "0.3", features = ["macros"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+wiremock = "0.6"

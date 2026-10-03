@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { isLeaf } from '../../../entities/report'
 import { isAggNode, type ReportNode } from '../../../shared/api'
 import { useTranslation } from '../../../shared/i18n'
 import { duration } from '../../../shared/lib/format'
@@ -8,7 +9,7 @@ import { Section } from './Section'
 /** Попытки, потери и очередь джобы; у остальных узлов раздела нет. */
 export function StabilitySection({ node }: { node: ReportNode }) {
   const { t } = useTranslation()
-  if (node.kind !== 'job' && node.kind !== 'bridge') return null
+  if (!isLeaf(node)) return null
   const rows: [string, ReactNode][] = []
   if (isAggNode(node)) {
     const { retried, present, queued } = node.stats

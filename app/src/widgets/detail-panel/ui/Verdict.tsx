@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from 'react'
 import { Trans } from 'react-i18next'
-import { useReportView } from '../../../entities/report'
+import { CRITICAL_SHARE, useReportView } from '../../../entities/report'
 import { isAggNode, type ReportNode } from '../../../shared/api'
 import { useTranslation } from '../../../shared/i18n'
 import { duration } from '../../../shared/lib/format'
@@ -25,7 +25,7 @@ export function Verdict({ node }: { node: ReportNode }) {
     const percent = Math.round(share * 100)
     if (!share) parts.push(<Trans i18nKey="report.verdict.off" components={MARKUP} />)
     else if (!agg) parts.push(<Trans i18nKey="report.verdict.on" components={MARKUP} />)
-    else parts.push(<Trans i18nKey={share >= 0.5 ? 'report.verdict.onAgg' : 'report.verdict.onAggSometimes'} values={{ percent }} components={MARKUP} />)
+    else parts.push(<Trans i18nKey={share >= CRITICAL_SHARE ? 'report.verdict.onAgg' : 'report.verdict.onAggSometimes'} values={{ percent }} components={MARKUP} />)
     if (node.saving) parts.push(<Trans i18nKey="report.verdict.saving" values={{ time: duration(node.saving) }} components={MARKUP} />)
     if (node.holds) parts.push(<Trans i18nKey="report.verdict.holdsStage" values={{ stage: tree.nodes[node.holds.stage]?.name, time: duration(node.holds.excess) }} components={MARKUP} />)
     if (agg) {

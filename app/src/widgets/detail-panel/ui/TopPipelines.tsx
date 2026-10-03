@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { pipelineOf, useReportView } from '../../../entities/report'
 import { OpenTree } from '../../../features/tree-switch'
 import type { AggNode } from '../../../shared/api'
@@ -13,7 +14,7 @@ const TOP = 5
 export function TopPipelines({ node }: { node: AggNode }) {
   const { report, state, dispatch } = useReportView()
   const { t } = useTranslation()
-  const all = [...node.stats.samples].sort((a, b) => b.end - b.start - (a.end - a.start))
+  const all = useMemo(() => [...node.stats.samples].sort((a, b) => b.end - b.start - (a.end - a.start)), [node])
   if (!all.length) return null
   const longest = all[0].end - all[0].start || 1
   const expanded = state.showAll

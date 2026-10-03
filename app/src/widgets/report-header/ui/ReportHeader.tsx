@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import { Trans } from 'react-i18next'
-import { useReportView } from '../../../entities/report'
+import { isLeaf, useReportView } from '../../../entities/report'
 import { KeysHelp } from '../../../features/keys-help'
 import { BackToAggregate } from '../../../features/tree-switch'
 import { isAggNode, type ReportNode } from '../../../shared/api'
@@ -10,9 +10,8 @@ import { Badge } from '../../../shared/ui/badge'
 import { LanguageSwitch } from './LanguageSwitch'
 
 const BOLD = { b: <b /> }
-const LEAF = new Set(['job', 'bridge'])
 
-const Chip = ({ variant = 'chip', children }: { variant?: 'chip' | 'chipCrit' | 'chipBad'; children: React.ReactNode }) => (
+const Chip = ({ variant = 'chip', children }: { variant?: 'chip' | 'chipCrit' | 'chipBad'; children: ReactNode }) => (
   <Badge variant={variant} className="px-2.5 py-[3px] text-[12.5px]">
     {children}
   </Badge>
@@ -52,7 +51,8 @@ export function ReportHeader() {
   const { t } = useTranslation()
   const { meta } = report
   const root = tree.nodes[tree.root]
-  const jobs = Object.values(tree.nodes).filter((n) => LEAF.has(n.kind)).length
+  // шапка перерисовывается на каждый кадр перетаскивания, а узлов сотни
+  const jobs = useMemo(() => Object.values(tree.nodes).filter(isLeaf).length, [tree])
   const subject = isAggNode(root) ? (meta.label ?? t('report.allPipelines')) : root.name
 
   useEffect(() => {

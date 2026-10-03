@@ -37,13 +37,14 @@ export function DurationStrip({ node }: { node: AggNode }) {
           <Mark key={kind} kind={kind} left={at(d[kind] ?? 0)} />
         ))}
         {samples.map((x) => {
-          const label = `${pipelineOf(report, x.tree).name} ${duration(sampleMs(x))}`
+          const plain = `${pipelineOf(report, x.tree).name} ${duration(sampleMs(x))}`
+          const label = x.retries ? t('report.strip.dotRetried', { label: plain }) : plain
           return (
             <OpenTree
               key={x.tree}
               index={x.tree}
               aria-label={label}
-              title={x.retries ? t('report.strip.dotRetried', { label }) : label}
+              title={label}
               className={cn(
                 'absolute top-[19px] -ml-[4.5px] size-[9px] cursor-pointer rounded-full hover:opacity-100 focus-visible:opacity-100',
                 x.retries ? 'bg-fail opacity-90' : 'bg-ok opacity-55',

@@ -11,7 +11,7 @@ export function useReportKeys() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return
-      // Esc снимает выделение и вместе с ним закрывает подсказку «?», которая гасит событие до нас
+      // Esc снимает выделение независимо от `defaultPrevented`: подсказка «?» (Radix) гасит событие и закрывается сама, а одного нажатия хватает на оба
       if (e.key === 'Escape') {
         dispatch({ type: 'close' })
         return

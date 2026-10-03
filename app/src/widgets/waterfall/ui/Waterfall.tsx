@@ -45,7 +45,8 @@ export function Waterfall() {
         // отпускание после перетаскивания не должно менять выделение
         onClickCapture={(e) => justDragged() && e.stopPropagation()}
       >
-        {blocks.map(({ card, cont, rows: entries }, i) => {
+        {blocks.map((block, i) => {
+          const { card, rows: entries } = block
           const excess = card ? nodes[card].excess : undefined
           const holderName = excess && nodes[excess.id]?.name
           const content = entries.map(({ node, depth }) => {
@@ -72,7 +73,7 @@ export function Waterfall() {
               />
             )
           })
-          return <Fragment key={`${i}:${entries[0].node.id}`}>{card ? <StageCard cont={cont}>{content}</StageCard> : content}</Fragment>
+          return <Fragment key={`${i}:${entries[0].node.id}`}>{card ? <StageCard cont={block.cont}>{content}</StageCard> : content}</Fragment>
         })}
         <LinksOverlay host={host} track={track} rows={rows} />
       </main>

@@ -47,6 +47,7 @@ export const Row = memo(function Row({ node, depth, view, selected, critical, de
       ref={ref}
       data-id={node.id}
       data-selected={selected ? '' : undefined}
+      aria-current={selected || undefined}
       className={cn(
         GRID,
         'group scroll-my-10 cursor-pointer items-stretch focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',

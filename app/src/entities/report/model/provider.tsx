@@ -2,7 +2,7 @@ import { createContext, use, useCallback, useEffect, useLayoutEffect, useMemo, u
 import type { Report, ReportNode, Tree } from '../../../shared/api'
 import type { View } from '../../../shared/lib/timeline'
 import { criticalOf, relations, type Critical, type Relations } from './selectors'
-import { createReducer, fullView, openState, treeOf, type ViewAction, type ViewState } from './state'
+import { createReducer, fullView, initialRef, openState, treeOf, type ViewAction, type ViewState } from './state'
 
 type ReportView = {
   report: Report
@@ -28,28 +28,28 @@ export function useReportView(): ReportView {
 
 export function ReportViewProvider({ report, children }: { report: Report; children: ReactNode }) {
   const reducer = useMemo(() => createReducer(report), [report])
-  const [state, dispatch] = useReducer(reducer, report, (r) => openState(r, r.mode === 'aggregate' ? 'agg' : 0))
+  const [state, dispatch] = useReducer(reducer, report, (r) => openState(r, initialRef(r)))
 
-  const latest = useRef(state.view)
+  const viewRef = useRef(state.view)
   const frame = useRef(0)
   // событие читает ось из ref: между dispatch и рендером state.view ещё старый
   useLayoutEffect(() => {
-    if (!frame.current) latest.current = state.view
+    if (!frame.current) viewRef.current = state.view
   }, [state.view])
   useEffect(() => () => cancelAnimationFrame(frame.current), [])
-  const getView = useCallback(() => latest.current, [])
+  const getView = useCallback(() => viewRef.current, [])
   const setView = useCallback((view: View) => {
-    latest.current = view
+    viewRef.current = view
     if (frame.current) return
     frame.current = requestAnimationFrame(() => {
       frame.current = 0
-      dispatch({ type: 'setView', view: latest.current })
+      dispatch({ type: 'setView', view: viewRef.current })
     })
   }, [])
 
   const tree = treeOf(report, state.tree)
   const crit = useMemo(() => criticalOf(tree, state.scope), [tree, state.scope])
-  const rel = useMemo(() => relations(tree, state), [tree, state.selected, state.collapsed])
+  const rel = useMemo(() => relations(tree, state.selected, state.collapsed), [tree, state.selected, state.collapsed])
   const full = useMemo(() => fullView(tree), [tree])
 
   const value = useMemo<ReportView>(

@@ -17,7 +17,9 @@ async function readReport(): Promise<Report> {
     return (await fixtures[name]()).default as Report
   }
   // данные подставляет Rust (core::render); в шаблоне блок пустой
-  return JSON.parse(document.getElementById('data')?.textContent || 'null') ?? Promise.reject(new Error('в отчёте нет данных'))
+  const text = document.getElementById('data')?.textContent
+  if (!text) throw new Error('в отчёте нет данных')
+  return JSON.parse(text) as Report
 }
 
 async function main() {

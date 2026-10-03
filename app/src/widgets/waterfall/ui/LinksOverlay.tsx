@@ -60,9 +60,9 @@ export function LinksOverlay({ host, track, rows }: LinksOverlayProps) {
   }
 
   // измерение — после отрисовки строк: их положение и ширина дорожки известны только из DOM
-  const latest = useRef(measure)
+  const measureRef = useRef(measure)
   useLayoutEffect(() => {
-    latest.current = measure
+    measureRef.current = measure
     measure()
   }, [state.view, state.collapsed, rel, tree])
 
@@ -70,7 +70,7 @@ export function LinksOverlay({ host, track, rows }: LinksOverlayProps) {
   useEffect(() => {
     const el = host.current
     if (!el) return
-    const observer = new ResizeObserver(() => latest.current())
+    const observer = new ResizeObserver(() => measureRef.current())
     observer.observe(el)
     return () => observer.disconnect()
   }, [host])

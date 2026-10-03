@@ -28,6 +28,9 @@ export type ViewAction =
 export const treeOf = (report: Report, ref: TreeRef): Tree<ReportNode> =>
   report.mode === 'single' ? report.tree : ref === 'agg' ? report.agg : report.trees[ref]
 
+/** Открывается агрегат, а у одиночного отчёта — его единственное дерево. */
+export const initialRef = (report: Report): TreeRef => (report.mode === 'aggregate' ? 'agg' : 0)
+
 /** Видно весь пайплайн; в агрегате — до p90 конца. */
 export function fullView(tree: Tree<ReportNode>): View {
   const root = tree.nodes[tree.root]

@@ -1,5 +1,4 @@
 import type { ReportNode, Tree } from '../../../shared/api'
-import type { ViewState } from './state'
 
 type Nodes = Tree<ReportNode>['nodes']
 
@@ -31,7 +30,7 @@ export type Relations = {
 const NO_RELATIONS: Relations = { up: new Set(), down: new Set(), own: new Set(), name: '' }
 
 /** Связи выбранного узла; у стейджа и пайплайна их нет. */
-export function relations(tree: Tree<ReportNode>, { selected, collapsed }: ViewState): Relations {
+export function relations(tree: Tree<ReportNode>, selected: string | null, collapsed: ReadonlySet<string>): Relations {
   const sel = selected ? tree.nodes[selected] : undefined
   if (!sel || !isLinkable(sel)) return NO_RELATIONS
   const visible = (id: string) => visibleId(tree.nodes, collapsed, id)
@@ -55,8 +54,8 @@ export function criticalOf(tree: Tree<ReportNode>, scope: string): Critical {
 
 export type RowEntry = { node: ReportNode; depth: number }
 
-/** Подряд идущие строки одного стейджа; `card: null` — строка пайплайна вне карточки. */
-export type CardBlock = { card: string | null; cont: boolean; rows: RowEntry[] }
+/** Подряд идущие строки одного стейджа (`cont` — продолжение без заголовка) или строки пайплайна вне карточки. */
+export type CardBlock = ({ card: string; cont: boolean } | { card: null }) & { rows: RowEntry[] }
 
 /**
  * Строки водопада по карточкам. Строки downstream-пайплайна внутри bridge закрывают
@@ -67,7 +66,7 @@ export function cards(tree: Tree<ReportNode>, collapsed: ReadonlySet<string>): C
   const walk = (node: ReportNode, depth: number, card: string | null) => {
     const own = node.kind === 'stage' ? node.id : node.kind === 'pipeline' ? null : card
     let block = blocks.at(-1)
-    if (!block || block.card !== own) blocks.push((block = { card: own, cont: node.kind !== 'stage', rows: [] }))
+    if (!block || block.card !== own) blocks.push((block = own === null ? { card: null, rows: [] } : { card: own, cont: node.kind !== 'stage', rows: [] }))
     block.rows.push({ node, depth })
     if (!collapsed.has(node.id)) for (const id of node.children) walk(tree.nodes[id], depth + 1, own)
   }

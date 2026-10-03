@@ -9,5 +9,21 @@
     "tooManyJobs": "Pipeline {{pipeline}} in project {{project}}: more than {{limit}} jobs, loading stopped",
     "mrHasNoPipeline": "MR !{{iid}} in project {{project}} has no pipeline",
     "ipc": "Could not run the command: {{detail}}"
+  },
+  "report": {
+    "stageLength": "length",
+    "stageToEnd": "to end",
+    "holds": "holds",
+    "notRun": "not run",
+    "notRunStatus": "not run · {{status}}",
+    "expand": "Expand {{name}}",
+    "collapse": "Collapse {{name}}",
+    "stable": "stable",
+    "retried": "↻ {{retried}} of {{present}}",
+    "retriedTitle_one": "retries in {{retried}} of {{present}} pipeline",
+    "retriedTitle_other": "retries in {{retried}} of {{present}} pipelines",
+    "needFor": "↑ needed by",
+    "waits": "↓ waits for",
+    "loadFailed": "Failed to read the report data: {{detail}}"
   }
 }

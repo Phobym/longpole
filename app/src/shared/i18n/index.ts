@@ -2,7 +2,7 @@ import i18next, { type TFunction } from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import type { Locale } from '../api/schema/Locale'
 import type { IpcError } from '../api/api'
-import type { ErrorBody } from '../api/types'
+import type { ErrorBody } from '../api/schema/ErrorBody'
 import en from './locales/en.json'
 import ru from './locales/ru.json'
 

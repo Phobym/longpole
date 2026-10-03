@@ -8,6 +8,16 @@
     "pipelineNotFound": "Pipeline {{pipeline}} in project {{project}} on {{host}} not found",
     "tooManyJobs": "Pipeline {{pipeline}} in project {{project}}: more than {{limit}} jobs, loading stopped",
     "mrHasNoPipeline": "MR !{{iid}} in project {{project}} has no pipeline",
+    "noPipelines": "No pipelines matched the filters: check the branch and statuses",
+    "noToken": "No token for {{host}}: add it in the form (the “Token” field)",
+    "emptyToken": "Empty token",
+    "keychainUnavailable": "The system keychain is unavailable: set GITLAB_TOKEN and GITLAB_HOST or install libsecret",
+    "storage": "Could not read or write the app data: {{detail}}",
+    "invalidLink": "A link like https://<host>/<group>/<project>/-/pipelines/<id> or …/-/merge_requests/<iid> is required",
+    "invalidHost": "Enter a GitLab host, for example gitlab.example.com",
+    "invalidProject": "Enter a project path, for example group/project",
+    "invalidLast": "The number of pipelines must be from 1 to {{max}}",
+    "invalidStatuses": "Select at least one status or “any”",
     "ipc": "Could not run the command: {{detail}}"
   }
 }

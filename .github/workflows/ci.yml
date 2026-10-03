@@ -27,8 +27,8 @@ jobs:
     # Не ubuntu-latest: смена образа молча обнуляет кеши Rust и apt.
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

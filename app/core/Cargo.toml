@@ -5,4 +5,9 @@ edition = "2024"
 publish = false
 
 [dependencies]
+regex = "1"
+time = "0.3"
 ts-rs = "12"
+
+[dev-dependencies]
+time = { version = "0.3", features = ["macros"] }

@@ -2217,6 +2217,8 @@ dependencies = [
 name = "pipeline-trace-core"
 version = "0.0.0"
 dependencies = [
+ "regex",
+ "time",
  "ts-rs",
 ]
 

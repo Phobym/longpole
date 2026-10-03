@@ -1,0 +1,12 @@
+[package]
+name = "pipeline-trace"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[build-dependencies]
+tauri-build = "2"
+
+[dependencies]
+tauri = "2"
+pipeline-trace-core = { path = "../core" }

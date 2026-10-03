@@ -16,6 +16,7 @@ env:
   # Отладочная информация в CI не нужна: target/ и кеш меньше, линковка быстрее.
   CARGO_PROFILE_DEV_DEBUG: 0
   CARGO_PROFILE_TEST_DEBUG: 0
+  APT_PACKAGES: libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
 
 defaults:
   run:
@@ -39,11 +40,18 @@ jobs:
       # До cargo: generate_context! требует dist/, шаблон отчёта — dist-report/.
       - run: npm run build
 
-      - name: Системные зависимости Tauri
+      - name: Системные зависимости Tauri (кеш)
         uses: awalsh128/cache-apt-pkgs-action@v1.6.3
         with:
-          packages: libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
-          version: 1
+          packages: ${{ env.APT_PACKAGES }}
+          version: 2
+      # Экшен глотает ошибки apt (404 зеркала) и сохраняет пустой кеш — тогда ставим штатно.
+      - name: Системные зависимости Tauri (проверка)
+        run: |
+          pkg-config --exists webkit2gtk-4.1 ayatana-appindicator3-0.1 librsvg-2.0 && exit 0
+          echo "::warning::apt-кеш неполный, ставлю пакеты через apt-get"
+          sudo apt-get update
+          sudo apt-get install -y $APT_PACKAGES
       # Тулчейн из app/rust-toolchain.toml — до кеша и по умолчанию: rust-cache считает ключ
       # по `rustc -vV` из корня репозитория, иначе туда попал бы stable раннера.
       - run: |

@@ -1,7 +1,7 @@
 import { useEffect, type RefObject } from 'react'
 import { useReportView } from '../../../entities/report'
 import { clampView } from '../../../shared/lib/timeline'
-import { LANE_SELECTOR, TRACK_SELECTOR } from './lane'
+import { trackOf } from './lane'
 
 const MIN_VIEW_MS = 1000
 const ZOOM_SPEED = 0.004
@@ -18,7 +18,7 @@ export function useWheelZoom(host: RefObject<HTMLElement | null>) {
     const el = host.current
     if (!el) return
     const onWheel = (e: WheelEvent) => {
-      const track = (e.target as Element).closest(LANE_SELECTOR)?.querySelector(TRACK_SELECTOR)
+      const track = trackOf(e.target)
       const zoom = e.ctrlKey || e.metaKey
       const horizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY)
       if (!track || !(zoom || e.shiftKey || horizontal)) return

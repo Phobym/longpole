@@ -27,10 +27,10 @@ export function Waterfall() {
   useReportKeys()
   const selection = useNodeSelection()
   const groups = useGroupToggle()
-  const onKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLElement>, node: ReportNode) => selection.onRowKeyDown(e, node.id) || groups.onRowKeyDown(e, node),
-    [selection, groups],
-  )
+  // колбэки хуков стабильны, а сами объекты — нет: от них зависит memo у Row
+  const { onRowKeyDown: selectKey } = selection
+  const { onRowKeyDown: toggleKey } = groups
+  const onKeyDown = useCallback((e: KeyboardEvent<HTMLElement>, node: ReportNode) => selectKey(e, node) || toggleKey(e, node), [selectKey, toggleKey])
 
   const { nodes } = tree
   return (

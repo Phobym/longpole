@@ -41,4 +41,6 @@ async function main() {
   )
 }
 
-void main()
+main().catch((e) => {
+  document.body.textContent = String(e)
+})

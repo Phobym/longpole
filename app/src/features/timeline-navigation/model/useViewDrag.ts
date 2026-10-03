@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, type MouseEvent } from 'react'
 import { useReportView } from '../../../entities/report'
 import { clampView, type View } from '../../../shared/lib/timeline'
-import { LANE_SELECTOR, TRACK_SELECTOR } from './lane'
+import { trackOf } from './lane'
 import './dragging.css'
 
 const DRAG_THRESHOLD_PX = 4
@@ -45,7 +45,7 @@ export function useViewDrag() {
 
   const onMouseDown = useCallback(
     (e: MouseEvent) => {
-      const track = (e.target as Element).closest(LANE_SELECTOR)?.querySelector(TRACK_SELECTOR)
+      const track = trackOf(e.target)
       if (!track || e.button !== 0) return
       e.preventDefault()
       drag.current = { x: e.clientX, view: getView(), width: track.getBoundingClientRect().width, moved: false }

@@ -7,7 +7,6 @@ import { createReducer, fullView, openState, treeOf, type ViewAction, type ViewS
 type ReportView = {
   report: Report
   tree: Tree<ReportNode>
-  isAgg: boolean
   state: ViewState
   dispatch: Dispatch<ViewAction>
   crit: Critical
@@ -54,7 +53,7 @@ export function ReportViewProvider({ report, children }: { report: Report; child
   const full = useMemo(() => fullView(tree), [tree])
 
   const value = useMemo<ReportView>(
-    () => ({ report, tree, isAgg: state.tree === 'agg', state, dispatch, crit, rel, fullView: full, getView, setView }),
+    () => ({ report, tree, state, dispatch, crit, rel, fullView: full, getView, setView }),
     [report, tree, state, crit, rel, full, getView, setView],
   )
   return <ReportViewContext value={value}>{children}</ReportViewContext>

@@ -1,8 +1,10 @@
 import { useTranslation } from '../../../shared/i18n'
 import { cn } from '../../../shared/lib/cn'
 
+export type DepDir = 'up' | 'down'
+
 /** Метка у связанной с выбранной строки: «↑ нужна для X» или «↓ ждёт X». */
-export function DepTag({ dir, name }: { dir: 'up' | 'down'; name: string }) {
+export function DepTag({ dir, name }: { dir: DepDir; name: string }) {
   const { t } = useTranslation()
   return (
     <span

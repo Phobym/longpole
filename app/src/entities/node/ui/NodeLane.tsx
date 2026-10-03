@@ -58,7 +58,8 @@ type MainBarProps = { node: ReportNode; from: number; to: number; view: View; cr
 // у узкого места стейджа хвост правее конца остальных джоб заштрихован
 function MainBar({ node, from, to, view, critical, excess }: MainBarProps) {
   const partial = isAggNode(node) && node.stats.present < node.stats.total
-  const main = cn(THICK, mainColor(node, critical), partial && 'opacity-50')
+  // строка группы — тонкая полоска, критическая — оранжевая
+  const main = node.kind === 'group' ? cn(THIN, critical && 'bg-crit') : cn(THICK, mainColor(node, critical), partial && 'opacity-50')
   if (excess?.id !== node.id) return <Bar className={main} from={from} to={to} view={view} />
   const cut = Math.min(Math.max(excess.peersEnd, from), to)
   const head = cut > from
@@ -127,15 +128,15 @@ function SingleLane({ node, view, critical, excess, gapMs }: NodeLaneProps & { n
   const { t } = useTranslation()
   const { start, end } = node
   if (start == null || end == null) return <NotRun>{t('report.notRunStatus', { status: node.status ?? '' })}</NotRun>
-  const tries = node.attempts.filter((a) => a.start != null && a.end != null).sort((a, b) => a.start! - b.start!)
+  const tries = node.attempts.flatMap((a) => (a.start != null && a.end != null ? [{ start: a.start, end: a.end }] : [])).sort((a, b) => a.start - b.start)
   return (
     <>
       {tries.map((a, i) => {
         const next = tries[i + 1]?.start ?? start
         return (
           <span key={i}>
-            <Bar className={cn(THICK, RETRY_HATCH)} from={a.start!} to={a.end!} view={view} />
-            {next > a.end! && <Bar className={cn(LINE, 'bg-wait')} from={a.end!} to={next} view={view} />}
+            <Bar className={cn(THICK, RETRY_HATCH)} from={a.start} to={a.end} view={view} />
+            {next > a.end && <Bar className={cn(LINE, 'bg-wait')} from={a.end} to={next} view={view} />}
           </span>
         )
       })}

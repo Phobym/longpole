@@ -1,5 +1,6 @@
 import { useCallback, type KeyboardEvent, type MouseEvent } from 'react'
 import { useReportView } from '../../../entities/report'
+import type { ReportNode } from '../../../shared/api'
 
 const ROW_SELECTOR = '[data-row]'
 export const rowAttrs = { 'data-row': '', tabIndex: 0 }
@@ -19,9 +20,9 @@ export function useNodeSelection() {
 
   /** `↑` `↓` — соседняя строка, `Enter` — выбрать; `true`, если клавиша обработана. */
   const onRowKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLElement>, id: string): boolean => {
+    (e: KeyboardEvent<HTMLElement>, node: ReportNode): boolean => {
       if (e.key === 'Enter') {
-        dispatch({ type: 'select', id })
+        dispatch({ type: 'select', id: node.id })
       } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         const rows = [...document.querySelectorAll<HTMLElement>(ROW_SELECTOR)]
         rows[rows.indexOf(e.currentTarget) + (e.key === 'ArrowDown' ? 1 : -1)]?.focus()

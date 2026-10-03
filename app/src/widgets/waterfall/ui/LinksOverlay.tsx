@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { type DepDir, } from '../../../entities/node'
 import { isLinkable, useReportView, visibleId } from '../../../entities/report'
 import { cn } from '../../../shared/lib/cn'
 import { pos } from '../../../shared/lib/timeline'
 
-type Dir = 'up' | 'down'
+type Dir = DepDir
 type Geometry = { left: number; width: number; height: number; paths: { d: string; dir: Dir }[] }
 
 // короткий горизонтальный отрезок от конца полоски до вертикали

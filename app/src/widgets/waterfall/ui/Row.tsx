@@ -1,5 +1,5 @@
-import { memo, type KeyboardEvent, type MouseEvent } from 'react'
-import { DepTag, NodeLane, StabilityPill } from '../../../entities/node'
+import { memo, useCallback, type KeyboardEvent, type MouseEvent } from 'react'
+import { DepTag, NodeLane, StabilityPill, type DepDir } from '../../../entities/node'
 import { GroupToggle } from '../../../features/group-toggle'
 import { rowAttrs } from '../../../features/node-selection'
 import { laneAttrs, trackAttrs } from '../../../features/timeline-navigation'
@@ -15,7 +15,7 @@ type RowProps = {
   selected: boolean
   critical: boolean
   /** связь с выбранной строкой */
-  dep: 'up' | 'down' | null
+  dep: DepDir | null
   depName: string
   collapsed: boolean
   /** узкое место стейджа, в карточке которого лежит строка */
@@ -34,13 +34,17 @@ type RowProps = {
 /** Строка водопада: имя, дорожка с полосками, метка стабильности. */
 export const Row = memo(function Row({ node, depth, view, selected, critical, dep, depName, collapsed, excess, holderName, afterName, gapMs, register, onClick, onKeyDown, onToggle }: RowProps) {
   const stage = node.kind === 'stage'
+  const ref = useCallback(
+    (el: HTMLElement | null) => {
+      register(node.id, el)
+      return () => register(node.id, null)
+    },
+    [register, node.id],
+  )
   return (
     <div
       {...rowAttrs}
-      ref={(el) => {
-        register(node.id, el)
-        return () => register(node.id, null)
-      }}
+      ref={ref}
       data-id={node.id}
       data-selected={selected ? '' : undefined}
       className={cn(
@@ -53,8 +57,8 @@ export const Row = memo(function Row({ node, depth, view, selected, critical, de
       )}
       onClick={(e) => onClick(e, node.id)}
       onKeyDown={(e) => {
-        // клавиши внутри строки (стрелка-переключатель) обрабатывает сам элемент
-        if (e.target === e.currentTarget && onKeyDown(e, node)) e.preventDefault()
+        // клавиши внутри строки (стрелка-переключатель) обрабатывает сам элемент; с ⌘/Ctrl/Alt отчёт клавиши не трогает
+        if (e.target === e.currentTarget && !e.ctrlKey && !e.metaKey && !e.altKey && onKeyDown(e, node)) e.preventDefault()
       }}
     >
       <div className="flex min-w-0 items-center pr-2 whitespace-nowrap" style={{ paddingLeft: 8 + depth * 12 }} title={node.name}>

@@ -16,7 +16,7 @@ declare module 'i18next' {
 
 export { useTranslation } from 'react-i18next'
 
-/** Вызвать до первого рендера: форма — с `get_locale`, отчёт — с `meta.locale` или языком браузера. */
+/** `await` до первого рендера: форма — с `get_locale`, отчёт — с `meta.locale` или языком браузера. */
 export const initI18n = (locale: Locale) =>
   i18next.use(initReactI18next).init({
     resources: { ru: { translation: ru }, en: { translation: en } },

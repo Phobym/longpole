@@ -166,7 +166,7 @@ type Hotspot = { id: Id; name: string; saving: Ms } & (
 | `remove_history` | `at` | `HistoryEntry[]` |
 | `clear_history` | — | `()` |
 | `projects` | `{host, search, after}` | `Page<Project>` |
-| `branches` | `{host, project, search}` | `Branch[]` |
+| `branches` | `{host, project, search}` | `string[]` |
 | `pipelines` | `{host, project, ref, after}` | `Page<Pipeline>` |
 | `build` | `form, onProgress: Channel<Progress>` | `()` — открывает окно отчёта |
 | `get_locale` | — | `'ru' \| 'en'` |

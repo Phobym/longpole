@@ -1,166 +1,117 @@
 @import 'tailwindcss';
 
-/* Тёмная тема — по системе, переключателя нет: переменные ниже переопределяются в @media. */
-:root {
-  color-scheme: light dark;
-  --radius: 0.625rem;
-
-  /* база shadcn; значения — из палитры старых form.css и template.html */
-  --background: #f7f8fa;
-  --foreground: #1a1b1f;
-  --card: #ffffff;
-  --card-foreground: #1a1b1f;
-  --popover: #ffffff;
-  --popover-foreground: #1a1b1f;
-  --primary: #6b6ff0;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f2f5;
-  --secondary-foreground: #1a1b1f;
-  --muted: #f1f2f5;
-  --muted-foreground: #8b909a;
-  --accent: #f3f4f8;
-  --accent-foreground: #1a1b1f;
-  --destructive: #c23434;
-  --border: #e8eaee;
-  --input: #e8eaee;
-  --ring: #6b6ff0;
-  --selected: #eef0ff;
+/*
+ * Тёмная тема — по системе, переключателя нет: те же переменные переопределяются в @media.
+ * Палитра — из старых form.css и template.html; primary и muted-foreground затемнены ради контраста AA (≥ 4,5:1).
+ * `static`: переменные нужны и без утилит (inline-стили, var(--color-*)).
+ */
+@theme static {
+  --color-background: #f7f8fa;
+  --color-foreground: #1a1b1f;
+  --color-card: #ffffff;
+  --color-card-foreground: #1a1b1f;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1a1b1f;
+  --color-primary: #5b5fe8;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f2f5;
+  --color-secondary-foreground: #1a1b1f;
+  --color-muted: #f1f2f5;
+  --color-muted-foreground: #656a7a;
+  --color-accent: #f3f4f8;
+  --color-accent-foreground: #1a1b1f;
+  --color-destructive: #c23434;
+  --color-border: #e8eaee;
+  --color-input: #e8eaee;
+  --color-ring: #5b5fe8;
+  --color-selected: #eef0ff;
 
   /* домен: статусы, критический путь, повторы и превышения, связи */
-  --ok: #8b8ff6;
-  --fail: #f06262;
-  --warn: #f2b33d;
-  --run: #5b9cf8;
-  --idle: #b4b9c2;
-  --queued: #dfe2e7;
-  --thin: #c9ccd3;
-  --wait: #e3e5e9;
-  --guide: #c9ccd3;
-  --crit: #f59a3c;
-  --crit-fg: #b65c0c;
-  --crit-soft: #fbd3a8;
-  --crit-bg: #fffaf4;
-  --over-a: var(--crit);
-  --over-b: #fde0c7;
-  --retry-a: var(--fail);
-  --retry-b: #fbd0d0;
-  --retry-fg: #c23434;
-  --dep-up: #0284c7;
-  --dep-down: #16a34a;
-  --pill-ok-bg: #e9f7ef;
-  --pill-ok-fg: #1a7f45;
-  --pill-mid-bg: #fff3dc;
-  --pill-mid-fg: #9a6200;
-  --pill-bad-bg: #fdecec;
-  --pill-bad-fg: #c23434;
-  --pill-run-bg: #eaf1fe;
-  --pill-run-fg: #2f5fc4;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111318;
-    --foreground: #e6e7ea;
-    --card: #1a1c22;
-    --card-foreground: #e6e7ea;
-    --popover: #1a1c22;
-    --popover-foreground: #e6e7ea;
-    --primary: #9a9cf8;
-    --primary-foreground: #111318;
-    --secondary: #22252c;
-    --secondary-foreground: #e6e7ea;
-    --muted: #22252c;
-    --muted-foreground: #8d939e;
-    --accent: #20232a;
-    --accent-foreground: #e6e7ea;
-    --destructive: #f58a8d;
-    --border: #2a2d35;
-    --input: #2a2d35;
-    --ring: #9a9cf8;
-    --selected: #262a45;
-
-    --ok: #9a9cf8;
-    --fail: #f16a6e;
-    --warn: #f5b041;
-    --idle: #5b616b;
-    --queued: #343842;
-    --thin: #4a4f59;
-    --wait: #3a3e47;
-    --guide: #4a4f59;
-    --crit: #f5a04a;
-    --crit-fg: #f7b26a;
-    --crit-soft: #5a3b1c;
-    --crit-bg: #241c14;
-    --over-b: #4a3320;
-    --retry-b: #4a2426;
-    --retry-fg: #f58a8d;
-    --dep-up: #38bdf8;
-    --dep-down: #4ade80;
-    --pill-ok-bg: #16301f;
-    --pill-ok-fg: #6fd49a;
-    --pill-mid-bg: #33280f;
-    --pill-mid-fg: #f0c060;
-    --pill-bad-bg: #3a1a1b;
-    --pill-bad-fg: #f58a8d;
-    --pill-run-bg: #1b2a44;
-    --pill-run-fg: #8ab4f8;
-  }
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-selected: var(--selected);
-
-  --color-ok: var(--ok);
-  --color-fail: var(--fail);
-  --color-warn: var(--warn);
-  --color-run: var(--run);
-  --color-idle: var(--idle);
-  --color-queued: var(--queued);
-  --color-thin: var(--thin);
-  --color-wait: var(--wait);
-  --color-guide: var(--guide);
-  --color-crit: var(--crit);
-  --color-crit-fg: var(--crit-fg);
-  --color-crit-soft: var(--crit-soft);
-  --color-crit-bg: var(--crit-bg);
-  --color-over-a: var(--over-a);
-  --color-over-b: var(--over-b);
-  --color-retry-a: var(--retry-a);
-  --color-retry-b: var(--retry-b);
-  --color-retry-fg: var(--retry-fg);
-  --color-dep-up: var(--dep-up);
-  --color-dep-down: var(--dep-down);
-  --color-pill-ok-bg: var(--pill-ok-bg);
-  --color-pill-ok-fg: var(--pill-ok-fg);
-  --color-pill-mid-bg: var(--pill-mid-bg);
-  --color-pill-mid-fg: var(--pill-mid-fg);
-  --color-pill-bad-bg: var(--pill-bad-bg);
-  --color-pill-bad-fg: var(--pill-bad-fg);
-  --color-pill-run-bg: var(--pill-run-bg);
-  --color-pill-run-fg: var(--pill-run-fg);
+  --color-ok: #8b8ff6;
+  --color-fail: #f06262;
+  --color-warn: #f2b33d;
+  --color-run: #5b9cf8;
+  --color-idle: #b4b9c2;
+  --color-queued: #dfe2e7;
+  --color-thin: #c9ccd3;
+  --color-wait: #e3e5e9;
+  --color-crit: #f59a3c;
+  --color-crit-fg: #b65c0c;
+  --color-crit-soft: #fbd3a8;
+  --color-crit-bg: #fffaf4;
+  --color-over-a: var(--color-crit);
+  --color-over-b: #fde0c7;
+  --color-retry-a: var(--color-fail);
+  --color-retry-b: #fbd0d0;
+  --color-retry-fg: #c23434;
+  --color-dep-up: #0284c7;
+  --color-dep-down: #16a34a;
+  --color-pill-ok-bg: #e9f7ef;
+  --color-pill-ok-fg: #1a7f45;
+  --color-pill-mid-bg: #fff3dc;
+  --color-pill-mid-fg: #9a6200;
+  --color-pill-bad-bg: #fdecec;
+  --color-pill-bad-fg: #c23434;
+  --color-pill-run-bg: #eaf1fe;
+  --color-pill-run-fg: #2f5fc4;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  color-scheme: light dark;
+  --radius: 0.625rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #111318;
+    --color-foreground: #e6e7ea;
+    --color-card: #1a1c22;
+    --color-card-foreground: #e6e7ea;
+    --color-popover: #1a1c22;
+    --color-popover-foreground: #e6e7ea;
+    --color-primary: #9a9cf8;
+    --color-primary-foreground: #111318;
+    --color-secondary: #22252c;
+    --color-secondary-foreground: #e6e7ea;
+    --color-muted: #22252c;
+    --color-muted-foreground: #8d939e;
+    --color-accent: #20232a;
+    --color-accent-foreground: #e6e7ea;
+    --color-destructive: #f58a8d;
+    --color-border: #2a2d35;
+    --color-input: #2a2d35;
+    --color-ring: #9a9cf8;
+    --color-selected: #262a45;
+    --color-ok: #9a9cf8;
+    --color-fail: #f16a6e;
+    --color-warn: #f5b041;
+    --color-idle: #5b616b;
+    --color-queued: #343842;
+    --color-thin: #4a4f59;
+    --color-wait: #3a3e47;
+    --color-crit: #f5a04a;
+    --color-crit-fg: #f7b26a;
+    --color-crit-soft: #5a3b1c;
+    --color-crit-bg: #241c14;
+    --color-over-b: #4a3320;
+    --color-retry-b: #4a2426;
+    --color-retry-fg: #f58a8d;
+    --color-dep-up: #38bdf8;
+    --color-dep-down: #4ade80;
+    --color-pill-ok-bg: #16301f;
+    --color-pill-ok-fg: #6fd49a;
+    --color-pill-mid-bg: #33280f;
+    --color-pill-mid-fg: #f0c060;
+    --color-pill-bad-bg: #3a1a1b;
+    --color-pill-bad-fg: #f58a8d;
+    --color-pill-run-bg: #1b2a44;
+    --color-pill-run-fg: #8ab4f8;
+  }
 }
 
 @layer base {
@@ -169,11 +120,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, system-ui, sans-serif;
     font-variant-numeric: tabular-nums;
-  }
-  /* .flex и подобные задают свой display той же специфичности, что и [hidden] */
-  [hidden] {
-    display: none !important;
   }
 }

@@ -5,12 +5,11 @@ import { cn } from '../lib/cn'
 
 export const Select = SelectPrimitive.Root
 export const SelectValue = SelectPrimitive.Value
-export const SelectGroup = SelectPrimitive.Group
 
 export const SelectTrigger = ({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Trigger>) => (
   <SelectPrimitive.Trigger
     className={cn(
-      'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3 py-2 text-sm whitespace-nowrap outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[placeholder]:text-muted-foreground',
+      'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3 py-2 text-sm whitespace-nowrap outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive data-[placeholder]:text-muted-foreground',
       className,
     )}
     {...props}
@@ -22,19 +21,19 @@ export const SelectTrigger = ({ className, children, ...props }: ComponentProps<
   </SelectPrimitive.Trigger>
 )
 
-export const SelectContent = ({ className, children, position = 'popper', ...props }: ComponentProps<typeof SelectPrimitive.Content>) => (
+export const SelectContent = ({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Content>) => (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
-      position={position}
+      position="popper"
       className={cn(
         'relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md',
-        position === 'popper' && 'data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1',
+        'data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1',
         className,
       )}
       {...props}
     >
       <SelectPrimitive.Viewport
-        className={cn('p-1', position === 'popper' && 'w-full min-w-(--radix-select-trigger-width)')}
+        className="w-full min-w-(--radix-select-trigger-width) p-1"
       >
         {children}
       </SelectPrimitive.Viewport>
@@ -57,8 +56,4 @@ export const SelectItem = ({ className, children, ...props }: ComponentProps<typ
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
-)
-
-export const SelectSeparator = ({ className, ...props }: ComponentProps<typeof SelectPrimitive.Separator>) => (
-  <SelectPrimitive.Separator className={cn('-mx-1 my-1 h-px bg-border', className)} {...props} />
 )

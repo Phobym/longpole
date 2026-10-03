@@ -1,4 +1,3 @@
-import { Slot } from 'radix-ui'
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
 import { cn } from '../lib/cn'
@@ -13,7 +12,6 @@ const buttonVariants = cva(
         outline: 'border bg-card hover:bg-accent hover:text-accent-foreground',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-9 px-4 py-2',
@@ -25,13 +23,6 @@ const buttonVariants = cva(
   },
 )
 
-export function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  ...props
-}: ComponentProps<'button'> & VariantProps<typeof buttonVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot.Root : 'button'
-  return <Comp className={cn(buttonVariants({ variant, size }), className)} {...props} />
-}
+export const Button = ({ className, variant, size, ...props }: ComponentProps<'button'> & VariantProps<typeof buttonVariants>) => (
+  <button className={cn(buttonVariants({ variant, size }), className)} {...props} />
+)

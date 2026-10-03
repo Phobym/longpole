@@ -8,16 +8,14 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground',
         secondary: 'bg-secondary text-secondary-foreground',
-        outline: 'border-border text-foreground',
         ok: 'bg-pill-ok-bg text-pill-ok-fg',
         run: 'bg-pill-run-bg text-pill-run-fg',
         mid: 'bg-pill-mid-bg text-pill-mid-fg',
         bad: 'bg-pill-bad-bg text-pill-bad-fg',
       },
     },
-    defaultVariants: { variant: 'default' },
+    defaultVariants: { variant: 'secondary' },
   },
 )
 

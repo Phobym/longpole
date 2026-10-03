@@ -10,13 +10,13 @@ export type CmdError =
 
 export type Progress = { loaded: number; total: number | null }
 
-export type BuildForm =
-  | { mode: 'link'; url: string }
-  | { mode: 'aggregate'; host: string; project: string; ref: string; source: string; last: string; statuses: string[] }
+type AggregateForm = { mode: 'aggregate'; host: string; project: string; ref: string; source: string; last: string; statuses: string[] }
+
+export type BuildForm = { mode: 'link'; url: string } | AggregateForm
 
 export type HistoryEntry = {
   at: string
   host: string
-  form: Partial<{ mode: string; host: string; url: string; project: string; ref: string; source: string; last: string; statuses: string[] }>
+  form: Partial<{ url: string } & AggregateForm> & { mode: BuildForm['mode'] }
   label: { project: string; label: string | null }
 }

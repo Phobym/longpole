@@ -40,11 +40,14 @@ jobs:
       # До cargo: generate_context! требует dist/, шаблон отчёта — dist-report/.
       - run: npm run build
 
+      # Списки пакетов в образе раннера отстают от зеркала (404 на заменённых .deb), а экшен
+      # их не обновляет, если файлы свежие по mtime.
+      - run: sudo apt-get update
       - name: Системные зависимости Tauri (кеш)
         uses: awalsh128/cache-apt-pkgs-action@v1.6.3
         with:
           packages: ${{ env.APT_PACKAGES }}
-          version: 2
+          version: 3
       # Экшен глотает ошибки apt (404 зеркала) и сохраняет пустой кеш — тогда ставим штатно.
       - name: Системные зависимости Tauri (проверка)
         run: |

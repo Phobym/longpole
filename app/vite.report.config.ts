@@ -7,6 +7,8 @@ const sha = (s: string) => `'sha256-${createHash('sha256').update(s, 'utf8').dig
 
 // После инлайна: sha256 каждого исполняемого <script> и <style> → <meta> CSP первым элементом <head>.
 // JSON-блок данных не исполняется и не хешируется: Rust подставляет в него данные после сборки.
+// ponytail: теги ищутся регулярками — годится для вывода vite-plugin-singlefile (атрибуты без `>`);
+// если шаблон начнёт содержать такие атрибуты или вложенные теги, перейти на HTML-парсер.
 function cspHashes(): Plugin {
   return {
     name: 'csp-hashes',
@@ -14,7 +16,8 @@ function cspHashes(): Plugin {
     generateBundle: {
       order: 'post',
       handler(_, bundle) {
-        const html = bundle['report.html'] as { source: string }
+        const html = bundle['report.html']
+        if (html?.type !== 'asset' || typeof html.source !== 'string') this.error('нет report.html в бандле')
         let src = html.source
         const scripts = [...src.matchAll(/<script(?![^>]*type="application\/json")[^>]*>([\s\S]*?)<\/script>/g)].map((m) => sha(m[1]))
         const styles = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => sha(m[1]))

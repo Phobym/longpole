@@ -1,7 +1,20 @@
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 
-// Данные подставляет Rust (core::render); в шаблоне блок пустой.
-const data: unknown = JSON.parse(document.getElementById('data')!.textContent || 'null')
+const root = document.getElementById('root')
+if (!root) throw new Error('нет #root в report.html')
 
-createRoot(document.getElementById('root')!).render(<pre>{JSON.stringify(data, null, 2)}</pre>)
+// Данные подставляет Rust (core::render); в шаблоне блок пустой.
+let data: unknown
+try {
+  data = JSON.parse(document.getElementById('data')?.textContent || 'null')
+} catch (e) {
+  data = `данные отчёта повреждены: ${String(e)}`
+}
+
+createRoot(root).render(
+  <StrictMode>
+    <pre>{JSON.stringify(data, null, 2)}</pre>
+  </StrictMode>,
+)

@@ -5,8 +5,8 @@ edition = "2024"
 publish = false
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = "2"
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = "2"
 pipeline-trace-core = { path = "../core" }

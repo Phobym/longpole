@@ -1,3 +1,11 @@
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
-createRoot(document.getElementById('root')!).render(<h1>pipeline-trace</h1>)
+const root = document.getElementById('root')
+if (!root) throw new Error('нет #root в index.html')
+
+createRoot(root).render(
+  <StrictMode>
+    <h1>pipeline-trace</h1>
+  </StrictMode>,
+)

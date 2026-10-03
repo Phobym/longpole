@@ -30,8 +30,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
-      # Тулчейн из app/rust-toolchain.toml — до кеша, иначе ключ кеша посчитается по stable раннера.
-      - run: rustup toolchain install
+      # Тулчейн из app/rust-toolchain.toml — до кеша и по умолчанию: rust-cache считает ключ
+      # по `rustc -vV` из корня репозитория, иначе туда попал бы stable раннера.
+      - run: |
+          rustup toolchain install
+          rustup default "$(rustup show active-toolchain | cut -d' ' -f1)"
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: app

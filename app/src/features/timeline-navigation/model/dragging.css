@@ -1,0 +1,6 @@
+/* пока тянем ось, курсор — «хватаю» везде, текст не выделяется */
+body.dragging,
+body.dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+}

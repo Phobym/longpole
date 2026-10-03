@@ -19,5 +19,21 @@
     "invalidLast": "The number of pipelines must be from 1 to {{max}}",
     "invalidStatuses": "Select at least one status or “any”",
     "ipc": "Could not run the command: {{detail}}"
+  },
+  "report": {
+    "stageLength": "length",
+    "stageToEnd": "to end",
+    "holds": "holds",
+    "notRun": "not run",
+    "notRunStatus": "not run · {{status}}",
+    "expand": "Expand {{name}}",
+    "collapse": "Collapse {{name}}",
+    "stable": "stable",
+    "retried": "↻ {{retried}} of {{present}}",
+    "retriedTitle_one": "retries in {{retried}} of {{present}} pipeline",
+    "retriedTitle_other": "retries in {{retried}} of {{present}} pipelines",
+    "needFor": "↑ needed by",
+    "waits": "↓ waits for",
+    "loadFailed": "Failed to read the report data: {{detail}}"
   }
 }

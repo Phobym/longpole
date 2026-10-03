@@ -19,5 +19,20 @@
     "invalidLast": "Число пайплайнов — от 1 до {{max}}",
     "invalidStatuses": "Выбери хотя бы один статус или «любой»",
     "ipc": "Не удалось выполнить команду: {{detail}}"
+  },
+  "report": {
+    "stageLength": "длина",
+    "stageToEnd": "до конца",
+    "holds": "держит",
+    "notRun": "не запускалась",
+    "notRunStatus": "не запускалась · {{status}}",
+    "expand": "Развернуть {{name}}",
+    "collapse": "Свернуть {{name}}",
+    "stable": "стабильна",
+    "retried": "↻ {{retried}} из {{present}}",
+    "retriedTitle": "ретраи в {{retried}} из {{present}} пайплайнов",
+    "needFor": "↑ нужна для",
+    "waits": "↓ ждёт",
+    "loadFailed": "Не удалось прочитать данные отчёта: {{detail}}"
   }
 }

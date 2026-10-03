@@ -30,7 +30,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
-      # rustup ставит тулчейн и компоненты из app/rust-toolchain.toml при первом вызове cargo.
+      # Тулчейн из app/rust-toolchain.toml — до кеша, иначе ключ кеша посчитается по stable раннера.
+      - run: rustup toolchain install
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: app

@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::time::Duration;
 
 use serde::Deserialize;
@@ -51,10 +52,6 @@ impl Client {
             permits: Semaphore::new(MAX_PARALLEL),
         })
     }
-
-    fn error(&self, code: ErrorCode) -> Error {
-        Error::new(code).with("host", &self.host)
-    }
 }
 
 /// Текст ошибки reqwest со всей цепочкой причин: сам по себе он ничего не говорит.
@@ -63,7 +60,7 @@ fn network_error(host: &str, e: reqwest::Error) -> Error {
     let mut detail = e.to_string();
     let mut source = std::error::Error::source(&e);
     while let Some(cause) = source {
-        detail.push_str(&format!(": {cause}"));
+        write!(detail, ": {cause}").expect("запись в String не падает");
         source = cause.source();
     }
     Error::new(ErrorCode::Network)

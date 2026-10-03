@@ -28,6 +28,7 @@ impl<T> Page<T> {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct Project {
+    /// путь вида `group/sub/project`
     pub full_path: String,
     pub name: String,
     pub last_activity_at: Option<String>,
@@ -61,9 +62,8 @@ pub struct Pipeline {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct Repository {
+struct RootRef {
     root_ref: Option<String>,
-    branch_names: Option<Vec<String>>,
 }
 
 const PROJECTS_QUERY: &str = "query($search: String, $after: String) {
@@ -84,7 +84,7 @@ struct WireProject {
     full_path: String,
     name_with_namespace: String,
     last_activity_at: Option<String>,
-    repository: Option<Repository>,
+    repository: Option<RootRef>,
 }
 
 /// Проекты, где пользователь участник, — от недавно активных.
@@ -113,8 +113,15 @@ const BRANCHES_QUERY: &str = "query($project: ID!, $pattern: String!) {
 }";
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BranchesRepository {
+    root_ref: Option<String>,
+    branch_names: Option<Vec<String>>,
+}
+
+#[derive(Deserialize)]
 struct BranchesProject {
-    repository: Option<Repository>,
+    repository: Option<BranchesRepository>,
 }
 
 /// Имена веток по подстроке; основная ветка, если попала в выдачу, — первой.
@@ -123,10 +130,11 @@ pub async fn list_branches(
     project: &str,
     search: &str,
 ) -> Result<Vec<String>, Error> {
+    // пустой поиск даёт `**`, а шаблон «все ветки» у GitLab — `*`
     let pattern = format!("*{}*", search.trim()).replacen("**", "*", 1);
     let variables = json!({ "project": project, "pattern": pattern });
     let found: BranchesProject = query_project(gql, BRANCHES_QUERY, variables, project).await?;
-    let Some(Repository {
+    let Some(BranchesRepository {
         root_ref,
         branch_names,
     }) = found.repository
@@ -152,12 +160,12 @@ const PIPELINES_QUERY: &str = "query($project: ID!, $ref: String, $after: String
 
 #[derive(Deserialize)]
 struct PipelinesProject {
-    pipelines: Connection<WirePipeline>,
+    pipelines: Connection<WireRecentPipeline>,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct WirePipeline {
+struct WireRecentPipeline {
     id: String,
     iid: String,
     status: String,
@@ -200,7 +208,7 @@ pub async fn recent_pipelines(
         status: p.status.to_lowercase(),
         source: p.source,
         created_at: p.created_at,
-        duration: p.duration.map(|seconds| seconds * 1000),
+        duration: p.duration.map(|seconds| seconds.saturating_mul(1000)),
         commit: p.commit.map(|c| Commit {
             sha: c.short_id,
             title: c.title,

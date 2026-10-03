@@ -2,8 +2,9 @@
 mod fixtures;
 
 use std::collections::{BTreeMap, HashMap};
-use std::sync::Mutex;
-use std::time::{Duration, Instant};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use fixtures::{assert_error, at, fake_gql};
 use pipeline_trace_core::error::ErrorCode;
@@ -12,6 +13,8 @@ use pipeline_trace_core::gitlab::{
 };
 use pipeline_trace_core::model::{RawJob, RawPipelineInfo};
 use serde_json::{Value, json};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
 use wiremock::matchers::{body_json, header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -265,6 +268,25 @@ async fn list_pipelines_фильтрует_статусы_считает_их_и
 }
 
 #[tokio::test]
+async fn list_pipelines_статусы_сравниваются_без_учёта_регистра() {
+    let gql = fake_gql(|_| {
+        json!({ "project": { "pipelines": {
+            "nodes": [{ "id": "a", "status": "SUCCESS" }, { "id": "b", "status": "FAILED" }],
+            "pageInfo": no_more(),
+        } } })
+    });
+    let filter = PipelineFilter {
+        r#ref: None,
+        source: None,
+        statuses: Some(vec!["success".into()]),
+        last: 10,
+    };
+    let listed = list_pipelines(&gql, "g/p", &filter).await.unwrap();
+    assert_eq!(listed.ids, ["a"]);
+    assert_eq!(listed.counts, BTreeMap::from([("SUCCESS".into(), 1)]));
+}
+
+#[tokio::test]
 async fn list_pipelines_нет_проекта() {
     let gql = fake_gql(|_| json!({ "project": null }));
     let filter = PipelineFilter {
@@ -375,27 +397,65 @@ async fn client_не_json_и_недоступный_хост_это_network_с_d
     }
 }
 
+/// Читает запрос целиком: заголовки и тело по `content-length`.
+async fn read_request(socket: &mut TcpStream) {
+    let mut buf = Vec::new();
+    let mut chunk = [0u8; 1024];
+    loop {
+        let n = socket.read(&mut chunk).await.unwrap();
+        buf.extend_from_slice(&chunk[..n]);
+        let head_end = buf.windows(4).position(|w| w == b"\r\n\r\n");
+        if let Some(end) = head_end {
+            let head = String::from_utf8_lossy(&buf[..end]).to_lowercase();
+            let length = head
+                .lines()
+                .find_map(|l| l.strip_prefix("content-length: "))
+                .map_or(0, |v| v.trim().parse::<usize>().unwrap());
+            if buf.len() >= end + 4 + length {
+                return;
+            }
+        }
+        if n == 0 {
+            return;
+        }
+    }
+}
+
+/// Сервер на сыром TCP: wiremock не видит момента завершения ответа, а нам нужно
+/// число одновременно обрабатываемых запросов. Возвращает базовый URL.
+async fn serve_counting(in_flight: Arc<AtomicUsize>, max: Arc<AtomicUsize>) -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    tokio::spawn(async move {
+        loop {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let (in_flight, max) = (in_flight.clone(), max.clone());
+            tokio::spawn(async move {
+                read_request(&mut socket).await;
+                let now = in_flight.fetch_add(1, Ordering::SeqCst) + 1;
+                max.fetch_max(now, Ordering::SeqCst);
+                tokio::time::sleep(Duration::from_millis(150)).await;
+                in_flight.fetch_sub(1, Ordering::SeqCst);
+                let body = r#"{"data":{}}"#;
+                let response = format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\n\
+                     content-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                socket.write_all(response.as_bytes()).await.unwrap();
+            });
+        }
+    });
+    base_url
+}
+
 #[tokio::test]
 async fn client_держит_не_больше_4_запросов_одновременно() {
-    let server = MockServer::start().await;
-    let delay = Duration::from_millis(150);
-    Mock::given(method("POST"))
-        .respond_with(
-            ResponseTemplate::new(200)
-                .set_delay(delay)
-                .set_body_json(json!({ "data": {} })),
-        )
-        .mount(&server)
-        .await;
-    let gql = client(&server);
-    let started = Instant::now();
+    let (in_flight, max) = (Arc::new(AtomicUsize::new(0)), Arc::new(AtomicUsize::new(0)));
+    let base_url = serve_counting(in_flight, max.clone()).await;
+    let gql = Client::with_base_url("h.example", &base_url, "tok").unwrap();
     futures::future::try_join_all((0..10).map(|_| gql.query("{ x }", json!({}))))
         .await
         .unwrap();
-    // 10 запросов по 4 — минимум три «волны»; без лимита хватило бы одной
-    assert!(
-        started.elapsed() >= delay * 3,
-        "прошло {:?}",
-        started.elapsed()
-    );
+    assert_eq!(max.load(Ordering::SeqCst), 4);
 }

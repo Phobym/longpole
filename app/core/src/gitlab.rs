@@ -25,6 +25,12 @@ const JOBS_PER_PAGE: usize = 100;
 /// Один GraphQL-запрос; `Ok` — содержимое `data`.
 pub trait Gql: Sync {
     fn host(&self) -> &str;
+
+    /// Ошибка с `host` — общим параметром кодов, которым нужен хост GitLab.
+    fn error(&self, code: ErrorCode) -> Error {
+        Error::new(code).with("host", self.host())
+    }
+
     fn query(
         &self,
         query: &str,
@@ -39,11 +45,7 @@ pub(crate) async fn query_as<T: DeserializeOwned>(
     variables: Value,
 ) -> Result<T, Error> {
     let data = gql.query(query, variables).await?;
-    serde_json::from_value(data).map_err(|e| {
-        Error::new(ErrorCode::Graphql)
-            .with("host", gql.host())
-            .with("detail", e)
-    })
+    serde_json::from_value(data).map_err(|e| gql.error(ErrorCode::Graphql).with("detail", e))
 }
 
 #[derive(Deserialize)]
@@ -60,9 +62,8 @@ pub(crate) async fn query_project<T: DeserializeOwned>(
 ) -> Result<T, Error> {
     let data: ProjectData<T> = query_as(gql, query, variables).await?;
     data.project.ok_or_else(|| {
-        Error::new(ErrorCode::ProjectNotFound)
+        gql.error(ErrorCode::ProjectNotFound)
             .with("project", project)
-            .with("host", gql.host())
     })
 }
 
@@ -210,11 +211,17 @@ impl WireJob {
     }
 }
 
+/// Bridge-джоба и пайплайн, который она запускает.
+struct Bridge {
+    job_id: String,
+    downstream: Downstream,
+}
+
 /// Пайплайн со всеми страницами джоб и bridge'ами, у которых есть downstream.
 struct Loaded {
     info: RawPipelineInfo,
     jobs: Vec<RawJob>,
-    bridges: Vec<(String, Downstream)>,
+    bridges: Vec<Bridge>,
 }
 
 async fn load_pages(gql: &impl Gql, project: &str, id: &str) -> Result<Loaded, Error> {
@@ -225,29 +232,29 @@ async fn load_pages(gql: &impl Gql, project: &str, id: &str) -> Result<Loaded, E
         let variables = json!({ "project": project, "id": id, "after": after });
         let found: PipelineProject = query_project(gql, PIPELINE_QUERY, variables, project).await?;
         let wire = found.pipeline.ok_or_else(|| {
-            Error::new(ErrorCode::PipelineNotFound)
+            gql.error(ErrorCode::PipelineNotFound)
                 .with("pipeline", id)
                 .with("project", project)
-                .with("host", gql.host())
         })?;
         let (info, page) = wire.split();
         for wire_job in page.nodes {
             let (job, downstream) = wire_job.split();
             if let Some(downstream) = downstream {
-                bridges.push((job.id.clone(), downstream));
+                bridges.push(Bridge {
+                    job_id: job.id.clone(),
+                    downstream,
+                });
             }
             jobs.push(job);
         }
-        match page.page_info.next() {
-            Some(cursor) => after = Some(cursor),
-            None => {
-                return Ok(Loaded {
-                    info,
-                    jobs,
-                    bridges,
-                });
-            }
-        }
+        let Some(cursor) = page.page_info.next() else {
+            return Ok(Loaded {
+                info,
+                jobs,
+                bridges,
+            });
+        };
+        after = Some(cursor);
     }
     Err(Error::new(ErrorCode::TooManyJobs)
         .with("pipeline", id)
@@ -273,9 +280,10 @@ fn fetch_at_depth<'a, G: Gql>(
             bridges,
         } = load_pages(gql, project, id).await?;
         let downstream = if depth < MAX_DOWNSTREAM_DEPTH {
-            try_join_all(bridges.iter().map(|(job_id, ds)| async move {
+            try_join_all(bridges.iter().map(|bridge| async move {
+                let ds = &bridge.downstream;
                 let raw = fetch_at_depth(gql, &ds.project.full_path, &ds.id, depth + 1).await?;
-                Ok::<_, Error>((job_id.clone(), raw))
+                Ok::<_, Error>((bridge.job_id.clone(), raw))
             }))
             .await?
             .into_iter()
@@ -329,6 +337,8 @@ struct ListedNode {
     status: String,
 }
 
+/// Пайплайны по фильтру, не больше `filter.last`. Статусы сравниваются без учёта регистра:
+/// GitLab отдаёт `SUCCESS`, а `browse::Pipeline.status` — `success`.
 pub async fn list_pipelines(
     gql: &impl Gql,
     project: &str,
@@ -351,11 +361,11 @@ pub async fn list_pipelines(
             if listed.ids.len() >= filter.last {
                 break;
             }
-            if filter
+            let wanted = filter
                 .statuses
                 .as_ref()
-                .is_some_and(|s| !s.contains(&node.status))
-            {
+                .is_none_or(|s| s.iter().any(|w| w.eq_ignore_ascii_case(&node.status)));
+            if !wanted {
                 continue;
             }
             listed.ids.push(node.id);

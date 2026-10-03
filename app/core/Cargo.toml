@@ -17,5 +17,5 @@ ts-rs = "12"
 
 [dev-dependencies]
 time = { version = "0.3", features = ["macros"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+tokio = { version = "1", features = ["io-util", "macros", "net", "rt-multi-thread", "time"] }
 wiremock = "0.6"

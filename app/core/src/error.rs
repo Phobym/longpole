@@ -35,6 +35,7 @@ pub struct Error {
 }
 
 impl Error {
+    /// Ошибка без параметров; добавляйте их через [`Error::with`].
     pub fn new(code: ErrorCode) -> Self {
         Self {
             code,
@@ -42,6 +43,7 @@ impl Error {
         }
     }
 
+    /// Параметр для подстановки в перевод; повторный ключ перезаписывается.
     pub fn with(mut self, key: &'static str, value: impl ToString) -> Self {
         self.params.insert(key, value.to_string());
         self

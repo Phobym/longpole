@@ -25,6 +25,7 @@ pub struct RawPipeline {
     pub downstream: HashMap<String, RawPipeline>,
 }
 
+/// Поля самого пайплайна.
 #[derive(Debug, Clone)]
 pub struct RawPipelineInfo {
     pub id: String,
@@ -38,6 +39,7 @@ pub struct RawPipelineInfo {
     pub stages: Vec<String>,
 }
 
+/// Джоба или bridge, включая ретраенные попытки.
 #[derive(Debug, Clone)]
 pub struct RawJob {
     pub id: String,
@@ -56,6 +58,7 @@ pub struct RawJob {
     pub needs: Vec<String>,
 }
 
+/// Вид узла дерева.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
     Pipeline,
@@ -65,6 +68,7 @@ pub enum Kind {
     Bridge,
 }
 
+/// Прошлая попытка ретраенной джобы.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Attempt {
     pub start: Option<Ms>,
@@ -73,6 +77,7 @@ pub struct Attempt {
     pub url: String,
 }
 
+/// Узел дерева: пайплайн, стейдж, группа шардов, джоба или bridge.
 #[derive(Debug, Clone)]
 pub struct Span {
     pub id: String,
@@ -213,156 +218,206 @@ fn order_by_deps(mut children: Vec<Span>) -> Vec<Span> {
 
 /// Дерево пайплайна: время в мс от создания `raw`.
 pub fn build_tree(raw: &RawPipeline, base_url: &str, now: OffsetDateTime) -> Span {
-    build(raw, base_url, raw.pipeline.created_at, now)
+    Ctx {
+        base_url,
+        origin: raw.pipeline.created_at,
+        now,
+    }
+    .pipeline(raw)
 }
 
-fn build(raw: &RawPipeline, base_url: &str, origin: OffsetDateTime, now: OffsetDateTime) -> Span {
-    let at = |t: OffsetDateTime| (t - origin).whole_milliseconds() as Ms;
-    let end_of = |j: &RawJob| j.started_at.map(|_| at(j.finished_at.unwrap_or(now)));
-    let ordered: Vec<&RawJob> = raw.jobs.iter().rev().collect();
-    let current: Vec<&RawJob> = ordered.iter().copied().filter(|j| !j.retried).collect();
-    let id_by_name: HashMap<&str, &str> = current
-        .iter()
-        .map(|j| (j.name.as_str(), j.id.as_str()))
-        .collect();
+/// Общее для всего дерева: downstream отсчитывает время от корня.
+struct Ctx<'a> {
+    base_url: &'a str,
+    origin: OffsetDateTime,
+    now: OffsetDateTime,
+}
 
-    let mut jobs: Vec<Span> = current
-        .iter()
-        .map(|j| {
-            let children: Vec<Span> = raw
-                .downstream
-                .get(&j.id)
-                .map(|ds| build(ds, base_url, origin, now))
-                .into_iter()
-                .collect();
-            // bridge заканчивается не раньше своего downstream
-            let end = match (end_of(j), children.first().and_then(|ds| ds.end)) {
-                (own, None) => own,
-                (own, Some(ds)) => Some(own.unwrap_or(ds).max(ds)),
-            };
-            Span {
-                stage: Some(j.stage.clone()),
-                start: j.started_at.map(at),
-                end,
-                children,
-                queued: j.queued_duration.map(|q| (q * 1000.0).round() as Ms),
-                status: Some(j.status.to_lowercase()),
-                allow_failure: j.allow_failure,
-                url: Some(format!("{base_url}{}", j.web_path)),
-                attempts: ordered
-                    .iter()
-                    .filter(|r| r.retried && r.name == j.name)
-                    .map(|r| Attempt {
-                        start: r.started_at.map(at),
-                        end: end_of(r),
-                        status: r.status.to_lowercase(),
-                        url: format!("{base_url}{}", r.web_path),
-                    })
-                    .collect(),
-                deps: j
-                    .needs
-                    .iter()
-                    .filter_map(|n| id_by_name.get(n.as_str()).map(|&id| id.to_owned()))
-                    .collect(),
-                ..span(
-                    j.id.clone(),
-                    if j.bridge { Kind::Bridge } else { Kind::Job },
-                    j.name.clone(),
-                )
-            }
-        })
-        .collect();
+/// Unix-время в мс с отброшенными долями, как `Date.parse`.
+fn unix_ms(t: OffsetDateTime) -> Ms {
+    // OffsetDateTime ограничен ±9999 годами — в i64 мс помещается без потерь
+    (t.unix_timestamp_nanos() / 1_000_000) as Ms
+}
 
-    let p = &raw.pipeline;
-    let mut job_stages: Vec<&str> = vec![];
-    for j in &ordered {
-        if !job_stages.contains(&j.stage.as_str()) {
-            job_stages.push(&j.stage);
-        }
+impl Ctx<'_> {
+    fn at(&self, t: OffsetDateTime) -> Ms {
+        unix_ms(t) - unix_ms(self.origin)
     }
-    // объявленный порядок — правда GitLab; стейджи без объявления — в порядке появления джоб
-    let mut stage_names: Vec<&str> = p
-        .stages
-        .iter()
-        .map(String::as_str)
-        .filter(|s| job_stages.contains(s))
-        .collect();
-    for s in job_stages {
-        if !stage_names.contains(&s) {
-            stage_names.push(s);
-        }
+
+    /// Конец запущенной джобы; идущая заканчивается в `now`.
+    fn end_of(&self, j: &RawJob) -> Option<Ms> {
+        j.started_at
+            .map(|_| self.at(j.finished_at.unwrap_or(self.now)))
     }
-    let stages: Vec<Span> = stage_names
-        .iter()
-        .enumerate()
-        .map(|(position, &stage)| {
-            let mut members: Vec<Span> = jobs
-                .extract_if(.., |s| s.stage.as_deref() == Some(stage))
-                .collect();
-            members.sort_by_key(by_start);
-            let groups: Vec<String> = members
-                .iter()
-                .map(|s| shard_group_name(&s.name).to_owned())
-                .collect();
-            let mut slots: Vec<Option<Span>> = members.into_iter().map(Some).collect();
-            let mut children = vec![];
-            for i in 0..slots.len() {
-                let Some(first) = slots[i].take() else {
-                    continue;
-                };
-                let mut shards = vec![first];
-                for k in i + 1..slots.len() {
-                    if groups[k] == groups[i] {
-                        shards.extend(slots[k].take());
-                    }
-                }
-                if shards.len() < 2 {
-                    children.extend(shards);
-                    continue;
-                }
-                let (start, end) = bounds(&shards);
-                let mut deps: Vec<String> = vec![];
-                for d in shards.iter().flat_map(|s| &s.deps) {
-                    if !deps.contains(d) {
-                        deps.push(d.clone());
-                    }
-                }
-                children.push(Span {
+
+    fn url(&self, path: &str) -> String {
+        format!("{}{path}", self.base_url)
+    }
+
+    fn pipeline(&self, raw: &RawPipeline) -> Span {
+        let ordered: Vec<&RawJob> = raw.jobs.iter().rev().collect();
+        let id_by_name: HashMap<&str, &str> = ordered
+            .iter()
+            .filter(|j| !j.retried)
+            .map(|j| (j.name.as_str(), j.id.as_str()))
+            .collect();
+        let mut jobs: Vec<Span> = ordered
+            .iter()
+            .filter(|j| !j.retried)
+            .map(|j| self.job(j, raw, &ordered, &id_by_name))
+            .collect();
+
+        let p = &raw.pipeline;
+        let stages: Vec<Span> = stage_names(&p.stages, &ordered)
+            .into_iter()
+            .enumerate()
+            .map(|(position, stage)| {
+                let id = format!("{}:{stage}", p.id);
+                let members = jobs
+                    .extract_if(.., |s| s.stage.as_deref() == Some(stage))
+                    .collect();
+                let children = group_shards(members, &id);
+                let (start, end) = bounds(&children);
+                Span {
+                    position: Some(position),
                     start,
                     end,
-                    deps,
-                    children: order_by_deps(shards),
-                    ..span(
-                        format!("{}:{stage}:{}", p.id, groups[i]),
-                        Kind::Group,
-                        groups[i].clone(),
-                    )
-                });
-            }
-            let (start, end) = bounds(&children);
-            Span {
-                position: Some(position),
-                start,
-                end,
-                children: order_by_deps(children),
-                ..span(format!("{}:{stage}", p.id), Kind::Stage, stage.to_owned())
-            }
-        })
-        .collect();
+                    children: order_by_deps(children),
+                    ..span(id, Kind::Stage, stage.to_owned())
+                }
+            })
+            .collect();
 
-    let stages_end = bounds(&stages).1;
-    let finished = p.finished_at.map(at);
-    Span {
-        project: Some(raw.project.clone()),
-        r#ref: Some(p.r#ref.clone()),
-        start: Some(at(p.created_at)),
-        end: match finished {
-            None => stages_end,
-            Some(f) => Some(f.max(stages_end.unwrap_or(f))),
-        },
-        status: Some(p.status.to_lowercase()),
-        url: Some(format!("{base_url}{}", p.path)),
-        children: stages,
-        ..span(p.id.clone(), Kind::Pipeline, format!("#{}", p.iid))
+        let stages_end = bounds(&stages).1;
+        let finished = p.finished_at.map(|t| self.at(t));
+        Span {
+            project: Some(raw.project.clone()),
+            r#ref: Some(p.r#ref.clone()),
+            start: Some(self.at(p.created_at)),
+            end: match finished {
+                None => stages_end,
+                Some(f) => Some(f.max(stages_end.unwrap_or(f))),
+            },
+            status: Some(p.status.to_lowercase()),
+            url: Some(self.url(&p.path)),
+            children: stages,
+            ..span(p.id.clone(), Kind::Pipeline, format!("#{}", p.iid))
+        }
     }
+
+    fn job(
+        &self,
+        j: &RawJob,
+        raw: &RawPipeline,
+        ordered: &[&RawJob],
+        id_by_name: &HashMap<&str, &str>,
+    ) -> Span {
+        let children: Vec<Span> = raw
+            .downstream
+            .get(&j.id)
+            .map(|ds| self.pipeline(ds))
+            .into_iter()
+            .collect();
+        // bridge заканчивается не раньше своего downstream
+        let end = match (self.end_of(j), children.first().and_then(|ds| ds.end)) {
+            (own, None) => own,
+            (own, Some(ds)) => Some(own.unwrap_or(ds).max(ds)),
+        };
+        Span {
+            stage: Some(j.stage.clone()),
+            start: j.started_at.map(|t| self.at(t)),
+            end,
+            children,
+            queued: j.queued_duration.map(|q| (q * 1000.0).round() as Ms),
+            status: Some(j.status.to_lowercase()),
+            allow_failure: j.allow_failure,
+            url: Some(self.url(&j.web_path)),
+            attempts: ordered
+                .iter()
+                .filter(|r| r.retried && r.name == j.name)
+                .map(|r| Attempt {
+                    start: r.started_at.map(|t| self.at(t)),
+                    end: self.end_of(r),
+                    status: r.status.to_lowercase(),
+                    url: self.url(&r.web_path),
+                })
+                .collect(),
+            deps: j
+                .needs
+                .iter()
+                .filter_map(|n| id_by_name.get(n.as_str()).map(|&id| id.to_owned()))
+                .collect(),
+            ..span(
+                j.id.clone(),
+                if j.bridge { Kind::Bridge } else { Kind::Job },
+                j.name.clone(),
+            )
+        }
+    }
+}
+
+/// Объявленный порядок — правда GitLab; стейджи без объявления — в порядке появления джоб.
+fn stage_names<'a>(declared: &'a [String], ordered: &[&'a RawJob]) -> Vec<&'a str> {
+    let mut seen: Vec<&str> = vec![];
+    for j in ordered {
+        if !seen.contains(&j.stage.as_str()) {
+            seen.push(&j.stage);
+        }
+    }
+    let mut names: Vec<&str> = declared
+        .iter()
+        .map(String::as_str)
+        .filter(|s| seen.contains(s))
+        .collect();
+    for s in seen {
+        if !names.contains(&s) {
+            names.push(s);
+        }
+    }
+    names
+}
+
+/// Шарды одного имени (`e2e: [1]`, `e2e: [2]`) сворачиваются в группу на месте первого из них.
+fn group_shards(mut members: Vec<Span>, stage_id: &str) -> Vec<Span> {
+    members.sort_by_key(by_start);
+    let groups: Vec<String> = members
+        .iter()
+        .map(|s| shard_group_name(&s.name).to_owned())
+        .collect();
+    let mut slots: Vec<Option<Span>> = members.into_iter().map(Some).collect();
+    let mut children = vec![];
+    for i in 0..slots.len() {
+        let Some(first) = slots[i].take() else {
+            continue;
+        };
+        let mut shards = vec![first];
+        for k in i + 1..slots.len() {
+            if groups[k] == groups[i] {
+                shards.extend(slots[k].take());
+            }
+        }
+        if shards.len() < 2 {
+            children.extend(shards);
+            continue;
+        }
+        let (start, end) = bounds(&shards);
+        let mut deps: Vec<String> = vec![];
+        for d in shards.iter().flat_map(|s| &s.deps) {
+            if !deps.contains(d) {
+                deps.push(d.clone());
+            }
+        }
+        children.push(Span {
+            start,
+            end,
+            deps,
+            children: order_by_deps(shards),
+            ..span(
+                format!("{stage_id}:{}", groups[i]),
+                Kind::Group,
+                groups[i].clone(),
+            )
+        });
+    }
+    children
 }

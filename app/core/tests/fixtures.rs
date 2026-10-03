@@ -40,6 +40,27 @@ impl Default for JobOpts {
     }
 }
 
+/// Как `encodeURIComponent` в JS.
+fn encode_uri_component(s: &str) -> String {
+    s.bytes()
+        .map(|b| match b {
+            b'A'..=b'Z'
+            | b'a'..=b'z'
+            | b'0'..=b'9'
+            | b'-'
+            | b'_'
+            | b'.'
+            | b'!'
+            | b'~'
+            | b'*'
+            | b'\''
+            | b'('
+            | b')' => (b as char).to_string(),
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
+}
+
 pub fn job(name: &str, stage: &str, o: JobOpts) -> RawJob {
     let retry = if o.retried {
         format!("-r{}", o.start.unwrap_or_default())
@@ -58,7 +79,7 @@ pub fn job(name: &str, stage: &str, o: JobOpts) -> RawJob {
         queued_duration: o.start.map(|_| o.queued),
         retried: o.retried,
         allow_failure: o.allow_failure,
-        web_path: format!("/g/p/-/jobs/{name}"),
+        web_path: format!("/g/p/-/jobs/{}", encode_uri_component(name)),
         stage: stage.into(),
         needs: o.deps.iter().map(|&d| d.into()).collect(),
     }

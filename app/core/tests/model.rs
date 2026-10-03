@@ -493,6 +493,124 @@ fn в_стейдже_джоба_стоит_после_соседа_которо�
     );
 }
 
+fn order(stage: &Span) -> Vec<(&str, Option<&str>)> {
+    stage
+        .children
+        .iter()
+        .map(|s| (s.name.as_str(), s.after.as_deref()))
+        .collect()
+}
+
+// эталон для трёх тестов ниже — вывод src/model.mjs на тех же фикстурах
+
+#[test]
+fn цикл_зависимостей_не_теряет_узлы_и_каждый_стоит_после_того_кого_ждал() {
+    let tree = build(&raw_pipeline(
+        vec![
+            job(
+                "a",
+                "build",
+                JobOpts {
+                    start: Some(0),
+                    end: Some(10),
+                    deps: vec!["b"],
+                    ..Default::default()
+                },
+            ),
+            job(
+                "b",
+                "build",
+                JobOpts {
+                    start: Some(5),
+                    end: Some(20),
+                    deps: vec!["a"],
+                    ..Default::default()
+                },
+            ),
+        ],
+        PipelineOpts::default(),
+    ));
+    assert_eq!(
+        order(find(&tree, "build")),
+        [
+            ("a", Some("gid://gitlab/Ci::Build/b")),
+            ("b", Some("gid://gitlab/Ci::Build/a"))
+        ]
+    );
+}
+
+#[test]
+fn при_равном_конце_ждавших_джоба_встаёт_за_раньше_стартовавшим_соседом() {
+    let tree = build(&raw_pipeline(
+        vec![
+            job(
+                "a",
+                "build",
+                JobOpts {
+                    start: Some(0),
+                    end: Some(10),
+                    ..Default::default()
+                },
+            ),
+            job(
+                "b",
+                "build",
+                JobOpts {
+                    start: Some(1),
+                    end: Some(10),
+                    ..Default::default()
+                },
+            ),
+            job(
+                "c",
+                "build",
+                JobOpts {
+                    start: Some(11),
+                    end: Some(20),
+                    deps: vec!["b", "a"],
+                    ..Default::default()
+                },
+            ),
+        ],
+        PipelineOpts::default(),
+    ));
+    assert_eq!(
+        order(find(&tree, "build")),
+        [
+            ("a", None),
+            ("c", Some("gid://gitlab/Ci::Build/a")),
+            ("b", None)
+        ]
+    );
+}
+
+#[test]
+fn джоба_без_старта_стоит_в_стейдже_последней() {
+    let tree = build(&raw_pipeline(
+        vec![
+            job(
+                "deploy",
+                "build",
+                JobOpts {
+                    status: "MANUAL",
+                    ..Default::default()
+                },
+            ),
+            job(
+                "a",
+                "build",
+                JobOpts {
+                    start: Some(0),
+                    end: Some(10),
+                    ..Default::default()
+                },
+            ),
+        ],
+        PipelineOpts::default(),
+    ));
+    assert_eq!(order(find(&tree, "build")), [("a", None), ("deploy", None)]);
+}
+
 #[test]
 fn shard_group_name_снимает_оба_формата_суффикса() {
     assert_eq!(

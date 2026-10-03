@@ -5,13 +5,13 @@ use std::collections::{BTreeMap, HashMap};
 use serde::Serialize;
 use ts_rs::TS;
 
-use crate::aggregate::{Stats, aggregate};
+use crate::aggregate::aggregate;
 use crate::critical_path::{Critical, critical_path};
 use crate::insights::{
     Excess, Hotspot, Insights, Stability, agg_end, agg_insights, insights, stability_by_name,
     stability_key,
 };
-use crate::model::{Attempt, Kind, Ms, Span, leaf_ids};
+use crate::model::{Attempt, Kind, Ms, Span, Stats, leaf_ids};
 
 /// Порог подсветки узла агрегата на критическом пути.
 const AGG_CRITICAL: f64 = 0.5;
@@ -243,6 +243,13 @@ fn with_groups(mut crit: Critical, visits: &[Visit]) -> Critical {
     crit
 }
 
+/// Поля узла, которые single и агрегат считают по-разному.
+struct ModeFields {
+    crit_share: f64,
+    bar: Option<Bar>,
+    stability: Option<Stability>,
+}
+
 /// Общая часть узла; `crit_share`, `bar` и `stability` зависят от режима.
 struct Common<'a> {
     visits: Vec<Visit<'a>>,
@@ -296,21 +303,15 @@ impl<'a> Common<'a> {
             .collect()
     }
 
-    fn base(
-        &self,
-        v: &Visit,
-        crit_share: Option<f64>,
-        bar: Option<Bar>,
-        stability: Option<Stability>,
-    ) -> BaseNode {
+    fn base(&self, v: &Visit, mode: ModeFields) -> BaseNode {
         let s = v.span;
-        let saving: f64 = self
+        let savings: Vec<f64> = self
             .ins
             .hotspots
             .iter()
             .filter(|h| h.id == s.id)
             .map(|h| h.saving)
-            .sum();
+            .collect();
         BaseNode {
             id: s.id.clone(),
             kind: s.kind,
@@ -319,19 +320,14 @@ impl<'a> Common<'a> {
             children: s.children.iter().map(|c| c.id.clone()).collect(),
             deps: s.deps.clone(),
             after: s.after.clone(),
-            bar,
+            bar: mode.bar,
             dependents: is_linkable(s).then(|| self.dependents(s)),
-            crit_share: crit_share.filter(|_| is_linkable(s)),
+            crit_share: is_linkable(s).then_some(mode.crit_share),
             excess: self.ins.stages.get(&s.id).cloned(),
             holds: self.holds.get(&s.id).cloned(),
             retry_loss: self.ins.retry_loss.get(&s.id).copied(),
-            stability: stability.filter(|_| is_leaf(s)),
-            saving: self
-                .ins
-                .hotspots
-                .iter()
-                .any(|h| h.id == s.id)
-                .then_some(saving),
+            stability: mode.stability.filter(|_| is_leaf(s)),
+            saving: (!savings.is_empty()).then(|| savings.iter().sum()),
         }
     }
 
@@ -380,7 +376,14 @@ fn single_tree(root: &Span, by_name: Option<&HashMap<String, Stability>>) -> Tre
                 m.get(&stability_key(&names)).copied()
             });
             let node = SingleNode {
-                base: c.base(v, Some(if on_path { 1.0 } else { 0.0 }), bar, stability),
+                base: c.base(
+                    v,
+                    ModeFields {
+                        crit_share: if on_path { 1.0 } else { 0.0 },
+                        bar,
+                        stability,
+                    },
+                ),
                 start: s.start,
                 end: s.end,
                 queued: s.queued,
@@ -406,11 +409,7 @@ fn agg_tree(root: &Span) -> Tree<AggNode> {
         .map(|v| v.span.id.clone())
         .collect();
     let crit = with_groups(Critical { ids, gaps: vec![] }, &c.visits);
-    let index: HashMap<&str, &Span> = c
-        .visits
-        .iter()
-        .map(|v| (v.span.id.as_str(), v.span))
-        .collect();
+    let index = root.index();
     let nodes = c
         .visits
         .iter()
@@ -430,7 +429,14 @@ fn agg_tree(root: &Span) -> Tree<AggNode> {
                 .map(|(start, end)| Bar { start, end });
             let stability = c.ins.stability.get(&s.id).copied();
             let node = AggNode {
-                base: c.base(v, Some(share.min(1.0)), bar, stability),
+                base: c.base(
+                    v,
+                    ModeFields {
+                        crit_share: share.min(1.0),
+                        bar,
+                        stability,
+                    },
+                ),
                 position: s.position,
                 stats: s.stats().clone(),
             };

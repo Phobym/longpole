@@ -6,8 +6,6 @@ use serde::Serialize;
 use time::OffsetDateTime;
 use ts_rs::TS;
 
-use crate::aggregate::Stats;
-
 static SHARD_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?:\s+[0-9]+/[0-9]+|:\s*\[[^\]]*\])$").expect("static regex"));
 
@@ -74,6 +72,46 @@ pub enum Kind {
     Bridge,
 }
 
+/// p50 и p90; `null` — узел не запускался ни разу.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
+pub struct P {
+    pub p50: Option<Ms>,
+    pub p90: Option<Ms>,
+}
+
+/// Один запуск узла: `tree` — индекс пайплайна в агрегате.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
+pub struct Sample {
+    pub tree: usize,
+    pub start: Ms,
+    pub end: Ms,
+    pub retries: u32,
+}
+
+/// Статистика узла агрегата по пайплайнам, где он запускался.
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct Stats {
+    pub present: u32,
+    pub total: u32,
+    pub start: P,
+    pub end: P,
+    pub duration: P,
+    pub queued: P,
+    /// среднее число ретраев на запуск
+    pub retries: f64,
+    /// запусков с ретраями
+    pub retried: u32,
+    /// средняя потеря на ретраях, мс
+    pub retry_loss: f64,
+    /// доля пайплайнов, где узел на критическом пути; у стейджа и группы всегда 0
+    pub critical: f64,
+    pub samples: Vec<Sample>,
+}
+
 /// Прошлая попытка ретраенной джобы.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 #[ts(export)]
@@ -116,6 +154,23 @@ impl Span {
     /// Узел без времени, статуса и связей.
     pub fn new(id: impl Into<String>, kind: Kind, name: impl Into<String>) -> Span {
         span(id.into(), kind, name.into())
+    }
+
+    /// Обход в глубину: узел раньше своих детей.
+    pub fn walk<'a>(&'a self, f: &mut impl FnMut(&'a Span)) {
+        f(self);
+        for c in &self.children {
+            c.walk(f);
+        }
+    }
+
+    /// Узлы поддерева по id.
+    pub fn index(&self) -> HashMap<&str, &Span> {
+        let mut by_id = HashMap::new();
+        self.walk(&mut |s| {
+            by_id.insert(s.id.as_str(), s);
+        });
+        by_id
     }
 
     /// Статистика узла агрегата; у узла одиночного пайплайна её нет.

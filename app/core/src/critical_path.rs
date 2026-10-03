@@ -24,13 +24,6 @@ pub struct Gap {
     pub ms: Ms,
 }
 
-fn index<'a>(s: &'a Span, by_id: &mut HashMap<&'a str, &'a Span>) {
-    by_id.insert(&s.id, s);
-    for c in &s.children {
-        index(c, by_id);
-    }
-}
-
 /// Джобы и bridge; в downstream bridge не заходит.
 pub fn leaves(s: &Span) -> Vec<&Span> {
     match s.kind {
@@ -51,8 +44,7 @@ fn latest<'a>(spans: impl IntoIterator<Item = &'a Span>) -> Option<&'a Span> {
 /// Цепочка от последней джобы scope назад по зависимости, закончившейся позже всех.
 /// bridge сначала проходит свой downstream.
 pub fn critical_path(root: &Span, scope_id: &str) -> Critical {
-    let mut by_id = HashMap::new();
-    index(root, &mut by_id);
+    let by_id = root.index();
 
     fn walk<'a>(
         mut job: Option<&'a Span>,

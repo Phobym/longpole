@@ -74,26 +74,16 @@ pub struct Insights {
     pub stability: HashMap<String, Stability>,
 }
 
-fn walk<'a>(s: &'a Span, f: &mut impl FnMut(&'a Span)) {
-    f(s);
-    for c in &s.children {
-        walk(c, f);
+impl Insights {
+    /// Оставляет самые выгодные пункты и считает их суммарную экономию.
+    fn finish(mut self, mut candidates: Vec<Hotspot>) -> Self {
+        candidates.retain(|c| c.saving >= MIN_SAVING_MS);
+        candidates.sort_by(|a, b| b.saving.total_cmp(&a.saving));
+        candidates.truncate(MAX_HOTSPOTS);
+        self.saving = candidates.iter().map(|h| h.saving).sum();
+        self.hotspots = candidates;
+        self
     }
-}
-
-fn index(root: &Span) -> HashMap<&str, &Span> {
-    let mut by_id = HashMap::new();
-    walk(root, &mut |s| {
-        by_id.insert(s.id.as_str(), s);
-    });
-    by_id
-}
-
-fn rank(mut candidates: Vec<Hotspot>) -> Vec<Hotspot> {
-    candidates.retain(|c| c.saving >= MIN_SAVING_MS);
-    candidates.sort_by(|a, b| b.saving.total_cmp(&a.saving));
-    candidates.truncate(MAX_HOTSPOTS);
-    candidates
 }
 
 /// Столько пайплайн ждал из-за упавших попыток джобы.
@@ -146,10 +136,10 @@ pub fn agg_end(s: &Span) -> Option<Ms> {
 /// Выводы по пайплайну: в hotspots только узлы его критического пути.
 pub fn insights(tree: &Span) -> Insights {
     let crit: HashSet<String> = critical_path(tree, &tree.id).ids.into_iter().collect();
-    let by_id = index(tree);
+    let by_id = tree.index();
     let mut out = Insights::default();
     let mut candidates = vec![];
-    walk(tree, &mut |s| match s.kind {
+    tree.walk(&mut |s| match s.kind {
         Kind::Job | Kind::Bridge => {
             let loss = retry_loss(s) as f64;
             if loss == 0.0 {
@@ -187,17 +177,15 @@ pub fn insights(tree: &Span) -> Insights {
         }
         Kind::Pipeline | Kind::Group => {}
     });
-    out.hotspots = rank(candidates);
-    out.saving = out.hotspots.iter().map(|h| h.saving).sum();
-    out
+    out.finish(candidates)
 }
 
 /// Выводы по агрегату: экономия взвешена долей пайплайнов, где узел на критическом пути.
 pub fn agg_insights(agg: &Span) -> Insights {
-    let by_id = index(agg);
+    let by_id = agg.index();
     let mut out = Insights::default();
     let mut candidates = vec![];
-    walk(agg, &mut |s| match s.kind {
+    agg.walk(&mut |s| match s.kind {
         Kind::Job | Kind::Bridge => {
             let st = s.stats();
             out.stability.insert(
@@ -250,9 +238,7 @@ pub fn agg_insights(agg: &Span) -> Insights {
         }
         Kind::Pipeline | Kind::Group => {}
     });
-    out.hotspots = rank(candidates);
-    out.saving = out.hotspots.iter().map(|h| h.saving).sum();
-    out
+    out.finish(candidates)
 }
 
 /// Ключ метки стабильности: имена предков-стейджей и bridge плюс имя узла,

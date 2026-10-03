@@ -1,12 +1,9 @@
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 
-use serde::Serialize;
-use ts_rs::TS;
-
 use crate::critical_path::critical_path;
 use crate::insights::retry_loss;
-use crate::model::{Kind, Ms, Span, by_start, order_by_deps};
+use crate::model::{Kind, Ms, P, Sample, Span, Stats, by_start, order_by_deps};
 
 /// Nearest-rank перцентиль.
 pub fn percentile(values: &[Ms], p: u32) -> Option<Ms> {
@@ -16,51 +13,11 @@ pub fn percentile(values: &[Ms], p: u32) -> Option<Ms> {
     sorted.get(rank.saturating_sub(1)).copied()
 }
 
-/// p50 и p90; `null` — узел не запускался ни разу.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
-#[ts(export)]
-pub struct P {
-    pub p50: Option<Ms>,
-    pub p90: Option<Ms>,
-}
-
 fn stat(values: &[Ms]) -> P {
     P {
         p50: percentile(values, 50),
         p90: percentile(values, 90),
     }
-}
-
-/// Один запуск узла: `tree` — индекс пайплайна в агрегате.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-#[ts(export)]
-pub struct Sample {
-    pub tree: usize,
-    pub start: Ms,
-    pub end: Ms,
-    pub retries: u32,
-}
-
-/// Статистика узла агрегата по пайплайнам, где он запускался.
-#[derive(Debug, Clone, PartialEq, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct Stats {
-    pub present: u32,
-    pub total: u32,
-    pub start: P,
-    pub end: P,
-    pub duration: P,
-    pub queued: P,
-    /// среднее число ретраев на запуск
-    pub retries: f64,
-    /// запусков с ретраями
-    pub retried: u32,
-    /// средняя потеря на ретраях, мс
-    pub retry_loss: f64,
-    /// доля пайплайнов, где узел на критическом пути; у стейджа и группы всегда 0
-    pub critical: f64,
-    pub samples: Vec<Sample>,
 }
 
 /// Один и тот же узел в разных пайплайнах.

@@ -3,6 +3,7 @@ name: release
 on:
   push:
     tags: ['v*']
+    branches: [Phobym/blue-square] # TEMP: проверка до мержа, убрать
   # Артефакты без релиза — для приёмки (S10).
   workflow_dispatch:
 
@@ -97,7 +98,7 @@ jobs:
           releaseDraft: true
 
       - uses: actions/upload-artifact@v4
-        if: github.event_name == 'workflow_dispatch'
+        if: github.ref_type != 'tag'
         with:
           name: pipeline-trace-${{ matrix.target }}
           path: |

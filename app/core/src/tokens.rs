@@ -105,13 +105,14 @@ impl TokenStore {
     }
 
     pub fn remove(&self, host: &str) -> Result<(), Error> {
-        if let Some(entry) = self.entry(host)? {
+        let host = normalize_host(host)?;
+        if let Some(entry) = self.entry(&host)? {
             match entry.delete_credential() {
                 Ok(()) | Err(KeyringError::NoEntry) => {}
                 Err(e) => return Err(key_error(e)),
             }
         }
-        self.hosts.remove(host)
+        self.hosts.remove(&host)
     }
 
     fn entry(&self, host: &str) -> Result<Option<Entry>, Error> {

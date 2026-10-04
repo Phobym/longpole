@@ -381,6 +381,24 @@ async fn client_ошибки_http_и_graphql_это_коды_с_параметр
 }
 
 #[tokio::test]
+async fn client_не_идёт_по_редиректу_а_значит_не_шлёт_запрос_с_телом_на_чужой_хост() {
+    let elsewhere = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "data": {} })))
+        .expect(0)
+        .mount(&elsewhere)
+        .await;
+    assert_error(
+        query_answering(
+            ResponseTemplate::new(307).insert_header("location", elsewhere.uri().as_str()),
+        )
+        .await,
+        ErrorCode::HttpStatus,
+        &[("host", "h.example"), ("status", "307")],
+    );
+}
+
+#[tokio::test]
 async fn client_не_json_и_недоступный_хост_это_network_с_detail() {
     let not_json = ResponseTemplate::new(200).set_body_string("<html>login</html>");
     // на порту 1 никто не слушает: соединение отклоняется сразу

@@ -10,7 +10,7 @@ use ts_rs::TS;
 use crate::error::Error;
 use crate::iso::iso;
 use crate::json_file;
-use crate::request::{Form, Request};
+use crate::request::{Form, FormMode, Request};
 
 const LIMIT: usize = 20;
 
@@ -44,7 +44,11 @@ pub struct NewEntry {
 }
 
 /// Ссылка на пайплайн может нести `?private_token=…`: в историю идёт только путь.
-fn without_query(mut url: String) -> String {
+/// В режиме агрегата поле `url` не участвует в запросе, а в нём могла остаться ссылка со своим секретом.
+fn stored_url(mode: FormMode, mut url: String) -> String {
+    if mode == FormMode::Aggregate {
+        return String::new();
+    }
     if let Some(at) = url.find(['?', '#']) {
         url.drain(at..);
     }
@@ -76,7 +80,7 @@ impl History {
             at: iso(now),
             host: new.host,
             form: Form {
-                url: without_query(new.form.url),
+                url: stored_url(new.form.mode, new.form.url),
                 ..new.form
             },
             request: new.request,

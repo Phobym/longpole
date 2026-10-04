@@ -21,23 +21,24 @@ pub fn serve(
     ctx: UriSchemeContext<'_, Wry>,
     request: Request<Vec<u8>>,
 ) -> Response<Cow<'static, [u8]>> {
-    let html = matches!(request.uri().path(), "" | "/")
-        .then(|| {
-            let state = ctx.app_handle().state::<AppState>();
-            lock(&state.reports)
-                .get(ctx.webview_label())
-                .map(|e| e.html.clone())
-        })
-        .flatten();
-    let response = match html {
-        Some(html) => Response::builder()
-            .header(CONTENT_TYPE, "text/html; charset=utf-8")
-            .body(Cow::Owned(html.into_bytes())),
-        None => Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Cow::Borrowed(&[][..])),
+    let state = ctx.app_handle().state::<AppState>();
+    let html = if matches!(request.uri().path(), "" | "/") {
+        lock(&state.reports)
+            .get(ctx.webview_label())
+            .map(|entry| entry.html.clone())
+    } else {
+        None
     };
-    response.expect("верный ответ")
+    let Some(html) = html else {
+        return Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Cow::Borrowed(&[][..]))
+            .expect("верный ответ");
+    };
+    Response::builder()
+        .header(CONTENT_TYPE, "text/html; charset=utf-8")
+        .body(Cow::Owned(html.into_bytes()))
+        .expect("верный ответ")
 }
 
 /// Новое окно отчёта; запись в памяти уходит вместе с окном (`on_window_event`).

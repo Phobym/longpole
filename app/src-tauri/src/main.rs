@@ -7,9 +7,9 @@ mod state;
 mod strings;
 mod windows;
 
-use tauri::{Manager, RunEvent, WindowEvent};
+use tauri::{AppHandle, Manager, RunEvent, WindowEvent};
 
-use crate::state::{AppState, lock};
+use crate::state::AppState;
 
 fn main() {
     let app = tauri::Builder::default()
@@ -47,26 +47,25 @@ fn main() {
         .on_window_event(|window, event| {
             let state = window.state::<AppState>();
             match event {
-                WindowEvent::Focused(true) => {
-                    *lock(&state.last_focused) = Some(window.label().into());
-                }
-                WindowEvent::Destroyed => {
-                    lock(&state.reports).remove(window.label());
-                    lock(&state.zoom).remove(window.label());
-                }
+                WindowEvent::Focused(true) => state.focus(window.label()),
+                WindowEvent::Destroyed => state.forget(window.label()),
                 _ => {}
             }
         })
         .build(tauri::generate_context!())
         .expect("не удалось собрать приложение");
 
-    app.run(|app, event| match event {
-        // macOS живёт в Dock без окон; выход — только явный (⌘Q, `app.exit`)
-        #[cfg(target_os = "macos")]
+    app.run(on_run_event);
+}
+
+/// macOS живёт в Dock без окон: выход только явный (⌘Q, `app.exit`), а клик по иконке возвращает форму.
+/// Windows и Linux выходят после закрытия последнего окна, как в Tauri по умолчанию.
+#[cfg(target_os = "macos")]
+fn on_run_event(app: &AppHandle, event: RunEvent) {
+    match event {
         RunEvent::ExitRequested {
             code: None, api, ..
         } => api.prevent_exit(),
-        #[cfg(target_os = "macos")]
         RunEvent::Reopen { .. } => {
             if app.get_webview_window(windows::FORM).is_none()
                 && let Err(e) = windows::create_form(app)
@@ -74,8 +73,53 @@ fn main() {
                 eprintln!("форма: {e}");
             }
         }
-        _ => {
-            let _ = app;
-        }
-    });
+        _ => {}
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn on_run_event(_: &AppHandle, _: RunEvent) {}
+
+/// Три списка команд — `COMMANDS` в `build.rs`, `generate_handler!` и `capabilities/form.json` — ведутся
+/// вручную: команда, пропущенная в одном, либо открыта окнам отчётов, либо не вызывается из формы.
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+
+    fn quoted(text: &str) -> BTreeSet<String> {
+        text.split('"')
+            .skip(1)
+            .step_by(2)
+            .map(String::from)
+            .collect()
+    }
+
+    #[test]
+    fn списки_команд_совпадают() {
+        let build = include_str!("../build.rs");
+        let in_build = quoted(
+            build
+                .split("const COMMANDS: &[&str] = &[")
+                .nth(1)
+                .and_then(|rest| rest.split("];").next())
+                .expect("COMMANDS в build.rs"),
+        );
+        let in_handler: BTreeSet<String> = include_str!("main.rs")
+            .split("generate_handler![")
+            .nth(1)
+            .and_then(|rest| rest.split(']').next())
+            .expect("generate_handler! в main.rs")
+            .lines()
+            .filter_map(|line| line.trim().strip_prefix("commands::"))
+            .map(|name| name.trim_end_matches(',').to_string())
+            .collect();
+        let in_capability: BTreeSet<String> = quoted(include_str!("../capabilities/form.json"))
+            .iter()
+            .filter_map(|permission| permission.strip_prefix("allow-"))
+            .map(|name| name.replace('-', "_"))
+            .collect();
+        assert_eq!(in_build.len(), 12);
+        assert_eq!(in_build, in_handler);
+        assert_eq!(in_build, in_capability);
+    }
 }

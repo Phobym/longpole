@@ -6,7 +6,7 @@ use tauri::{
 };
 use tauri_plugin_opener::OpenerExt;
 
-use crate::state::{AppState, lock};
+use crate::state::AppState;
 
 pub const FORM: &str = "form";
 const REPORT_SCHEME: &str = "report";
@@ -38,10 +38,18 @@ fn report_url() -> Url {
 
 /// `https` — в системный браузер; остальное (в том числе `file://`) не открываем.
 fn open_external(app: &AppHandle, url: &Url) {
-    if url.scheme() == "https" {
-        // ссылка не открылась — повторять нечего, окно всё равно остаётся на своей странице
-        let _ = app.opener().open_url(url.as_str(), None::<&str>);
+    if url.scheme() == "https"
+        && let Err(e) = app.opener().open_url(url.as_str(), None::<&str>)
+    {
+        eprintln!("не открылась ссылка {url}: {e}");
     }
+}
+
+struct Spec<'a> {
+    label: &'a str,
+    url: WebviewUrl,
+    title: &'a str,
+    size: LogicalSize<f64>,
 }
 
 /// Окно, из которого нельзя уйти со своей страницы. Чужой адрес не загружается, а `https` уходит
@@ -49,16 +57,13 @@ fn open_external(app: &AppHandle, url: &Url) {
 /// `on_new_window`, поэтому внешние ссылки открываются здесь, а `on_new_window` — для остальных платформ.
 fn open(
     app: &AppHandle,
-    label: &str,
-    url: WebviewUrl,
-    title: &str,
-    (width, height): (f64, f64),
+    spec: Spec,
     own: impl Fn(&Url) -> bool + Send + 'static,
 ) -> tauri::Result<WebviewWindow> {
     let (navigating, opening) = (app.clone(), app.clone());
-    let window = WebviewWindowBuilder::new(app, label, url)
-        .title(title)
-        .inner_size(width, height)
+    let window = WebviewWindowBuilder::new(app, spec.label, spec.url)
+        .title(spec.title)
+        .inner_size(spec.size.width, spec.size.height)
         .on_navigation(move |url| {
             if own(url) {
                 return true;
@@ -71,7 +76,7 @@ fn open(
             NewWindowResponse::Deny
         })
         .build()?;
-    *lock(&app.state::<AppState>().last_focused) = Some(label.into());
+    app.state::<AppState>().focus(spec.label);
     Ok(window)
 }
 
@@ -85,10 +90,12 @@ pub fn create_form(app: &AppHandle) -> tauri::Result<()> {
         .filter(|_| tauri::is_dev());
     let window = open(
         app,
-        FORM,
-        WebviewUrl::App("index.html".into()),
-        "pipeline-trace",
-        (1280.0, 860.0),
+        Spec {
+            label: FORM,
+            url: WebviewUrl::App("index.html".into()),
+            title: "pipeline-trace",
+            size: LogicalSize::new(1280.0, 860.0),
+        },
         move |url| {
             is_origin(url, APP_SCHEME)
                 || dev.as_ref().is_some_and(|dev| url.origin() == dev.origin())
@@ -99,7 +106,7 @@ pub fn create_form(app: &AppHandle) -> tauri::Result<()> {
 
 /// Окно, которому адресованы ⌘S и пункты меню: получившее фокус последним, если оно ещё есть.
 pub fn focused(app: &AppHandle) -> Option<WebviewWindow> {
-    let label = lock(&app.state::<AppState>().last_focused).clone()?;
+    let label = app.state::<AppState>().focused_label()?;
     app.get_webview_window(&label)
 }
 
@@ -114,15 +121,13 @@ pub fn show_form(app: &AppHandle) -> tauri::Result<()> {
 
 /// Окно отчёта; `title` фиксируется при создании.
 pub fn create_report(app: &AppHandle, label: &str, title: &str) -> tauri::Result<()> {
-    open(
-        app,
+    let spec = Spec {
         label,
-        WebviewUrl::CustomProtocol(report_url()),
+        url: WebviewUrl::CustomProtocol(report_url()),
         title,
-        (1440.0, 900.0),
-        |url| is_origin(url, REPORT_SCHEME),
-    )
-    .map(drop)
+        size: LogicalSize::new(1440.0, 900.0),
+    };
+    open(app, spec, |url| is_origin(url, REPORT_SCHEME)).map(drop)
 }
 
 #[cfg(test)]

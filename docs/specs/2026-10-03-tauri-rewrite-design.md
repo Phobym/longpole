@@ -183,10 +183,10 @@ type Hotspot = { id: Id; name: string; saving: Ms } & (
 - `AppManifest::commands` в `build.rs` — без него свои команды доступны любому локальному окну, включая `report://`.
 - Одна capability `form.json` с `"windows": ["form"]`: наши `allow-*`, `dialog:allow-ask` и `dialog:allow-message` (подтверждения, #8). Окна `report-<n>` не входят ни в одну capability. `core:*` для `Channel` не нужен (S5, проверено на macOS): прогресс — короткие сообщения, они идут через `eval`, а `plugin:__TAURI_CHANNEL__|fetch` для больших выведен из ACL самим Tauri.
 - `ensure_form(&webview)?` в каждой команде — сверка label (аналог `fromForm`).
-- **CSP формы**: `app.security.csp` — `default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost`.
+- **CSP формы**: `app.security.csp` — `default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; form-action 'none'` (последние три `default-src` не покрывает). В dev — `app.security.devCsp` с origin vite (`http://localhost:5173`, `ws://localhost:5173`, `'unsafe-inline'` для скрипта обновления), и тот же origin разрешает `on_navigation`.
 - **CSP отчёта**: только `<meta>` из сборки — `default-src 'none'; script-src 'sha256-…'; style-src 'sha256-…'; img-src data:; connect-src 'none'`.
-- **Навигация**: `on_navigation` разрешает только собственный origin окна (`tauri://localhost` / `http://tauri.localhost`, `report://localhost` / `http://report.localhost`); `on_new_window` всегда `Deny`. `https` Rust открывает через `opener` из обоих обработчиков: на macOS WebKit для `target=_blank` зовёт только `on_navigation`. JS-перехват плагина (`open_js_links_on_click`) выключен: он открывает ссылку через IPC, а окнам отчёта IPC запрещён.
-- **Отчёт отдаётся из памяти**: `HashMap<label, { html, file_name }>`, своя схема `report://` отдаёт по `webview_label`; «Сохранить» пишет этот буфер; запись удаляется при закрытии окна. Временных файлов нет.
+- **Навигация**: `on_navigation` разрешает только собственный origin окна (`tauri://localhost` / `http://tauri.localhost`, `report://localhost` / `http://report.localhost`), без `https` и без порта; `on_new_window` всегда `Deny`. `https` Rust открывает через `opener` из обоих обработчиков: на macOS WebKit для `target=_blank` зовёт только `on_navigation`. JS-перехват плагина (`open_js_links_on_click`) выключен: он открывает ссылку через IPC, а окнам отчёта IPC запрещён.
+- **Отчёт отдаётся из памяти**: `HashMap<label, { html, file_name }>`, своя схема `report://` отдаёт по `webview_label`; «Сохранить» пишет этот буфер; запись удаляется при закрытии окна. Временных файлов нет. Метка последнего окна запоминается и при его создании, а не только по `Focused(true)`: новое окно получает ⌘S и пункты «Вид» сразу.
 - **Окно отчёта без IPC**: получает тот же самодостаточный HTML, что сохраняется.
 
 ### Окна, меню, жизненный цикл
@@ -207,7 +207,7 @@ type Hotspot = { id: Id; name: string; saving: Ms } & (
 - «Новый отчёт»: фокус на `form` или создать заново.
 - «Сохранить отчёт…»: запоминается label последнего окна с `WindowEvent::Focused(true)`; по ⌘S сохраняется оно, если это окно отчёта и оно существует, иначе ничего. Неблокирующий `save_file` с родителем, имя по умолчанию, фильтр HTML; ошибка — `message` с `MessageDialogKind::Error`.
 - Жизненный цикл: macOS — `RunEvent::ExitRequested` при `code == None` → `prevent_exit()`, `RunEvent::Reopen` → форма, если её нет; Windows/Linux — выход после закрытия последнего окна.
-- Данные — `app_data_dir()`.
+- Данные — `app_data_dir()`. DevTools в релизе нет, потому что не включён feature `devtools` у `tauri`; выход Windows/Linux после последнего окна — поведение Tauri по умолчанию, кода под него нет.
 
 ## 6. Фронтенд: общее
 

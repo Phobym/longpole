@@ -11,10 +11,10 @@ use pipeline_trace_core::hosts::normalize_host;
 use pipeline_trace_core::render::render;
 use pipeline_trace_core::report::{BuildEnv, Progress, build_report};
 use pipeline_trace_core::request::{Form, parse_form};
-use pipeline_trace_core::schema::{Locale, Report};
+use pipeline_trace_core::schema::{Locale, Meta, Report};
 use pipeline_trace_core::tokens::{Glab, find_token};
 use tauri::ipc::Channel;
-use tauri::{AppHandle, State, Webview};
+use tauri::{AppHandle, Manager, State, Webview};
 use time::OffsetDateTime;
 
 use crate::menu;
@@ -40,18 +40,23 @@ fn ensure_form(webview: &Webview) -> Cmd<()> {
 }
 
 /// Клиент хоста с токеном: хранилище → `glab` → `GITLAB_TOKEN`.
-// ponytail: поиск токена синхронный (связка ключей, `glab config get`) на потоке рантайма;
-// spawn_blocking, если окажется, что он заметно занимает рантайм
-fn client_for(state: &AppState, host: &str) -> Result<Client, Error> {
+/// Связка ключей может ждать ответа пользователя, `glab` — запускаться, поэтому поиск идёт в пуле блокирующих задач.
+// ponytail: у `glab` нет таймаута, зависший процесс займёт поток пула; добавить, если такое случится
+async fn client_for(app: &AppHandle, host: &str) -> Result<Client, Error> {
     let host = normalize_host(host)?;
-    let glab = Glab::find();
-    let token = find_token(
-        &host,
-        &state.tokens,
-        &|name| std::env::var(name).ok(),
-        &|args| glab.as_ref().and_then(|glab| glab.value(args)),
-    )?;
-    Client::new(&host, &token)
+    let app = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let glab = Glab::find();
+        let token = find_token(
+            &host,
+            &app.state::<AppState>().tokens,
+            &|name| std::env::var(name).ok(),
+            &|args| glab.as_ref().and_then(|glab| glab.value(args)),
+        )?;
+        Client::new(&host, &token)
+    })
+    .await
+    .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))?
 }
 
 #[tauri::command]
@@ -101,42 +106,59 @@ pub async fn clear_history(webview: Webview, state: State<'_, AppState>) -> Cmd<
 
 #[tauri::command]
 pub async fn projects(
+    app: AppHandle,
     webview: Webview,
-    state: State<'_, AppState>,
     host: String,
     search: String,
     after: Option<String>,
 ) -> Cmd<Page<Project>> {
     ensure_form(&webview)?;
-    let gql = client_for(&state, &host)?;
+    let gql = client_for(&app, &host).await?;
     Ok(list_projects(&gql, &search, after.as_deref()).await?)
 }
 
 #[tauri::command]
 pub async fn branches(
+    app: AppHandle,
     webview: Webview,
-    state: State<'_, AppState>,
     host: String,
     project: String,
     search: String,
 ) -> Cmd<Vec<String>> {
     ensure_form(&webview)?;
-    let gql = client_for(&state, &host)?;
+    let gql = client_for(&app, &host).await?;
     Ok(list_branches(&gql, &project, &search).await?)
 }
 
 #[tauri::command]
 pub async fn pipelines(
+    app: AppHandle,
     webview: Webview,
-    state: State<'_, AppState>,
     host: String,
     project: String,
     r#ref: Option<String>,
     after: Option<String>,
 ) -> Cmd<Page<Pipeline>> {
     ensure_form(&webview)?;
-    let gql = client_for(&state, &host)?;
+    let gql = client_for(&app, &host).await?;
     Ok(recent_pipelines(&gql, &project, r#ref.as_deref(), after.as_deref()).await?)
+}
+
+fn history_label(meta: &Meta) -> HistoryLabel {
+    HistoryLabel {
+        project: meta.project.clone(),
+        label: meta.label.clone(),
+    }
+}
+
+/// Заголовок окна отчёта: фиксируется при создании, «все пайплайны» — на языке момента сборки.
+fn report_title(label: &HistoryLabel, locale: Locale) -> String {
+    let all = strings(locale).all_pipelines;
+    format!(
+        "{} · {}",
+        label.project,
+        label.label.as_deref().unwrap_or(all)
+    )
 }
 
 /// Собирает отчёт, пишет историю и открывает окно отчёта; прогресс идёт в `on_progress`.
@@ -150,7 +172,7 @@ pub async fn build(
 ) -> Cmd<()> {
     ensure_form(&webview)?;
     let parsed = parse_form(&form)?;
-    let gql = client_for(&state, &parsed.host)?;
+    let gql = client_for(&app, &parsed.host).await?;
     let now = OffsetDateTime::now_utc();
     let locale = state.locale();
     let built = build_report(
@@ -164,18 +186,8 @@ pub async fn build(
     )
     .await?;
     let (Report::Single { meta, .. } | Report::Aggregate { meta, .. }) = &built.report;
-    let label = HistoryLabel {
-        project: meta.project.clone(),
-        label: meta.label.clone(),
-    };
-    let title = format!(
-        "{} · {}",
-        label.project,
-        label
-            .label
-            .as_deref()
-            .unwrap_or(strings(locale).all_pipelines)
-    );
+    let label = history_label(meta);
+    let title = report_title(&label, locale);
     let html = render(&built.report, TEMPLATE);
     state.history.add(
         NewEntry {

@@ -10,6 +10,9 @@ use pipeline_trace_core::schema::Locale;
 use pipeline_trace_core::settings::Settings;
 use pipeline_trace_core::tokens::{TokenStore, platform_store};
 
+const ZOOM_MIN: f64 = 0.25;
+const ZOOM_MAX: f64 = 5.0;
+
 /// Отчёт в памяти: окно `report-<n>` получает `html` по схеме `report://`, «Сохранить» пишет его же.
 #[derive(Clone)]
 pub struct ReportEntry {
@@ -41,6 +44,29 @@ impl AppState {
             zoom: Mutex::default(),
             next_report: AtomicU32::new(0),
         }
+    }
+
+    /// Это окно получило фокус последним: ему адресованы ⌘S и пункты меню.
+    pub fn focus(&self, label: &str) {
+        *lock(&self.last_focused) = Some(label.into());
+    }
+
+    pub fn focused_label(&self) -> Option<String> {
+        lock(&self.last_focused).clone()
+    }
+
+    /// Окно закрыто: его отчёт и масштаб больше не нужны.
+    pub fn forget(&self, label: &str) {
+        lock(&self.reports).remove(label);
+        lock(&self.zoom).remove(label);
+    }
+
+    /// Новый масштаб окна после `change`, в пределах `ZOOM_MIN..=ZOOM_MAX`.
+    pub fn zoom_by(&self, label: &str, change: impl Fn(f64) -> f64) -> f64 {
+        let mut zooms = lock(&self.zoom);
+        let factor = zooms.entry(label.into()).or_insert(1.0);
+        *factor = change(*factor).clamp(ZOOM_MIN, ZOOM_MAX);
+        *factor
     }
 
     /// Язык интерфейса; не читается файл настроек — системный.

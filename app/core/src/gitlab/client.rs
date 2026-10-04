@@ -42,6 +42,8 @@ impl Client {
         let http = reqwest::Client::builder()
             .connect_timeout(CONNECT_TIMEOUT)
             .read_timeout(READ_TIMEOUT)
+            // GraphQL GitLab не редиректит; 307/308 унёс бы POST с телом на чужой хост
+            .redirect(reqwest::redirect::Policy::none())
             .build()
             .map_err(|e| network_error(host, e))?;
         Ok(Self {

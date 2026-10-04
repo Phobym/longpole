@@ -6,6 +6,13 @@ on:
   # Артефакты без релиза — для приёмки (S10).
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# Два прогона одного тега не должны гонять создание черновика релиза.
+concurrency:
+  group: release-${{ github.ref }}
+
 jobs:
   version:
     runs-on: ubuntu-24.04
@@ -74,7 +81,6 @@ jobs:
         with:
           workspaces: app
           key: ${{ matrix.target }}
-          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - run: npm ci
         working-directory: app

@@ -3,7 +3,6 @@ name: release
 on:
   push:
     tags: ['v*']
-    branches: [Phobym/blue-square] # TEMP: проверка до мержа, убрать
   # Артефакты без релиза — для приёмки (S10).
   workflow_dispatch:
 

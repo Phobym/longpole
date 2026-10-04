@@ -23,7 +23,7 @@ async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<Res
   try {
     return { ok: true, value: await invoke<T>(cmd, args) }
   } catch (e) {
-    return { ok: false, error: isCmdError(e) ? e : { kind: 'message', code: 'ipc', params: { detail: String(e) } } }
+    return { ok: false, error: isCmdError(e) ? e : { kind: 'message', code: 'ipc', params: { detail: cmd === 'set_token' ? cmd : String(e) } } }
   }
 }
 

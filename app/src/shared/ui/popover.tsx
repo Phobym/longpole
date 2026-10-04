@@ -4,6 +4,7 @@ import { cn } from '../lib/cn'
 
 export const Popover = PopoverPrimitive.Root
 export const PopoverTrigger = PopoverPrimitive.Trigger
+export const PopoverAnchor = PopoverPrimitive.Anchor
 
 export const PopoverContent = ({ className, align = 'center', sideOffset = 4, ...props }: ComponentProps<typeof PopoverPrimitive.Content>) => (
   <PopoverPrimitive.Portal>

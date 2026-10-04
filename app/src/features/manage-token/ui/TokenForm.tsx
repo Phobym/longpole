@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import { messageError } from '../../../shared/api'
-import { errorText, useTranslation } from '../../../shared/i18n'
+import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { Input } from '../../../shared/ui/input'
 import { useSaveToken } from '../model/useSaveToken'
@@ -8,6 +8,7 @@ import { useSaveToken } from '../model/useSaveToken'
 /** Хост и токен; `defaultHost` — выбранный хост без токена. Токен после сохранения прочитать нельзя нигде. */
 export function TokenForm({ defaultHost }: { defaultHost: string }) {
   const { t } = useTranslation()
+  const errorText = useErrorText()
   const id = useId()
   const [host, setHost] = useState(defaultHost)
   const [token, setToken] = useState('')
@@ -31,7 +32,7 @@ export function TokenForm({ defaultHost }: { defaultHost: string }) {
       <Input id={`${id}-token`} type="password" autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false} value={token} onChange={(e) => setToken(e.target.value)} />
       {failure && (
         <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
-          {errorText(t, failure)}
+          {errorText(failure)}
         </p>
       )}
       <Button type="submit" className="self-start">

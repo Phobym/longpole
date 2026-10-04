@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { setToken, type ApiError } from '../../../shared/api'
-import { hostsKey, normalizeHost, pickHost } from '../../../entities/host'
+import { hostsQuery, normalizeHost, pickHost } from '../../../entities/host'
 
 /** Не `useMutation`: он держит аргументы (а с ними токен) в `variables` и в кеше мутаций ещё минуты после сохранения. */
 export function useSaveToken() {
@@ -11,7 +11,7 @@ export function useSaveToken() {
     const result = await setToken(host, token)
     setError(result.ok ? null : result.error)
     if (!result.ok) return
-    await queryClient.invalidateQueries({ queryKey: hostsKey })
+    await queryClient.invalidateQueries(hostsQuery)
     pickHost(normalizeHost(host))
   }
   return { save, error }

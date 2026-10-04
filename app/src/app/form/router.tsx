@@ -12,7 +12,7 @@ function Layout() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return
-      if (router.state.location.pathname.startsWith('/project/')) void router.navigate({ to: '/' })
+      if (router.state.matches.some((m) => m.routeId === '/project/$host/$')) void router.navigate({ to: '/' })
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
@@ -48,7 +48,7 @@ const projectRoute = createRoute({
     const { host, _splat } = projectRoute.useParams()
     const { ref } = projectRoute.useSearch()
     // key: другой проект — другая страница, прогресс, ошибки и подсказки веток прежнего не переносятся
-    return <ProjectPage key={`${host}/${_splat}`} host={host} fullPath={_splat ?? ''} branch={ref} />
+    return <ProjectPage key={`${host}/${_splat}`} host={host} project={_splat ?? ''} branch={ref} />
   },
 })
 

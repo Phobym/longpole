@@ -13,7 +13,7 @@ export function ProjectsPanel({ host }: { host: string }) {
           <ProjectRow
             key={project.fullPath}
             project={project}
-            onOpen={() => void openProject({ host, fullPath: project.fullPath, ref: project.defaultBranch ?? undefined, name: project.name })}
+            onOpen={() => void openProject({ host, project: project.fullPath, branch: project.defaultBranch ?? undefined, name: project.name })}
           />
         )}
       </PagedList>

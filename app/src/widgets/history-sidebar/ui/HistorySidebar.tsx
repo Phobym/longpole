@@ -1,17 +1,19 @@
 import { useNavigate } from '@tanstack/react-router'
 import { type HistoryEntry } from '../../../shared/api'
-import { useTranslation } from '../../../shared/i18n'
+import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { fillAggSettings } from '../../../features/build-aggregate'
 import { fillLink } from '../../../features/build-by-link'
 import { ClearHistoryButton, RemoveEntryButton } from '../../../features/history-actions'
 import { resetSearch } from '../../../features/search-projects'
-import { pickHost } from '../../../entities/host'
+import { pickHost, useHostState } from '../../../entities/host'
 import { HistoryEntryItem, useHistory } from '../../../entities/history-entry'
 import { useOpenProject } from '../../../entities/project'
 
 export function HistorySidebar() {
   const { t } = useTranslation()
-  const { data: entries = [] } = useHistory()
+  const errorText = useErrorText()
+  const { entries, error } = useHistory()
+  const { host: currentHost } = useHostState()
   const navigate = useNavigate()
   const openProject = useOpenProject()
 
@@ -22,10 +24,10 @@ export function HistorySidebar() {
       void navigate({ to: '/' })
       return
     }
+    if (host !== currentHost) resetSearch() // текст поиска относился к другому хосту
     pickHost(host)
-    resetSearch()
     fillAggSettings(form)
-    void openProject({ host, fullPath: form.project, ref: form.ref || undefined })
+    void openProject({ host, project: form.project, branch: form.ref || undefined })
   }
 
   return (
@@ -34,7 +36,12 @@ export function HistorySidebar() {
         <h2 className="text-sm font-semibold">{t('form.history.title')}</h2>
         {entries.length > 0 && <ClearHistoryButton />}
       </div>
-      {entries.length === 0 && <p className="text-sm text-muted-foreground">{t('form.history.empty')}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {errorText(error)}
+        </p>
+      )}
+      {entries.length === 0 && !error && <p className="text-sm text-muted-foreground">{t('form.history.empty')}</p>}
       <ul className="flex flex-col gap-0.5">
         {entries.map((entry) => (
           <li key={entry.at} className="flex items-center gap-1">

@@ -3,13 +3,11 @@ import { useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { Card } from '../../../shared/ui/card'
 import { BranchSelect } from '../../../features/select-branch'
-import { useOpenProject } from '../../../entities/project'
+import { useOpenProject, type ProjectRef } from '../../../entities/project'
 import { AggregateBlock } from '../../../widgets/aggregate-block'
 import { PipelinesList } from '../../../widgets/pipelines-list'
 
-type Props = { host: string; fullPath: string; branch: string | undefined }
-
-export function ProjectPage({ host, fullPath, branch }: Props) {
+export function ProjectPage(target: ProjectRef) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const openProject = useOpenProject()
@@ -22,17 +20,12 @@ export function ProjectPage({ host, fullPath, branch }: Props) {
           {t('form.projects.back')}
         </Button>
         <h1 translate="no" className="truncate text-xl font-semibold">
-          {name ?? fullPath}
+          {name ?? target.project}
         </h1>
       </div>
-      <BranchSelect
-        host={host}
-        project={fullPath}
-        value={branch}
-        onCommit={(ref) => void openProject({ host, fullPath, ref: ref || undefined, name, replace: true })}
-      />
-      <PipelinesList host={host} project={fullPath} branch={branch} />
-      <AggregateBlock host={host} project={fullPath} branch={branch} />
+      <BranchSelect {...target} onCommit={(branch) => void openProject({ ...target, branch: branch || undefined, name, replace: true })} />
+      <PipelinesList {...target} />
+      <AggregateBlock {...target} />
     </Card>
   )
 }

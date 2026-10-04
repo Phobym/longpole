@@ -1,4 +1,3 @@
-import i18next from 'i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
@@ -22,10 +21,6 @@ async function main() {
   const locale = await getLocale()
   const initial = locale.ok ? locale.value : browserLocale()
   await initI18n(initial)
-  document.documentElement.lang = initial
-  i18next.on('languageChanged', (lng) => {
-    document.documentElement.lang = lng
-  })
   createRoot(root).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>

@@ -11,7 +11,7 @@ export function LanguageSwitch() {
   const choose = async (locale: Locale) => {
     await changeLocale(locale)
     const result = await setLocale(locale)
-    if (!result.ok) await showError(t, result.error)
+    if (!result.ok) await showError(result.error)
   }
   return (
     <div role="group" aria-label={t('form.language')} className="flex gap-0.5">

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { build, type Form, type Progress, apiError, unwrap } from '../../../shared/api'
 import { useTranslation } from '../../../shared/i18n'
-import { historyKey } from './history'
+import { historyQuery } from './history'
 
 /**
  * Одна сборка отчёта со своим `Channel`: прогресс получает только тот, кто её запустил.
@@ -18,12 +18,13 @@ export function useBuild() {
       setProgress(null)
       return unwrap(build(form, setProgress))
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: historyKey }),
+    onSuccess: () => void queryClient.invalidateQueries(historyQuery),
   })
   return {
     start: mutation.mutate,
-    /** «Загружаю N из M…», пока идёт сборка; иначе `null`. */
-    progress: mutation.isPending ? (progress ? t('form.progress.step', progress) : t('form.progress.start')) : null,
+    busy: mutation.isPending,
+    /** «Загружаю N из M…» (или «Загружаю…», пока прогресса нет). */
+    progressLabel: progress ? t('form.progress.step', progress) : t('form.progress.start'),
     error: apiError(mutation.error),
   }
 }

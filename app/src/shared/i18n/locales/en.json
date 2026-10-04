@@ -34,6 +34,89 @@
     "retriedTitle_other": "retries in {{retried}} of {{present}} pipelines",
     "needFor": "↑ needed by",
     "waits": "↓ waits for",
-    "loadFailed": "Failed to read the report data: {{detail}}"
+    "loadFailed": "Failed to read the report data: {{detail}}",
+    "allPipelines": "all pipelines",
+    "back": "← back to aggregate",
+    "language": "Language",
+    "help": "Controls",
+    "keys": {
+      "pan": "<k>Drag</k>, <k>Shift</k> + wheel, <k>[</k> <k>]</k> — pan the axis",
+      "zoom": "<k>⌘</k>/<k>Ctrl</k> + wheel or pinch — zoom around the cursor, horizontal swipe — pan, <k>0</k> — the whole pipeline",
+      "rows": "<k>↑</k> <k>↓</k> — neighbouring row, <k>Enter</k> — select",
+      "fold": "<k>←</k> <k>→</k> — collapse and expand",
+      "stage": "Click a stage — critical path to its end",
+      "job": "Click a job — its links, <k>Esc</k> — clear the selection"
+    },
+    "chip": {
+      "pipelines_one": "<b>{{count}}</b> pipeline",
+      "pipelines_other": "<b>{{count}}</b> pipelines",
+      "length": "<b>{{value}}</b> length",
+      "lengthP": "<b>{{p50}} · {{p90}}</b> length p50 · p90",
+      "retries": "retries <b>{{value}}</b>",
+      "saving": "up to <b>{{value}}</b> can be saved",
+      "jobs_one": "<b>{{count}}</b> job",
+      "jobs_other": "<b>{{count}}</b> jobs"
+    },
+    "hotspots": {
+      "title": "Where to focus",
+      "excess": "stage <n>{{stage}}</n> waits {{excess}} for it after the others",
+      "excessCritical": "stage <n>{{stage}}</n> waits {{excess}} for it after the others, on the critical path",
+      "retriesAgg": "retries in {{retried}} of {{present}} pipelines",
+      "retries_one": "{{count}} failed attempt",
+      "retries_other": "{{count}} failed attempts",
+      "retriesLast": ", retries in {{retried}} of the last {{present}}"
+    },
+    "panel": {
+      "close": "Close",
+      "stage": "stage",
+      "ran": "ran in {{present}} of {{total}}",
+      "critAgg": "crit. path {{percent}}%",
+      "onCritical": "on the critical path",
+      "notOnCritical": "not on the critical path",
+      "stability": "Stability",
+      "attempts": "Attempts",
+      "loss": "Loss",
+      "queue": "Queue",
+      "retries": "Retries",
+      "retriesIn_one": "in {{retried}} of {{present}} pipeline",
+      "retriesIn_other": "in {{retried}} of {{present}} pipelines",
+      "lossAvg": "{{time}} on average",
+      "queueP": "p50 {{p50}} · p90 {{p90}}",
+      "relations": "Links",
+      "relationUp": "needed by the selected one",
+      "relationDown": "waits for the selected one",
+      "openGitlab": "Open in GitLab ↗",
+      "gitlab": "GitLab ↗",
+      "longest": "Longest",
+      "showAll_one": "All {{count}} pipeline ▾",
+      "showAll_other": "All {{count}} pipelines ▾",
+      "collapseAll": "Collapse ▴"
+    },
+    "kpi": {
+      "duration": "Duration",
+      "start": "Start",
+      "toEnd": "To end",
+      "p90": "p90 {{time}}"
+    },
+    "strip": {
+      "title_one": "Duration across {{count}} pipeline",
+      "title_other": "Duration across {{count}} pipelines",
+      "dotRetried": "{{label}} · retries"
+    },
+    "verdict": {
+      "holds": "Holds <n>{{name}}</n> <b>+{{time}}</b>.",
+      "stagePath": "The critical path to the end of the stage is highlighted in the waterfall.",
+      "pipelinePath": "The critical path is highlighted in the waterfall.",
+      "off": "Not on the critical path: speeding it up <b>will not shorten</b> the pipeline.",
+      "on": "On the critical path: speeding it up <b>will shorten</b> the pipeline.",
+      "onAgg": "On the critical path in {{percent}}% of pipelines: speeding it up <b>will shorten</b> the pipeline.",
+      "onAggSometimes": "On the critical path in {{percent}}% of pipelines: speeding it up <b>sometimes shortens</b> the pipeline.",
+      "saving": "Saves up to <b>−{{time}}</b>.",
+      "holdsStage": "Holds stage <n>{{stage}}</n> by <b>+{{time}}</b>.",
+      "retriesAgg": "Worth a look at the retries — <b>{{retried}} of {{present}}</b>.",
+      "attempts_one": "<b>{{count}} failed attempt</b>",
+      "attempts_other": "<b>{{count}} failed attempts</b>",
+      "lost": ", {{time}} lost"
+    }
   }
 }

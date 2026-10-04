@@ -1,8 +1,15 @@
-import type { ReportNode, Tree } from '../../../shared/api'
+import type { Kind, Report, ReportNode, SingleNode, Tree } from '../../../shared/api'
 
 type Nodes = Tree<ReportNode>['nodes']
 
-const LINKABLE = new Set(['job', 'bridge', 'group'])
+const LINKABLE = new Set<Kind>(['job', 'bridge', 'group'])
+const LEAF = new Set<Kind>(['job', 'bridge'])
+
+/** С этой доли пайплайнов узел агрегата считается лежащим на критическом пути. */
+export const CRITICAL_SHARE = 0.5
+
+/** Джоба или bridge: у них есть стабильность, попытки и очередь. */
+export const isLeaf = (node: ReportNode) => LEAF.has(node.kind)
 
 /** У этих узлов есть связи `deps`/`dependents`, их линии и метки рисует водопад. */
 export const isLinkable = (node: ReportNode) => LINKABLE.has(node.kind)
@@ -72,4 +79,17 @@ export function cards(tree: Tree<ReportNode>, collapsed: ReadonlySet<string>): C
   }
   walk(tree.nodes[tree.root], 0, null)
   return blocks
+}
+
+/** Стейдж, в котором лежит узел. */
+export function stageOf(tree: Tree<ReportNode>, id: string): ReportNode | null {
+  for (let p = tree.nodes[id]?.parent; p; p = tree.nodes[p]?.parent) if (tree.nodes[p]?.kind === 'stage') return tree.nodes[p]
+  return null
+}
+
+/** Корень пайплайна из `trees` агрегата: имя `#iid` и ссылка на GitLab. */
+export function pipelineOf(report: Report, index: number): SingleNode {
+  if (report.mode !== 'aggregate') throw new Error('pipelineOf: отчёт не агрегат')
+  const tree = report.trees[index]
+  return tree.nodes[tree.root]
 }

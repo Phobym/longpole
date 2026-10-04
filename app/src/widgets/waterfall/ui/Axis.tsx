@@ -1,15 +1,14 @@
 import type { Ref } from 'react'
 import { duration } from '../../../shared/lib/format'
-import { pos, type View } from '../../../shared/lib/timeline'
+import { pos, tickStep, type View } from '../../../shared/lib/timeline'
 import { GRID } from './grid'
 
-const STEPS = [1e3, 5e3, 1e4, 3e4, 6e4, 12e4, 3e5, 6e5, 9e5, 18e5, 36e5, 72e5]
 const MAX_TICKS = 10
 
 /** Ось времени от создания пайплайна; шаг мельчает при приближении. */
 export function Axis({ view, trackRef }: { view: View; trackRef: Ref<HTMLDivElement> }) {
   const [a, b] = view
-  const step = STEPS.find((x) => (b - a) / x <= MAX_TICKS) ?? STEPS[STEPS.length - 1]
+  const step = tickStep(b - a, MAX_TICKS)
   const ticks = []
   for (let t = Math.ceil(a / step) * step; t <= b; t += step) {
     ticks.push(

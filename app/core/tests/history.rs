@@ -84,6 +84,18 @@ fn дедупликация_по_хосту_и_запросу_а_не_по_фо�
 }
 
 #[test]
+fn в_агрегате_ссылка_из_другого_режима_в_историю_не_идёт() {
+    let (_dir, history) = history();
+    let mut new = entry(1);
+    new.form.mode = FormMode::Aggregate;
+    new.form.url = "https://oauth2:secret@h/g/p/-/pipelines/1".into();
+    let list = history.add(new, minute(1)).unwrap();
+    assert_eq!(list[0].form.url, "");
+    let file = std::fs::read_to_string(_dir.path().join("data").join("history.json")).unwrap();
+    assert!(!file.contains("secret"));
+}
+
+#[test]
 fn remove_убирает_запись_по_at_clear_очищает() {
     let (_dir, history) = history();
     history.add(entry(1), minute(1)).unwrap();

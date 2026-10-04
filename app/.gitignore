@@ -2,3 +2,4 @@ dist/
 dist-report/
 target/
 src-tauri/gen/
+src-tauri/permissions/

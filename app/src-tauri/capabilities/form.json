@@ -1,0 +1,22 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "form",
+  "description": "Окно формы; окна report-<n> не входят ни в одну capability",
+  "windows": ["form"],
+  "permissions": [
+    "allow-hosts",
+    "allow-set-token",
+    "allow-remove-token",
+    "allow-history",
+    "allow-remove-history",
+    "allow-clear-history",
+    "allow-projects",
+    "allow-branches",
+    "allow-pipelines",
+    "allow-build",
+    "allow-get-locale",
+    "allow-set-locale",
+    "dialog:allow-ask",
+    "dialog:allow-message"
+  ]
+}

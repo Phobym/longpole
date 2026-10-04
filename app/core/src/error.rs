@@ -40,6 +40,10 @@ pub enum ErrorCode {
     /// `max`
     InvalidLast,
     InvalidStatuses,
+    /// команду вызвало не окно формы
+    Forbidden,
+    /// окно или меню не создались: `detail` — текст ошибки Tauri
+    Window,
 }
 
 /// Ошибка ядра: код и параметры, без готового текста.

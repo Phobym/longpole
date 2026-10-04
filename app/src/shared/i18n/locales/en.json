@@ -18,6 +18,8 @@
     "invalidProject": "Enter a project path, for example group/project",
     "invalidLast": "The number of pipelines must be from 1 to {{max}}",
     "invalidStatuses": "Select at least one status or “any”",
+    "forbidden": "The request did not come from the form window",
+    "window": "Could not open the window: {{detail}}",
     "ipc": "Could not run the command: {{detail}}"
   },
   "report": {

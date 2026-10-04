@@ -101,6 +101,15 @@ fn хост_нормализуется_при_сохранении() {
 }
 
 #[test]
+fn хост_нормализуется_и_при_удалении() {
+    let f = fixture();
+    f.tokens.set("gitlab.example.com", "t").unwrap();
+    f.tokens.remove("https://gitlab.example.com/").unwrap();
+    assert_eq!(f.tokens.get("gitlab.example.com").unwrap(), None);
+    assert_eq!(f.tokens.hosts().unwrap(), Vec::<String>::new());
+}
+
+#[test]
 fn normalize_host_схема_слэш_и_порт() {
     assert_eq!(
         normalize_host(" http://h.example:8080/ ").unwrap(),

@@ -8,8 +8,16 @@ export default defineConfig([
   // слияние нарушило бы спеку. Правило не считает ссылки из файлов, для которых оно выключено, поэтому в список
   // входят и слайсы с несколькими потребителями, но только из этих виджетов (`entities/{node,report}`, `node-selection`, `tree-switch`).
   // Убрать, когда появится вторая страница, которая их использует.
+  // Форма нарезана так же (спека, § 7): страниц две, и многие слайсы нужны только одной из них.
   {
-    files: ['./src/widgets/{waterfall,report-header,hotspots,detail-panel}/**', './src/features/{timeline-navigation,group-toggle,keys-help,node-selection,tree-switch}/**', './src/entities/{node,report}/**'],
+    files: [
+      './src/widgets/{waterfall,report-header,hotspots,detail-panel}/**',
+      './src/features/{timeline-navigation,group-toggle,keys-help,node-selection,tree-switch}/**',
+      './src/entities/{node,report}/**',
+      './src/widgets/{projects-panel,pipelines-list,aggregate-block}/**',
+      './src/features/{manage-token,select-branch,history-actions,build-aggregate}/**',
+      './src/entities/pipeline/**',
+    ],
     rules: { 'fsd/insignificant-slice': 'off' },
   },
 ])

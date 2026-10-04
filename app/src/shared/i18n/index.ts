@@ -1,7 +1,7 @@
 import i18next, { type TFunction } from 'i18next'
-import { initReactI18next } from 'react-i18next'
+import { initReactI18next, useTranslation } from 'react-i18next'
 import type { Locale } from '../api/schema/Locale'
-import type { IpcError } from '../api/api'
+import type { ApiError, IpcError } from '../api/api'
 import type { ErrorBody } from '../api/schema/ErrorBody'
 import en from './locales/en.json'
 import ru from './locales/ru.json'
@@ -14,7 +14,10 @@ declare module 'i18next' {
   }
 }
 
-export { useTranslation } from 'react-i18next'
+export { useTranslation }
+
+/** Текущий язык интерфейса для `Intl`-форматирования из `shared/lib/format`. */
+export const useLocale = (): Locale => useTranslation().i18n.language as Locale
 
 /** `await` до первого рендера: форма — с `get_locale`, отчёт — с `meta.locale` или языком браузера. */
 export const initI18n = (locale: Locale) =>
@@ -35,7 +38,16 @@ void (ru.errors satisfies Record<ErrorCodes, string>)
 
 /**
  * Текст ошибки по `code` и `params`; для `fields` — `errorText(t, error.errors.<поле>)`.
- * `params as never`: для объединения ключей i18next требует все переменные всех строк сразу, а ядро шлёт ровно нужные коду.
+ * `t` приведён к простой сигнатуре: для объединения ключей i18next требует все переменные всех строк сразу,
+ * а ядро шлёт ровно нужные коду; сами коды проверяет `satisfies` выше.
  */
 export const errorText = (t: TFunction, { code, params }: { code: ErrorCodes; params: Record<string, string> }) =>
-  t(`errors.${code}`, params as never)
+  (t as unknown as (key: string, options: object) => string)(`errors.${code}`, params)
+
+/** Текст любой ошибки команды; у `fields` — тексты всех полей подряд (вне `build` их не бывает). */
+export const apiErrorText = (t: TFunction, e: ApiError) =>
+  e.kind === 'message'
+    ? errorText(t, e)
+    : Object.values(e.errors)
+        .flatMap((body) => (body ? [errorText(t, body)] : []))
+        .join(' ')

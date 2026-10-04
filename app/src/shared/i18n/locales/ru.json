@@ -22,6 +22,59 @@
     "window": "Не удалось открыть окно: {{detail}}",
     "ipc": "Не удалось выполнить команду: {{detail}}"
   },
+  "form": {
+    "cancel": "Отмена",
+    "language": "Язык",
+    "loading": "Загрузка…",
+    "nothing": "Ничего не найдено",
+    "more": "Показать ещё",
+    "progress": {
+      "start": "Загружаю…",
+      "step": "Загружаю {{loaded}} из {{total}}…"
+    },
+    "history": {
+      "title": "История",
+      "clear": "Очистить",
+      "clearConfirm": "Очистить историю запросов?",
+      "empty": "Пока пусто",
+      "remove": "Удалить из истории: {{label}}"
+    },
+    "projects": {
+      "title": "Проекты",
+      "back": "← Проекты",
+      "search": "Поиск проекта",
+      "searchPlaceholder": "Название или путь…",
+      "activity": "активность {{time}}"
+    },
+    "link": {
+      "label": "Вставь ссылку на пайплайн или MR",
+      "placeholder": "https://gitlab.example.com/group/project/-/pipelines/123…",
+      "build": "Построить"
+    },
+    "host": {
+      "label": "Хост",
+      "add": "+ Добавить хост…",
+      "saved": "{{host}} — токен сохранён",
+      "hint": "Добавь токен для этого хоста, чтобы смотреть список проектов.",
+      "placeholder": "gitlab.example.com",
+      "token": "Токен",
+      "saveToken": "Сохранить токен",
+      "removeToken": "Удалить токен",
+      "removeConfirm": "Удалить токен для {{host}}?"
+    },
+    "branch": {
+      "label": "Ветка"
+    },
+    "aggregate": {
+      "statuses": "Статусы",
+      "any": "любой",
+      "last": "Сколько пайплайнов",
+      "build_one": "Агрегат по {{value}} пайплайну",
+      "build_few": "Агрегат по {{value}} пайплайнам",
+      "build_many": "Агрегат по {{value}} пайплайнам",
+      "build_other": "Агрегат по {{value}} пайплайнам"
+    }
+  },
   "report": {
     "stageLength": "длина",
     "stageToEnd": "до конца",

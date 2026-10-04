@@ -22,6 +22,57 @@
     "window": "Could not open the window: {{detail}}",
     "ipc": "Could not run the command: {{detail}}"
   },
+  "form": {
+    "cancel": "Cancel",
+    "language": "Language",
+    "loading": "Loading…",
+    "nothing": "Nothing found",
+    "more": "Show more",
+    "progress": {
+      "start": "Loading…",
+      "step": "Loading {{loaded}} of {{total}}…"
+    },
+    "history": {
+      "title": "History",
+      "clear": "Clear",
+      "clearConfirm": "Clear the request history?",
+      "empty": "Nothing yet",
+      "remove": "Remove from history: {{label}}"
+    },
+    "projects": {
+      "title": "Projects",
+      "back": "← Projects",
+      "search": "Search projects",
+      "searchPlaceholder": "Name or path…",
+      "activity": "activity {{time}}"
+    },
+    "link": {
+      "label": "Paste a pipeline or MR link",
+      "placeholder": "https://gitlab.example.com/group/project/-/pipelines/123…",
+      "build": "Build"
+    },
+    "host": {
+      "label": "Host",
+      "add": "+ Add host…",
+      "saved": "{{host}} — token saved",
+      "hint": "Add a token for this host to browse its projects.",
+      "placeholder": "gitlab.example.com",
+      "token": "Token",
+      "saveToken": "Save token",
+      "removeToken": "Remove token",
+      "removeConfirm": "Remove the token for {{host}}?"
+    },
+    "branch": {
+      "label": "Branch"
+    },
+    "aggregate": {
+      "statuses": "Statuses",
+      "any": "any",
+      "last": "How many pipelines",
+      "build_one": "Aggregate of {{value}} pipeline",
+      "build_other": "Aggregate of {{value}} pipelines"
+    }
+  },
   "report": {
     "stageLength": "length",
     "stageToEnd": "to end",

@@ -1,0 +1,108 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  # Артефакты без релиза — для приёмки (S10).
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Два прогона одного тега не должны гонять создание черновика релиза.
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Тег совпадает с версией app/package.json
+        if: github.ref_type == 'tag'
+        run: |
+          version="$(node -p "require('./app/package.json').version")"
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::тег ${GITHUB_REF_NAME} ≠ версии v${version} в app/package.json"
+            exit 1
+          fi
+
+  build:
+    needs: version
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64
+            os: macos-14
+            target: aarch64-apple-darwin
+            bundles: dmg
+          - name: macOS x64
+            os: macos-14
+            target: x86_64-apple-darwin
+            bundles: dmg
+          - name: Windows x64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+          - name: Linux x64
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bundles: appimage,deb
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    env:
+      # NASM на Windows не ставим: aws-lc-sys (через rustls) берёт готовые объектники из крейта.
+      AWS_LC_SYS_PREBUILT_NASM: 1
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Системные зависимости Tauri
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+
+      # Тулчейн из app/rust-toolchain.toml — до кеша (см. ci.yml); цель добавляем явно для кросс-сборки.
+      - run: |
+          rustup toolchain install
+          rustup default "$(rustup show active-toolchain | cut -d' ' -f1)"
+          rustup target add ${{ matrix.target }}
+        shell: bash
+        working-directory: app
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app
+          key: ${{ matrix.target }}
+
+      - run: npm ci
+        working-directory: app
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+          # На dispatch tagName пуст — tauri-action только собирает, релиз не создаёт.
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: pipeline-trace ${{ github.ref_name }}
+          releaseDraft: true
+
+      - uses: actions/upload-artifact@v4
+        if: github.ref_type != 'tag'
+        with:
+          name: pipeline-trace-${{ matrix.target }}
+          path: |
+            app/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            app/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            app/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
+            app/target/${{ matrix.target }}/release/bundle/deb/*.deb
+          if-no-files-found: error

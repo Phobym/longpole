@@ -17,6 +17,15 @@
     }
   },
   "bundle": {
+    "category": "DeveloperTool",
+    "shortDescription": "Водопад длительности GitLab-пайплайнов",
+    "longDescription": "Водопад длительности GitLab-пайплайнов: стейджи и джобы, критический путь и p50/p90 по многим пайплайнам.",
+    "macOS": {
+      "signingIdentity": "-"
+    },
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper" }
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

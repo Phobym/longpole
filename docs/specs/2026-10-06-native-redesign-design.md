@@ -40,7 +40,7 @@
 | accent | `#eeeef2` | `#333336` | hover |
 | border | `#d8d8dc` | `#3a3a3c` | hairline |
 | input | `#c9c9cf` | `#48484a` | рамки полей |
-| ring | = primary | = primary | фокус |
+| ring | `#0a6fe6` | `#5aa2ff` | фокус: внутренняя линия 1px + ореол 3px на 35% (утилита `focus-ring`); линия ≥ 3:1 на chrome |
 | selected | `#dbe8ff` | `#18304f` | hover строк списка пайплайнов и хостов |
 | destructive | `#d0281f` | `#ff6961` | |
 | ok / fail / warn / run / idle | `#34c759` / `#ff3b30` / `#ffcc00` / `#0a6fe6` / `#c7c7cc` | `#30d158` / `#ff453a` / `#ffd60a` / `#1f6fdc` / `#48484a` | полоски |
@@ -60,7 +60,7 @@
 ## 3. Примитивы `shared/ui`
 
 - **Button**. Высота 26px (`sm` — 22px, `icon` — 26×26), радиус 6px, шрифт 13px/500. `default`: градиент `linear-gradient(#3a97ff, primary)`, тень `0 .5px 1px rgb(0 0 0/.25), inset 0 .5px 0 rgb(255 255 255/.25)`. `outline`: градиент `card → secondary`, рамка `rgb(0 0 0/.12)` (в тёмной `rgb(255 255 255/.1)`, градиент `#5a5a5e → #4a4a4e`), тень `0 .5px 1px rgb(0 0 0/.15)`. `ghost` и `secondary` — без градиента, как сейчас. `destructive` — на `destructive` без градиента.
-- **Input** и `inputClasses` (Combobox). Высота 26px, радиус 6px, рамка `rgb(0 0 0/.18)` (тёмная: `rgb(255 255 255/.12)`, фон `#1a1a1a`), внутренняя тень `inset 0 .5px 1px rgb(0 0 0/.08)`, отступ 8px; фокус — рамка `primary` и ореол `0 0 0 3px rgb(10 111 230/.35)` вместо `ring-2`.
+- **Input** и `inputClasses` (Combobox). Высота 26px, радиус 6px, рамка `rgb(0 0 0/.18)` (тёмная: `rgb(255 255 255/.12)`, фон `#1a1a1a`), внутренняя тень `inset 0 .5px 1px rgb(0 0 0/.08)`, отступ 8px; фокус — рамка `primary` и общая утилита `focus-ring`.
 - **SelectTrigger**. Как `outline`-кнопка, 26px.
 - **Segmented** (новый, `shared/ui/segmented.tsx`). `role="group"` с подложкой `secondary`, радиус 6px, отступ 1px; пункт 22px, радиус 5px, 12px; активный — `card`, тень `0 .5px 2px rgb(0 0 0/.2)`, 500. Заменяет пары ghost/secondary кнопок в ThemeSwitch и обоих LanguageSwitch.
 - **Card**. Радиус 10px, рамка `rgb(0 0 0/.1)` (тёмная `rgb(255 255 255/.08)`), фон `card`, тень `0 1px 2px rgb(0 0 0/.04)`, отступ 16×18px.
@@ -68,6 +68,7 @@
 - **DialogContent**. Радиус 12px, фон `chrome`, тень `0 20px 60px rgb(0 0 0/.3), 0 0 0 .5px rgb(0 0 0/.2)`.
 - **Popover, Command** — без изменений, кроме радиуса из токена.
 - Чекбоксы — нативные 14×14 (`accent-primary` остаётся).
+- **Фокус** — одна утилита `focus-ring` в `theme.css` (`@utility`): `outline: none`, на `:focus-visible` — `inset 0 0 0 1px ring` и ореол `0 0 0 3px ring/35%`. Внутренняя линия даёт ≥ 3:1 там, где ореол бледный, и не режется `overflow: hidden` у контейнеров списков. Заменяет `outline-hidden focus-visible:ring-…` во всех контролах, пунктах сайдбара и строках списков.
 
 ## 4. Форма
 

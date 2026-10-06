@@ -151,7 +151,7 @@ git commit -m "chore(web): мок моста Tauri для dev в браузер�
 - Modify: `app/report.html:5-6`
 
 **Interfaces:**
-- Produces: токены из спеки, § 2, включая новые `--color-chrome`, `--color-sidebar`, `--color-link` (утилиты `bg-chrome`, `bg-sidebar`, `text-link`); вариант `dark:`; `--radius: 8px`. Все следующие задачи опираются на эти имена.
+- Produces: токены из спеки, § 2, включая новые `--color-chrome`, `--color-sidebar`, `--color-link` (утилиты `bg-chrome`, `bg-sidebar`, `text-link`); утилита `focus-ring` (ореол + внутренняя линия, заменяет `outline-hidden focus-visible:ring-…`); вариант `dark:`; `--radius: 8px`. Все следующие задачи опираются на эти имена.
 
 - [ ] **Step 1: Переписать `app/src/shared/ui/theme.css`**
 
@@ -253,7 +253,8 @@ git commit -m "chore(web): мок моста Tauri для dev в браузер�
   --color-destructive: #ff6961;
   --color-border: #3a3a3c;
   --color-input: #48484a;
-  --color-ring: #1f6fdc;
+  /* ring светлее primary: сплошная линия фокуса должна давать ≥ 3:1 на chrome */
+  --color-ring: #5aa2ff;
   --color-selected: #18304f;
   --color-link: #5aa2ff;
   --color-ok: #30d158;
@@ -281,6 +282,19 @@ git commit -m "chore(web): мок моста Tauri для dev в браузер�
   --color-pill-bad-fg: #ff6961;
   --color-pill-run-bg: #1c2d4a;
   --color-pill-run-fg: #64d2ff;
+}
+
+/*
+ * Фокус как в macOS: ореол 3px на 35% и сплошная внутренняя линия 1px цвета ring — она даёт ≥ 3:1 там, где ореол слишком бледный,
+ * и не режется `overflow: hidden` контейнеров списков. Одна утилита вместо повторения четырёх классов в каждом контроле.
+ */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    box-shadow:
+      inset 0 0 0 1px var(--color-ring),
+      0 0 0 3px color-mix(in srgb, var(--color-ring) 35%, transparent);
+  }
 }
 
 @layer base {
@@ -328,7 +342,7 @@ git commit -m "chore(web): мок моста Tauri для dev в браузер�
 Run: `cd app && npm run typecheck && npm run build; cd -`
 Expected: зелёно. В браузере `http://localhost:5173/` — фон белый, кнопка «Построить» синяя (`#0a6fe6`), шрифт системный 13px; `http://localhost:5173/report.html?fixture=aggregate` — полоски success зелёные, критический путь оранжевый. Тёмная тема: в консоли `document.documentElement.classList.add('dark')` — фон `#1e1e1e`.
 
-Контраст (любой калькулятор WCAG): `#636368` на `#ffffff` ≈ 6,0, на `#f5f5f7` ≈ 5,5, на сайдбаре `#ececf0` ≈ 5,1; `#ffffff` на `#0a6fe6` ≈ 4,7; `#0b63cc` на `#f5f5f7` ≈ 5,3; `#a35500` на `#fff7eb` ≈ 5,1; `#bf231a` на `#ffe3e1` ≈ 5,0; `#187232` на `#e3f7e8` ≈ 5,4; тёмная: `#a1a1a6` на `#262626` ≈ 5,8 и на `#18304f` ≈ 5,2; `#ffffff` на `#1f6fdc` ≈ 4,8; `#5aa2ff` на `#2b2b2d` ≈ 5,4. Все ≥ 4,5.
+Контраст (любой калькулятор WCAG): `#636368` на `#ffffff` ≈ 6,0, на `#f5f5f7` ≈ 5,5, на сайдбаре `#ececf0` ≈ 5,1; `#ffffff` на `#0a6fe6` ≈ 4,7; `#0b63cc` на `#f5f5f7` ≈ 5,3; `#a35500` на `#fff7eb` ≈ 5,1; `#bf231a` на `#ffe3e1` ≈ 5,0; `#187232` на `#e3f7e8` ≈ 5,4; тёмная: `#a1a1a6` на `#262626` ≈ 5,8 и на `#18304f` ≈ 5,2; `#ffffff` на `#1f6fdc` ≈ 4,8; `#5aa2ff` на `#2b2b2d` ≈ 5,4. Все ≥ 4,5. Линия фокуса (`ring`): `#0a6fe6` на `#f5f5f7` ≈ 4,3, `#5aa2ff` на `#2b2b2d` ≈ 5,4 — ≥ 3:1 для нетекстового индикатора.
 
 - [ ] **Step 4: Commit**
 
@@ -367,7 +381,7 @@ import { cn } from '../lib/cn'
 
 // push-кнопки macOS: лёгкий градиент и полупиксельная тень, высота 26px (спека, § 3)
 export const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-[13px] font-medium whitespace-nowrap transition-colors outline-hidden focus-visible:ring-[3px] focus-visible:ring-primary/35 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-[13px] font-medium whitespace-nowrap transition-colors focus-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -402,7 +416,7 @@ import { cn } from '../lib/cn'
 
 // поле macOS: 26px, внутренняя полупиксельная тень, синий ореол на фокусе (спека, § 3)
 export const inputClasses =
-  'h-[26px] w-full min-w-0 rounded-md border border-black/18 bg-card px-2 text-[13px] shadow-[inset_0_0.5px_1px_rgb(0_0_0/0.08)] outline-hidden transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/35 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive dark:border-white/12 dark:bg-[#1a1a1a]'
+  'h-[26px] w-full min-w-0 rounded-md border border-black/18 bg-card px-2 text-[13px] shadow-[inset_0_0.5px_1px_rgb(0_0_0/0.08)] focus-ring transition-colors placeholder:text-muted-foreground focus-visible:border-primary disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive dark:border-white/12 dark:bg-[#1a1a1a]'
 
 /** Подпись поля формы: 11px капсом, приглушённая (спека, § 4). */
 export const labelClasses = 'text-[11px] font-medium tracking-[.02em] text-muted-foreground uppercase'
@@ -417,7 +431,7 @@ export const Input = ({ className, ...props }: ComponentProps<'input'>) => (
 Заменить строку классов `SelectTrigger`:
 ```tsx
     className={cn(
-      'flex h-[26px] w-full items-center justify-between gap-2 rounded-md border border-black/12 bg-linear-to-b from-card to-secondary px-2.5 text-[13px] whitespace-nowrap shadow-[0_0.5px_1px_rgb(0_0_0/0.15)] outline-hidden focus-visible:ring-[3px] focus-visible:ring-primary/35 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive data-[placeholder]:text-muted-foreground dark:border-white/10 dark:from-[#5a5a5e] dark:to-[#4a4a4e]',
+      'flex h-[26px] w-full items-center justify-between gap-2 rounded-md border border-black/12 bg-linear-to-b from-card to-secondary px-2.5 text-[13px] whitespace-nowrap shadow-[0_0.5px_1px_rgb(0_0_0/0.15)] focus-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive data-[placeholder]:text-muted-foreground dark:border-white/10 dark:from-[#5a5a5e] dark:to-[#4a4a4e]',
       className,
     )}
 ```
@@ -453,7 +467,7 @@ export function Segmented<T extends string>({ label, value, options, onChange, s
             aria-pressed={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              'rounded-[5px] px-2.5 font-medium whitespace-nowrap outline-hidden focus-visible:ring-[3px] focus-visible:ring-primary/35',
+              'rounded-[5px] px-2.5 font-medium whitespace-nowrap focus-ring',
               size === 'sm' ? 'h-[22px] text-xs' : 'h-5 text-[11px]',
               active ? 'bg-card shadow-[0_0.5px_2px_rgb(0_0_0/0.2)]' : 'text-muted-foreground hover:text-foreground',
             )}
@@ -664,7 +678,7 @@ export function SavedProjectItem({ project, active, onOpen, onRemove }: Props) {
         aria-current={active ? 'page' : undefined}
         onClick={onOpen}
         className={cn(
-          'flex min-w-0 flex-1 flex-col rounded-md px-2 py-1 text-left outline-hidden focus-visible:ring-[3px] focus-visible:ring-primary/35',
+          'flex min-w-0 flex-1 flex-col rounded-md px-2 py-1 text-left focus-ring',
           active ? 'bg-primary text-primary-foreground' : 'hover:bg-accent',
         )}
       >
@@ -786,7 +800,7 @@ git commit -m "feat(web): форма — source-list сайдбар, шапка-
         type="button"
         disabled={busy}
         onClick={onOpen}
-        className="grid w-full grid-cols-[4rem_5.5rem_1fr_9rem_8.5rem_4.5rem] items-center gap-3 px-2.5 py-1 text-left text-[12.5px] outline-hidden hover:bg-selected focus-visible:ring-[3px] focus-visible:ring-primary/35 focus-visible:ring-inset disabled:opacity-60"
+        className="grid w-full grid-cols-[4rem_5.5rem_1fr_9rem_8.5rem_4.5rem] items-center gap-3 px-2.5 py-1 text-left text-[12.5px] focus-ring hover:bg-selected disabled:opacity-60"
       >
 ```
 (`8.5rem` для «52 минуты назад» без переноса — спека, § 4; остальное содержимое кнопки без изменений.)
@@ -798,7 +812,7 @@ git commit -m "feat(web): форма — source-list сайдбар, шапка-
       <button
         type="button"
         onClick={onOpen}
-        className="flex w-full flex-col gap-0.5 px-2.5 py-1.5 text-left outline-hidden hover:bg-selected focus-visible:ring-[3px] focus-visible:ring-primary/35 focus-visible:ring-inset"
+        className="flex w-full flex-col gap-0.5 px-2.5 py-1.5 text-left focus-ring hover:bg-selected"
       >
 ```
 

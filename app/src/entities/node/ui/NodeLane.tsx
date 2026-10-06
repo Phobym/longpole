@@ -6,7 +6,7 @@ import { cn } from '../../../shared/lib/cn'
 import { pos, type View } from '../../../shared/lib/timeline'
 
 const BAR = 'absolute min-w-0.5'
-const THICK = `${BAR} top-[calc(50%-5px)] h-2.5 rounded-[5px]`
+const THICK = `${BAR} top-[calc(50%-6px)] h-3 rounded-[3px]`
 const THIN = `${BAR} top-[calc(50%-2px)] h-1 rounded-[2px] bg-thin`
 const LINE = `${BAR} top-[calc(50%-1px)] h-0.5 rounded-[1px]`
 const GAP = `${BAR} top-[calc(50%-1px)] h-0 border-t-2 border-dashed border-crit`
@@ -105,7 +105,7 @@ function StageMeta({ node, excess, holderName }: { node: ReportNode; excess: Exc
   }
   // поверх линий связей: подписи не перечёркнуты
   return (
-    <div className="absolute inset-y-0 right-3 z-[1] flex items-center gap-3 bg-card pl-1.5 text-[11px] whitespace-nowrap text-muted-foreground group-data-[selected]:bg-selected">
+    <div className="absolute inset-y-0 right-3 z-[1] flex items-center gap-3 bg-muted pl-1.5 text-[11px] whitespace-nowrap text-muted-foreground group-data-[selected]:bg-primary">
       {held}
       {lengths}
     </div>

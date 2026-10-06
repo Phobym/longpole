@@ -33,10 +33,13 @@ export function Hotspots() {
   const reveal = useRevealNode()
   if (!tree.hotspots.length) return null
   return (
-    <Card className="mt-px mb-2.5 gap-0 overflow-hidden rounded-[10px] border-0 p-0 pb-1.5 shadow-none ring-1 ring-crit-soft">
-      <h2 className="m-0 bg-crit-bg px-3 py-[7px] text-[12.5px] font-semibold text-crit-fg">{t('report.hotspots.title')}</h2>
+    <Card className="mt-px mb-2.5 gap-0 overflow-hidden p-0 pb-1.5">
+      <h2 className="m-0 flex items-center gap-2 px-3 pt-2 pb-0.5 text-[13px] font-semibold">
+        <span aria-hidden className="size-2 rounded-full bg-crit" />
+        {t('report.hotspots.title')}
+      </h2>
       {tree.hotspots.map((h) => (
-        <button key={`${h.id}:${h.kind}`} type="button" className="flex w-full cursor-pointer items-baseline gap-2 px-3 py-1 text-left hover:bg-accent" onClick={() => reveal(h.id)}>
+        <button key={`${h.id}:${h.kind}`} type="button" className="flex w-full cursor-pointer items-baseline gap-2 px-3 py-[3px] text-left hover:bg-accent" onClick={() => reveal(h.id)}>
           <span className="min-w-[62px] font-semibold text-crit-fg">−{duration(h.saving)}</span>
           <span>
             <span translate="no">{h.name}</span> <span className="text-muted-foreground">— <Reason hotspot={h} /></span>

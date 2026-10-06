@@ -12,7 +12,7 @@ import { LanguageSwitch } from './LanguageSwitch'
 const BOLD = { b: <b /> }
 
 const Chip = ({ variant = 'chip', children }: { variant?: 'chip' | 'chipCrit' | 'chipBad'; children: ReactNode }) => (
-  <Badge variant={variant} className="px-2.5 py-[3px] text-[12.5px]">
+  <Badge variant={variant} className="px-2 py-0.5 text-[12.5px]">
     {children}
   </Badge>
 )

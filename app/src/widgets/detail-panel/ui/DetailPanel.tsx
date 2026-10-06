@@ -19,7 +19,7 @@ export function DetailPanel() {
   if (!node) return null
   const agg = isAggNode(node)
   return (
-    <aside aria-labelledby="panel-title" className="fixed inset-y-0 right-0 z-[3] w-[min(420px,100vw)] overflow-x-hidden overflow-y-auto overscroll-contain border-l bg-card px-[18px] pt-3.5 pb-6 shadow-[-4px_0_16px_rgb(0_0_0/0.08)]">
+    <aside aria-labelledby="panel-title" className="fixed inset-y-0 right-0 z-[3] w-[min(420px,100vw)] overflow-x-hidden overflow-y-auto overscroll-contain border-l bg-chrome px-[18px] pt-3.5 pb-6">
       <Button variant="ghost" className="absolute top-2.5 right-3 size-[26px] text-base text-muted-foreground" aria-label={t('report.panel.close')} onClick={() => dispatch({ type: 'close' })}>
         ×
       </Button>

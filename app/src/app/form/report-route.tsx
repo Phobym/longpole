@@ -44,7 +44,7 @@ export function ReportRoute() {
   return (
     <>
       {/* не sticky: липкая ось водопада и панель деталей пинятся к верху того же скролла */}
-      <div className="flex items-center gap-3 border-b bg-card px-4 py-2">
+      <div className="flex items-center gap-3 border-b bg-chrome px-4 py-1.5">
         <Button type="button" variant="ghost" size="sm" onClick={back}>
           {t('form.reportView.back')}
         </Button>

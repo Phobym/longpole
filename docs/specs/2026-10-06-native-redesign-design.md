@@ -36,7 +36,7 @@
 | primary-foreground | `#ffffff` | `#ffffff` | |
 | secondary | `#f2f2f7` | `#2c2c2e` | теги шапки отчёта, подложка сегментов |
 | muted | `#f5f5f7` | `#2a2a2a` | строки стейджей, zebra |
-| muted-foreground | `#636368` | `#a1a1a6` | подписи (≥ 5,1:1 на белом, chrome, sidebar, selected) |
+| muted-foreground | `#636368` | `#a1a1a6` | подписи (≥ 4,8:1 на белом, chrome, sidebar, selected) |
 | accent | `#eeeef2` | `#333336` | hover |
 | border | `#d8d8dc` | `#3a3a3c` | hairline |
 | input | `#c9c9cf` | `#48484a` | рамки полей |

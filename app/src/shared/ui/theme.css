@@ -1,59 +1,64 @@
 @import 'tailwindcss';
 
+/* Тёмная тема — класс `dark` на `<html>` (`shared/lib/theme.ts`); утилиты `dark:` смотрят на него, а не на prefers-color-scheme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
- * Тёмная тема — класс `dark` на `<html>` (`shared/lib/theme.ts`): системная, светлая или тёмная из настроек; сохранённый отчёт следует системе.
- * Палитра — из старых form.css и template.html; primary и muted-foreground затемнены ради контраста AA (≥ 4,5:1).
+ * Палитра «нативный desktop» (спека docs/specs/2026-10-06-native-redesign-design.md, § 2): системный синий — единственный акцент,
+ * `chrome` — фон тулбара, контента формы, инспектора и диалога, `sidebar` — фон сайдбара. Контраст текста ≥ 4,5:1 в обеих темах.
  * `static`: переменные нужны и без утилит (inline-стили, var(--color-*)).
  */
 @theme static {
-  --color-background: #f7f8fa;
-  --color-foreground: #1a1b1f;
+  --color-background: #ffffff;
+  --color-foreground: #1d1d1f;
+  --color-chrome: #f5f5f7;
+  --color-sidebar: #ececf0;
   --color-card: #ffffff;
-  --color-card-foreground: #1a1b1f;
+  --color-card-foreground: #1d1d1f;
   --color-popover: #ffffff;
-  --color-popover-foreground: #1a1b1f;
-  --color-primary: #5b5fe8;
+  --color-popover-foreground: #1d1d1f;
+  --color-primary: #0a6fe6;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #f1f2f5;
-  --color-secondary-foreground: #1a1b1f;
-  --color-muted: #f1f2f5;
-  --color-muted-foreground: #656a7a;
-  --color-accent: #f3f4f8;
-  --color-accent-foreground: #1a1b1f;
-  --color-destructive: #c23434;
-  --color-border: #e8eaee;
-  --color-input: #e8eaee;
-  --color-ring: #5b5fe8;
-  --color-selected: #eef0ff;
+  --color-secondary: #f2f2f7;
+  --color-secondary-foreground: #1d1d1f;
+  --color-muted: #f5f5f7;
+  --color-muted-foreground: #6e6e73;
+  --color-accent: #eeeef2;
+  --color-accent-foreground: #1d1d1f;
+  --color-destructive: #d0281f;
+  --color-border: #d8d8dc;
+  --color-input: #c9c9cf;
+  --color-ring: #0a6fe6;
+  --color-selected: #dbe8ff;
 
   /* домен: статусы, критический путь, повторы и превышения, связи */
-  --color-ok: #8b8ff6;
-  --color-fail: #f06262;
-  --color-warn: #f2b33d;
-  --color-run: #5b9cf8;
-  --color-idle: #b4b9c2;
-  --color-queued: #dfe2e7;
-  --color-thin: #c9ccd3;
-  --color-wait: #e3e5e9;
-  --color-crit: #f59a3c;
-  --color-crit-fg: #b65c0c;
-  --color-crit-soft: #fbd3a8;
-  --color-crit-bg: #fffaf4;
+  --color-ok: #34c759;
+  --color-fail: #ff3b30;
+  --color-warn: #ffcc00;
+  --color-run: #0a6fe6;
+  --color-idle: #c7c7cc;
+  --color-queued: #e5e5ea;
+  --color-thin: #d1d1d6;
+  --color-wait: #e5e5ea;
+  --color-crit: #ff9500;
+  --color-crit-fg: #b35f00;
+  --color-crit-soft: #ffd9a8;
+  --color-crit-bg: #fff7eb;
   --color-over-a: var(--color-crit);
-  --color-over-b: #fde0c7;
+  --color-over-b: #ffe2bf;
   --color-retry-a: var(--color-fail);
-  --color-retry-b: #fbd0d0;
-  --color-retry-fg: #c23434;
-  --color-dep-up: #0284c7;
-  --color-dep-down: #16a34a;
-  --color-pill-ok-bg: #e9f7ef;
-  --color-pill-ok-fg: #1a7f45;
-  --color-pill-mid-bg: #fff3dc;
-  --color-pill-mid-fg: #9a6200;
-  --color-pill-bad-bg: #fdecec;
-  --color-pill-bad-fg: #c23434;
-  --color-pill-run-bg: #eaf1fe;
-  --color-pill-run-fg: #2f5fc4;
+  --color-retry-b: #ffd0cd;
+  --color-retry-fg: #d0281f;
+  --color-dep-up: #0a6fe6;
+  --color-dep-down: #1f8a3b;
+  --color-pill-ok-bg: #e3f7e8;
+  --color-pill-ok-fg: #1f8a3b;
+  --color-pill-mid-bg: #fff5cc;
+  --color-pill-mid-fg: #8a6400;
+  --color-pill-bad-bg: #ffe3e1;
+  --color-pill-bad-fg: #d0281f;
+  --color-pill-run-bg: #e1eeff;
+  --color-pill-run-fg: #0a5fd0;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -63,59 +68,70 @@
 
 :root {
   color-scheme: light;
-  --radius: 0.625rem;
+  /* в px, а не rem: корневой размер шрифта 13px, md = 6px (контролы), lg = 8px, xl = 12px (диалог) */
+  --radius: 8px;
 }
 
 :root.dark {
   color-scheme: dark;
-  --color-background: #111318;
-  --color-foreground: #e6e7ea;
-  --color-card: #1a1c22;
-  --color-card-foreground: #e6e7ea;
-  --color-popover: #1a1c22;
-  --color-popover-foreground: #e6e7ea;
-  --color-primary: #9a9cf8;
-  --color-primary-foreground: #111318;
-  --color-secondary: #22252c;
-  --color-secondary-foreground: #e6e7ea;
-  --color-muted: #22252c;
-  --color-muted-foreground: #8d939e;
-  --color-accent: #20232a;
-  --color-accent-foreground: #e6e7ea;
-  --color-destructive: #f58a8d;
-  --color-border: #2a2d35;
-  --color-input: #2a2d35;
-  --color-ring: #9a9cf8;
-  --color-selected: #262a45;
-  --color-ok: #9a9cf8;
-  --color-fail: #f16a6e;
-  --color-warn: #f5b041;
-  --color-idle: #5b616b;
-  --color-queued: #343842;
-  --color-thin: #4a4f59;
-  --color-wait: #3a3e47;
-  --color-crit: #f5a04a;
-  --color-crit-fg: #f7b26a;
-  --color-crit-soft: #5a3b1c;
-  --color-crit-bg: #241c14;
-  --color-over-b: #4a3320;
-  --color-retry-b: #4a2426;
-  --color-retry-fg: #f58a8d;
-  --color-dep-up: #38bdf8;
-  --color-dep-down: #4ade80;
-  --color-pill-ok-bg: #16301f;
-  --color-pill-ok-fg: #6fd49a;
-  --color-pill-mid-bg: #33280f;
-  --color-pill-mid-fg: #f0c060;
-  --color-pill-bad-bg: #3a1a1b;
-  --color-pill-bad-fg: #f58a8d;
-  --color-pill-run-bg: #1b2a44;
-  --color-pill-run-fg: #8ab4f8;
+  --color-background: #1e1e1e;
+  --color-foreground: #f5f5f7;
+  --color-chrome: #2b2b2d;
+  --color-sidebar: #242426;
+  --color-card: #262626;
+  --color-card-foreground: #f5f5f7;
+  --color-popover: #2c2c2e;
+  --color-popover-foreground: #f5f5f7;
+  --color-primary: #1f6fdc;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #2c2c2e;
+  --color-secondary-foreground: #f5f5f7;
+  --color-muted: #2a2a2a;
+  --color-muted-foreground: #a1a1a6;
+  --color-accent: #333336;
+  --color-accent-foreground: #f5f5f7;
+  --color-destructive: #ff6961;
+  --color-border: #3a3a3c;
+  --color-input: #48484a;
+  --color-ring: #1f6fdc;
+  --color-selected: #1f3a5f;
+  --color-ok: #30d158;
+  --color-fail: #ff453a;
+  --color-warn: #ffd60a;
+  --color-run: #1f6fdc;
+  --color-idle: #48484a;
+  --color-queued: #3a3a3c;
+  --color-thin: #48484a;
+  --color-wait: #3a3a3c;
+  --color-crit: #ff9f0a;
+  --color-crit-fg: #ffb84d;
+  --color-crit-soft: #5a3d10;
+  --color-crit-bg: #2a2416;
+  --color-over-b: #4a3a1c;
+  --color-retry-b: #4a2422;
+  --color-retry-fg: #ff6961;
+  --color-dep-up: #64d2ff;
+  --color-dep-down: #30d158;
+  --color-pill-ok-bg: #1d3a27;
+  --color-pill-ok-fg: #4ade80;
+  --color-pill-mid-bg: #3b3414;
+  --color-pill-mid-fg: #ffd60a;
+  --color-pill-bad-bg: #3f1f1d;
+  --color-pill-bad-fg: #ff6961;
+  --color-pill-run-bg: #1c2d4a;
+  --color-pill-run-fg: #64d2ff;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  html {
+    /* системный шрифт ОС; 13px — как в macOS; rem-утилиты Tailwind масштабируются от него, как в прототипе */
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable', 'Segoe UI', system-ui, Roboto, sans-serif;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
   }
   body {
     @apply bg-background text-foreground;

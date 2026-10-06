@@ -51,8 +51,12 @@ export const Row = memo(function Row({ node, depth, view, selected, critical, de
       className={cn(
         GRID,
         'group scroll-my-10 cursor-pointer items-stretch focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
-        stage ? 'h-8 border-b bg-muted' : 'h-[26px] odd:not-hover:bg-muted/50',
-        selected ? 'bg-primary text-primary-foreground **:text-primary-foreground focus-visible:outline-primary-foreground' : 'hover:bg-accent',
+        stage ? 'h-8 border-b bg-muted' : 'h-[26px]',
+        selected
+          ? 'bg-primary text-primary-foreground **:text-primary-foreground focus-visible:outline-primary-foreground'
+          : stage
+            ? 'hover:bg-accent'
+            : 'hover:bg-accent odd:not-hover:bg-muted/50',
         dep === 'up' && 'shadow-[inset_3px_0_var(--color-dep-up)]',
         dep === 'down' && 'shadow-[inset_3px_0_var(--color-dep-down)]',
       )}

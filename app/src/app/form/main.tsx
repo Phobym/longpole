@@ -18,6 +18,8 @@ const queryClient = new QueryClient({
 const browserLocale = (): Locale => (navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en')
 
 async function main() {
+  // в браузере без Tauri — мок моста, иначе `get_settings` падает на `invoke`
+  if (import.meta.env.DEV) await import('../dev/mock')
   const root = document.getElementById('root')
   if (!root) throw new Error('нет #root в index.html')
   const settings = await getSettings()

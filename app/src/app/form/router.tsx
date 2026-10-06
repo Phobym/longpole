@@ -19,8 +19,9 @@ function Layout() {
   const onReport = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/report/$id') })
   const onSettings = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/settings') })
 
-  // Один обработчик клавиш на приложение. Открытый Popover/Select гасит Esc сам (`defaultPrevented`):
-  // первый Esc закрывает его, второй уводит с отчёта или настроек.
+  // Один обработчик клавиш на приложение. Открытый оверлей (Popover/Select) и выделенная строка отчёта гасят Esc сами (`defaultPrevented`):
+  // первый Esc закрывает оверлей или снимает выделение, второй уводит с отчёта или настроек.
+  // Слушаем `window`, а не `document`: он срабатывает после document-слушателей независимо от порядка их регистрации.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return
@@ -34,8 +35,8 @@ function Layout() {
         void navigate({ to: '/settings' })
       }
     }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
   }, [goBack, navigate, onReport, onSettings])
 
   // отчёту нужна вся ширина: без сайдбара и шапки

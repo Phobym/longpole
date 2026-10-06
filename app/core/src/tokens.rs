@@ -195,7 +195,9 @@ pub fn list_hosts(
         push(host, TokenSource::Glab);
     }
     if env("GITLAB_TOKEN").is_some_and(|t| !t.is_empty())
-        && let Some(host) = env("GITLAB_HOST").map(|h| bare(&h).to_string())
+        && let Some(host) = env("GITLAB_HOST")
+            .map(|h| bare(&h).to_string())
+            .filter(|h| !h.is_empty())
     {
         push(host, TokenSource::Env);
     }

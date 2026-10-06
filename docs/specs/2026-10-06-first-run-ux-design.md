@@ -88,8 +88,8 @@
 
 ## 4. Отчёт в окне
 
-- `build(form, onProgress) -> Result<u32, CmdError>` возвращает `id` отчёта. Rust держит `AppState.reports: LruMap<u32, { report: Report, html: String, file_name: String }>`, ёмкость 10. Запись истории — как сейчас.
-- `report(id) -> Result<Report, CmdError>`; нет записи — `report_expired`, фронтенд уходит на `/`.
+- `build(form, onProgress) -> Result<u32, CmdError>` возвращает `id` отчёта. Rust держит `AppState.reports` — `VecDeque` на 10 записей `{ id, report: Report, html: String, file_name: String }`, вытесняется самая старая (FIFO). Запись истории — как сейчас.
+- `report(id) -> Result<String, CmdError>` возвращает JSON-строку `Report`, фронтенд парсит её; нет записи — `report_expired`, фронтенд уходит на `/`.
 - Повтор из «Недавних»: ключ `[host, request]` хранится рядом с отчётом; если запись в кеше, фронтенд сразу открывает `/report/$id` (команда `find_report(host, request) -> Option<u32>`), иначе `build` как сейчас.
 - `/report/$id` рендерит `<ReportPage report={…}/>` из `pages/report`. `ReportHeader` получает флаг `embedded`: без переключателя языка. Локаль — текущая i18next, тема — класс на корне (§ 5).
 - `set_current_report(id | null)` вызывается при монтировании и размонтировании экрана отчёта. «Сохранить отчёт…» пишет `html` текущего через `save_file` с `file_name`; нет текущего — ничего.

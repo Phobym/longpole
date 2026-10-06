@@ -378,6 +378,19 @@ fn list_hosts_связка_потом_glab_потом_env_без_дублей() 
         .map(|h| h.host)
         .collect();
     assert_eq!(hosts, ["a.example", "b.example", "glab.example"]);
+
+    // токен есть, а GITLAB_HOST пуст — пустого хоста в списке нет
+    let empty_host = |name: &str| match name {
+        "GITLAB_TOKEN" => Some("env-token".to_string()),
+        "GITLAB_HOST" => Some(String::new()),
+        _ => None,
+    };
+    let hosts: Vec<String> = list_hosts(&f.tokens, &empty_host, &|_: &[&str]| None)
+        .unwrap()
+        .into_iter()
+        .map(|h| h.host)
+        .collect();
+    assert_eq!(hosts, ["a.example", "b.example", "glab.example"]);
 }
 
 // --- glab ---

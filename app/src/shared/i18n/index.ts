@@ -19,7 +19,7 @@ export { useTranslation }
 /** Текущий язык интерфейса для `Intl`-форматирования из `shared/lib/format`. */
 export const useLocale = (): Locale => useTranslation().i18n.language as Locale
 
-/** `await` до первого рендера: форма — с `get_locale`, отчёт — с `meta.locale` или языком браузера. */
+/** `await` до первого рендера: форма — с `get_settings`, сохранённый отчёт — с языком браузера. */
 export const initI18n = async (locale: Locale) => {
   document.documentElement.lang = locale
   i18next.on('languageChanged', (lng) => {

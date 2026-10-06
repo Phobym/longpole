@@ -7,11 +7,11 @@ export function ProjectRow({ project, onOpen }: { project: Project; onOpen: () =
   const { t } = useTranslation()
   const locale = useLocale()
   return (
-    <li>
+    <li className="even:bg-muted">
       <button
         type="button"
         onClick={onOpen}
-        className="flex w-full flex-col gap-0.5 rounded-md border bg-card px-3 py-2 text-left outline-hidden hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex w-full flex-col gap-0.5 px-2.5 py-1.5 text-left focus-ring hover:bg-selected"
       >
         <span translate="no" className="font-medium">
           {project.name}

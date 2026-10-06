@@ -21,12 +21,12 @@ export function PipelineRow({ pipeline, onOpen, busy, progress, error }: Props) 
   const locale = useLocale()
   const variant = PILL[pipeline.status as keyof typeof PILL] ?? 'mid'
   return (
-    <li className="flex flex-col">
+    <li className="flex flex-col even:bg-muted">
       <button
         type="button"
         disabled={busy}
         onClick={onOpen}
-        className="grid w-full grid-cols-[4rem_5.5rem_1fr_9rem_7rem_4.5rem] items-center gap-3 rounded-md border bg-card px-3 py-2 text-left text-sm outline-hidden hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+        className="grid w-full grid-cols-[4rem_5.5rem_1fr_9rem_8.5rem_4.5rem] items-center gap-3 px-2.5 py-1 text-left text-[12.5px] focus-ring hover:bg-selected disabled:opacity-60"
       >
         <span className="font-medium">#{pipeline.iid}</span>
         <Badge variant={variant}>{pipeline.status}</Badge>

@@ -2,7 +2,7 @@ import { useId, useState } from 'react'
 import { messageError } from '../../../shared/api'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
-import { Input } from '../../../shared/ui/input'
+import { Input, labelClasses } from '../../../shared/ui/input'
 import { useSaveToken } from '../model/useSaveToken'
 
 /** Токен для известного хоста прямо там, где он понадобился; после сохранения `onSaved` повторяет действие. */
@@ -29,11 +29,11 @@ export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => voi
       <p className="text-sm font-medium">{t('form.token.need', { host })}</p>
       <p className="text-xs text-muted-foreground">
         {t('form.token.scope')}{' '}
-        <a href={createUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+        <a href={createUrl} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
           {t('form.token.create', { host })}
         </a>
       </p>
-      <label htmlFor={id} className="text-sm font-medium">
+      <label htmlFor={id} className={labelClasses}>
         {t('form.host.token')}
       </label>
       <Input id={id} type="password" autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false} aria-invalid={failure !== undefined} aria-describedby={failure ? `${id}-error` : undefined} value={token} onChange={(e) => setToken(e.target.value)} />

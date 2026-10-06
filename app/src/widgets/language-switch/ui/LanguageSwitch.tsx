@@ -1,7 +1,7 @@
 import { useUpdateSettings } from '../../../entities/settings'
 import type { Locale } from '../../../shared/api'
 import { changeLocale, useTranslation } from '../../../shared/i18n'
-import { Button } from '../../../shared/ui/button'
+import { Segmented } from '../../../shared/ui/segmented'
 
 const LOCALES: Locale[] = ['ru', 'en']
 
@@ -14,20 +14,11 @@ export function LanguageSwitch() {
     await update({ locale })
   }
   return (
-    <div role="group" aria-label={t('form.language')} className="flex gap-0.5">
-      {LOCALES.map((locale) => (
-        <Button
-          key={locale}
-          variant={i18n.language === locale ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-7 px-2.5 text-xs"
-          lang={locale}
-          aria-pressed={i18n.language === locale}
-          onClick={() => void choose(locale)}
-        >
-          {locale.toUpperCase()}
-        </Button>
-      ))}
-    </div>
+    <Segmented
+      label={t('form.language')}
+      value={i18n.language as Locale}
+      options={LOCALES.map((locale) => ({ value: locale, label: locale.toUpperCase(), lang: locale }))}
+      onChange={(locale) => void choose(locale)}
+    />
   )
 }

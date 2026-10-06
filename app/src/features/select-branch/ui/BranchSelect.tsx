@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from '../../../shared/i18n'
 import { SEARCH_DEBOUNCE, useDebounced } from '../../../shared/lib/useDebounced'
 import { Combobox } from '../../../shared/ui/combobox'
+import { labelClasses } from '../../../shared/ui/input'
 import { useBranches, type ProjectRef } from '../../../entities/project'
 
 type Props = ProjectRef & {
@@ -25,7 +26,7 @@ export function BranchSelect({ host, project, branch, onCommit }: Props) {
   const { data } = useBranches(host, project, useDebounced(search, SEARCH_DEBOUNCE))
   return (
     <div className="flex flex-col gap-1.5">
-      <span aria-hidden className="text-sm font-medium">
+      <span aria-hidden className={labelClasses}>
         {t('form.branch.label')}
       </span>
       <Combobox

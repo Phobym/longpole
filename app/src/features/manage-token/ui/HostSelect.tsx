@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react'
 import { useTranslation } from '../../../shared/i18n'
+import { labelClasses } from '../../../shared/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/ui/select'
 import { pickAddHost, pickHost, useHostState } from '../../../entities/host'
 
@@ -12,7 +13,7 @@ export function HostSelect({ onChange, children }: { onChange: () => void; child
   const { host, saved, tokenHost } = useHostState()
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium">
+      <label htmlFor={id} className={labelClasses}>
         {t('form.host.label')}
       </label>
       <div className="flex gap-2">

@@ -5,6 +5,7 @@ import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { useGoBack } from '../../../shared/lib/useGoBack'
 import { Button } from '../../../shared/ui/button'
 import { Card } from '../../../shared/ui/card'
+import { labelClasses } from '../../../shared/ui/input'
 import { ThemeSwitch } from '../../../features/choose-theme'
 import { RemoveTokenButton, TokenForm } from '../../../features/manage-token'
 import { hostsQuery } from '../../../entities/host'
@@ -23,24 +24,24 @@ export function SettingsPage() {
         <Button type="button" variant="ghost" size="sm" onClick={back}>
           {t('form.settings.back')}
         </Button>
-        <h1 className="text-xl font-semibold">{t('form.settings.title')}</h1>
+        <h1 className="text-[17px] font-semibold">{t('form.settings.title')}</h1>
       </div>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold">{t('form.settings.hosts')}</h2>
+        <h2 className={labelClasses}>{t('form.settings.hosts')}</h2>
         {failure && (
           <p role="alert" className="text-sm text-destructive">
             {errorText(failure)}
           </p>
         )}
         {hosts.length === 0 && !failure && <p className="text-sm text-muted-foreground">{t('form.settings.noHosts')}</p>}
-        <ul className="flex flex-col gap-1.5">
+        <ul className="flex flex-col overflow-hidden rounded-lg border empty:hidden">
           {hosts.map((h) => (
-            <li key={h.host} className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm">
-              <span translate="no" className="flex-1 truncate font-medium">
+            <li key={h.host} className="flex items-center gap-3 px-2.5 py-1.5 text-sm even:bg-muted">
+              <span translate="no" className="flex-1 truncate">
                 {h.host}
               </span>
-              <span className="text-xs text-muted-foreground">{t(`form.settings.source.${h.source}`)}</span>
+              <span className="text-[11px] text-muted-foreground">{t(`form.settings.source.${h.source}`)}</span>
               {h.source === 'keychain' && <RemoveTokenButton host={h.host} />}
             </li>
           ))}
@@ -61,12 +62,12 @@ export function SettingsPage() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold">{t('form.settings.theme')}</h2>
+        <h2 className={labelClasses}>{t('form.settings.theme')}</h2>
         <ThemeSwitch />
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold">{t('form.language')}</h2>
+        <h2 className={labelClasses}>{t('form.language')}</h2>
         <LanguageSwitch />
       </section>
     </Card>

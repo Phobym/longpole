@@ -23,6 +23,8 @@ async function readReport(): Promise<Report> {
 }
 
 async function main() {
+  // ПРОТОТИП: переключатель вариантов дизайна
+  if (import.meta.env.DEV) void import('../prototype/switcher').then((m) => m.mountSwitcher())
   applyTheme('system')
   const root = document.getElementById('root')
   if (!root) throw new Error('нет #root в report.html')

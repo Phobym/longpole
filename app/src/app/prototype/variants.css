@@ -1,0 +1,1068 @@
+/*
+ * ПРОТОТИП: три визуальных языка поверх существующей разметки, по `data-variant` на `<html>`.
+ * Правила вне @layer, поэтому перебивают утилиты Tailwind; цепляются за существующие классы и структуру.
+ * Шрифты только системные: отчёт — один файл с CSP без внешних запросов.
+ */
+
+:root[data-variant] {
+  --proto-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable', 'Segoe UI', system-ui, Roboto, sans-serif;
+  --proto-mono: ui-monospace, 'SF Mono', Menlo, 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+}
+
+/* строки пайплайнов: колонка «когда» не переносится */
+[data-variant] li > button.grid {
+  grid-template-columns: 4rem 5.5rem 1fr 9rem 8.5rem 4.5rem;
+}
+
+/* ============================================================================
+ * A · SWISS — плоско, hairline-линии, тёплый нейтральный фон, один акцент (оранжевый критического пути),
+ * данные в моноширинном, UI в системном гротеске. Кнопка — чёрная, не индиго.
+ * ========================================================================== */
+:root[data-variant='swiss'] {
+  --radius: 0.3125rem;
+  --color-background: #fcfcfb;
+  --color-foreground: #1b1b1a;
+  --color-card: #fcfcfb;
+  --color-card-foreground: #1b1b1a;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1b1b1a;
+  --color-primary: #1b1b1a;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f0efec;
+  --color-secondary-foreground: #1b1b1a;
+  --color-muted: #f3f2ef;
+  --color-muted-foreground: #6b6963;
+  --color-accent: #f3f2ef;
+  --color-accent-foreground: #1b1b1a;
+  --color-destructive: #b9362d;
+  --color-border: #e3e1dc;
+  --color-input: #cfccc5;
+  --color-ring: #1b1b1a;
+  --color-selected: #f7efe2;
+  --color-ok: #2f9e5b;
+  --color-fail: #d6453b;
+  --color-warn: #e0a81f;
+  --color-run: #3570d6;
+  --color-idle: #b8b5ae;
+  --color-queued: #e3e1dc;
+  --color-thin: #cfccc5;
+  --color-wait: #e3e1dc;
+  --color-crit: #ec7d1e;
+  --color-crit-fg: #a9500a;
+  --color-crit-soft: #f3c79b;
+  --color-crit-bg: #fdf6ee;
+  --color-over-b: #f9dcbf;
+  --color-retry-b: #f6c9c5;
+  --color-retry-fg: #b93a31;
+  --color-dep-up: #2f6fd0;
+  --color-dep-down: #2f9e5b;
+  --color-pill-ok-bg: transparent;
+  --color-pill-ok-fg: #1f7a45;
+  --color-pill-mid-bg: transparent;
+  --color-pill-mid-fg: #96620a;
+  --color-pill-bad-bg: transparent;
+  --color-pill-bad-fg: #b93a31;
+  --color-pill-run-bg: transparent;
+  --color-pill-run-fg: #2f5fc4;
+}
+:root.dark[data-variant='swiss'] {
+  --color-background: #171716;
+  --color-foreground: #e9e7e2;
+  --color-card: #171716;
+  --color-card-foreground: #e9e7e2;
+  --color-popover: #202020;
+  --color-popover-foreground: #e9e7e2;
+  --color-primary: #e9e7e2;
+  --color-primary-foreground: #171716;
+  --color-secondary: #242422;
+  --color-secondary-foreground: #e9e7e2;
+  --color-muted: #202020;
+  --color-muted-foreground: #9a978f;
+  --color-accent: #222220;
+  --color-accent-foreground: #e9e7e2;
+  --color-destructive: #f08a82;
+  --color-border: #2c2c2a;
+  --color-input: #3f3f3b;
+  --color-ring: #e9e7e2;
+  --color-selected: #2d2a22;
+  --color-ok: #4cc077;
+  --color-fail: #ee6a60;
+  --color-warn: #e6b434;
+  --color-run: #6a9bef;
+  --color-idle: #5b5a56;
+  --color-queued: #33332f;
+  --color-thin: #4a4946;
+  --color-wait: #3a3a37;
+  --color-crit: #f2913a;
+  --color-crit-fg: #f5ad68;
+  --color-crit-soft: #6a4420;
+  --color-crit-bg: #241c13;
+  --color-over-b: #4a3320;
+  --color-retry-b: #4a2426;
+  --color-retry-fg: #f08a82;
+  --color-dep-up: #6fa8ff;
+  --color-dep-down: #4cc077;
+  --color-pill-ok-fg: #5ccb86;
+  --color-pill-mid-fg: #e6b434;
+  --color-pill-bad-fg: #f08a82;
+  --color-pill-run-fg: #8ab4f8;
+}
+
+html[data-variant='swiss'] {
+  font-family: var(--proto-sans);
+  font-size: 13px;
+  letter-spacing: 0.005em;
+}
+/* данные — моноширинным: имена джоб/проектов, тайминги, ось */
+[data-variant='swiss'] [translate='no'],
+[data-variant='swiss'] [data-id],
+[data-variant='swiss'] aside.fixed .grid-cols-3 b,
+[data-variant='swiss'] aside.fixed dd,
+[data-variant='swiss'] header span.rounded-full b,
+[data-variant='swiss'] .ring-crit-soft button > span:first-child,
+[data-variant='swiss'] li > button.grid > span:first-child,
+[data-variant='swiss'] li > button.grid > span:nth-last-child(-n + 2),
+[data-variant='swiss'] .sticky .relative.h-4 span {
+  font-family: var(--proto-mono);
+  font-size: 0.96em;
+  letter-spacing: 0;
+}
+[data-variant='swiss'] [data-id] [translate='no'] {
+  font-size: inherit;
+}
+
+/* тени и скругления — долой */
+[data-variant='swiss'] .shadow-sm,
+[data-variant='swiss'] .shadow-md,
+[data-variant='swiss'] .shadow-lg,
+[data-variant='swiss'] aside.fixed {
+  box-shadow: none;
+}
+[data-variant='swiss'] [data-radix-popper-content-wrapper] > div,
+[data-variant='swiss'] [role='dialog'] {
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.08);
+  border-radius: 4px;
+}
+
+/* шапка отчёта: чипы → пары «подпись значение» через hairline */
+[data-variant='swiss'] header.relative {
+  padding-top: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+  gap: 0;
+}
+[data-variant='swiss'] header.relative h1 {
+  margin-right: 14px;
+  font-size: 14px;
+}
+[data-variant='swiss'] header span.rounded-full {
+  border: 0;
+  border-left: 1px solid var(--color-border);
+  border-radius: 0;
+  background: none;
+  padding: 1px 12px;
+  font-size: 12px;
+}
+[data-variant='swiss'] header span.rounded-full:first-of-type {
+  border-left: 0;
+  padding-left: 0;
+}
+[data-variant='swiss'] header button.rounded-full,
+[data-variant='swiss'] header button.h-6 {
+  border-radius: 3px;
+}
+
+/* «Куда направить силы» — не карточка, а блок с оранжевой чертой слева */
+[data-variant='swiss'] .ring-crit-soft {
+  --tw-ring-color: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  border-left: 2px solid var(--color-crit);
+  margin: 12px 0 14px;
+  padding-bottom: 2px;
+}
+[data-variant='swiss'] .ring-crit-soft h2 {
+  background: none;
+  color: var(--color-muted-foreground);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 12px 4px;
+}
+[data-variant='swiss'] .ring-crit-soft button {
+  padding: 2px 12px;
+}
+[data-variant='swiss'] .ring-crit-soft button > span:first-child {
+  color: var(--color-crit-fg);
+}
+
+/* стейджи — секции, разделённые hairline; заголовок стейджа на лёгкой плашке */
+[data-variant='swiss'] .ring-border.ring-1 {
+  --tw-ring-color: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin: 0;
+  border-top: 1px solid var(--color-border);
+}
+[data-variant='swiss'] .ring-border.ring-1:last-of-type {
+  border-bottom: 1px solid var(--color-border);
+}
+[data-variant='swiss'] [data-id].h-8 {
+  background: var(--color-muted);
+  border-bottom: 1px solid var(--color-border);
+  height: 30px;
+}
+[data-variant='swiss'] [data-id].h-8 .bg-card {
+  background: var(--color-muted);
+}
+[data-variant='swiss'] [data-id].h-8 .text-\[13px\] {
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+}
+[data-variant='swiss'] [data-id][data-selected] {
+  box-shadow: inset 2px 0 var(--color-foreground);
+}
+[data-variant='swiss'] [data-id][data-selected] .bg-selected {
+  background: var(--color-selected);
+}
+[data-variant='swiss'] .sticky.top-0 {
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* метки стабильности — точка и текст, без пилюли */
+[data-variant='swiss'] .bg-pill-ok-bg,
+[data-variant='swiss'] .bg-pill-mid-bg,
+[data-variant='swiss'] .bg-pill-bad-bg,
+[data-variant='swiss'] .bg-pill-run-bg {
+  background: none;
+  padding-left: 0;
+  padding-right: 0;
+  border-radius: 0;
+  font-family: var(--proto-sans);
+}
+[data-variant='swiss'] .bg-pill-ok-bg::before,
+[data-variant='swiss'] .bg-pill-mid-bg::before,
+[data-variant='swiss'] .bg-pill-bad-bg::before,
+[data-variant='swiss'] .bg-pill-run-bg::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 2px;
+}
+
+/* панель деталей — колонка с линией, без тени; KPI — строки с hairline сверху */
+[data-variant='swiss'] aside.fixed {
+  border-left: 1px solid var(--color-border);
+  background: var(--color-background);
+}
+[data-variant='swiss'] aside.fixed h2 {
+  font-size: 15px;
+}
+[data-variant='swiss'] aside.fixed p.bg-secondary {
+  background: none;
+  border-left: 2px solid var(--color-crit);
+  border-radius: 0;
+  padding: 2px 0 2px 10px;
+}
+[data-variant='swiss'] aside.fixed .grid-cols-3 {
+  gap: 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+[data-variant='swiss'] aside.fixed .grid-cols-3 > div {
+  background: none;
+  border-radius: 0;
+  padding: 8px 10px 8px 0;
+}
+[data-variant='swiss'] aside.fixed .grid-cols-3 > div + div {
+  border-left: 1px solid var(--color-border);
+  padding-left: 10px;
+}
+[data-variant='swiss'] aside.fixed .grid-cols-3 small {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+[data-variant='swiss'] aside.fixed .grid-cols-3 b {
+  font-size: 16px;
+  font-weight: 500;
+}
+[data-variant='swiss'] aside.fixed h3 {
+  letter-spacing: 0.08em;
+  font-size: 10px;
+  margin-top: 18px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--color-border);
+}
+[data-variant='swiss'] aside.fixed span.rounded-full {
+  border-radius: 3px;
+}
+
+/* форма: сайдбар и шапка без «карточного» фона, карточки страниц без рамок */
+[data-variant='swiss'] aside.w-72 {
+  background: var(--color-background);
+  padding: 14px 10px;
+}
+[data-variant='swiss'] aside.w-72 h2 {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+  padding-left: 8px;
+}
+[data-variant='swiss'] aside.w-72 button.flex-col {
+  border-radius: 3px;
+}
+[data-variant='swiss'] aside.w-72 button.flex-col .text-sm {
+  font-weight: 500;
+}
+[data-variant='swiss'] header.bg-card {
+  background: var(--color-background);
+  padding: 10px 24px 12px;
+}
+[data-variant='swiss'] main .rounded-xl.border.bg-card {
+  border: 0;
+  border-radius: 0;
+  padding: 8px 0;
+}
+[data-variant='swiss'] main h1 {
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+[data-variant='swiss'] li > button.grid {
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  background: none;
+  padding: 7px 8px;
+}
+[data-variant='swiss'] li > button.grid span.rounded-full {
+  border-radius: 2px;
+  padding: 0 6px;
+  font-family: var(--proto-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+[data-variant='swiss'] .flex-col.gap-1\.5 > ul {
+  gap: 0;
+  border-top: 1px solid var(--color-border);
+}
+[data-variant='swiss'] div.border-b.bg-card.px-4 {
+  background: var(--color-background);
+}
+[data-variant='swiss'] .rounded-md.border.bg-secondary\/40,
+[data-variant='swiss'] .rounded-md.border.border-warn {
+  border-radius: 0;
+  border-width: 0 0 0 2px;
+  background: none;
+  padding-left: 12px;
+}
+[data-variant='swiss'] [role='dialog'].rounded-xl {
+  border-radius: 4px;
+}
+
+/* ============================================================================
+ * B · MONO — всё моноширинным, тёмная тема первична (светлая не прорисована), зелёный акцент «run»,
+ * нулевой радиус, заголовки секций с префиксом «# ». По палитре uupm «Developer Tool / IDE».
+ * ========================================================================== */
+:root[data-variant='mono'],
+:root.dark[data-variant='mono'] {
+  --radius: 0px;
+  color-scheme: dark;
+  --color-background: #0f172a;
+  --color-foreground: #e2e8f0;
+  --color-card: #121c33;
+  --color-card-foreground: #e2e8f0;
+  --color-popover: #16213a;
+  --color-popover-foreground: #e2e8f0;
+  --color-primary: #22c55e;
+  --color-primary-foreground: #0f172a;
+  --color-secondary: #1e293b;
+  --color-secondary-foreground: #e2e8f0;
+  --color-muted: #1a2438;
+  --color-muted-foreground: #94a3b8;
+  --color-accent: #1e293b;
+  --color-accent-foreground: #f8fafc;
+  --color-destructive: #f87171;
+  --color-border: #2c3a55;
+  --color-input: #3b4a66;
+  --color-ring: #22c55e;
+  --color-selected: #172a3e;
+  --color-ok: #22c55e;
+  --color-fail: #f87171;
+  --color-warn: #fbbf24;
+  --color-run: #38bdf8;
+  --color-idle: #475569;
+  --color-queued: #1e293b;
+  --color-thin: #334155;
+  --color-wait: #334155;
+  --color-crit: #f59e0b;
+  --color-crit-fg: #fcd34d;
+  --color-crit-soft: #7a520c;
+  --color-crit-bg: #1c1a12;
+  --color-over-b: #4a3a10;
+  --color-retry-b: #4a1f1f;
+  --color-retry-fg: #f87171;
+  --color-dep-up: #38bdf8;
+  --color-dep-down: #22c55e;
+  --color-pill-ok-bg: transparent;
+  --color-pill-ok-fg: #22c55e;
+  --color-pill-mid-bg: transparent;
+  --color-pill-mid-fg: #fbbf24;
+  --color-pill-bad-bg: transparent;
+  --color-pill-bad-fg: #f87171;
+  --color-pill-run-bg: transparent;
+  --color-pill-run-fg: #38bdf8;
+}
+html[data-variant='mono'] {
+  font-family: var(--proto-mono);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+[data-variant='mono'] body {
+  background-image: radial-gradient(rgb(148 163 184 / 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+[data-variant='mono'] h1,
+[data-variant='mono'] h2,
+[data-variant='mono'] h3 {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+[data-variant='mono'] * {
+  border-radius: 0 !important;
+}
+[data-variant='mono'] .shadow-sm,
+[data-variant='mono'] .shadow-md,
+[data-variant='mono'] .shadow-lg,
+[data-variant='mono'] aside.fixed {
+  box-shadow: none;
+}
+[data-variant='mono'] [data-radix-popper-content-wrapper] > div,
+[data-variant='mono'] [role='dialog'] {
+  border: 1px solid var(--color-border);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 0.4);
+}
+
+/* кнопки: капсом, зелёная — основная */
+[data-variant='mono'] button.bg-primary,
+[data-variant='mono'] button.border.bg-card:not(.grid),
+[data-variant='mono'] a.bg-primary {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  font-size: 11px;
+}
+[data-variant='mono'] button.border.bg-card:not(.grid) {
+  border-color: var(--color-input);
+  background: transparent;
+}
+[data-variant='mono'] input.h-9,
+[data-variant='mono'] button.h-9.border {
+  background: #0b1222;
+  border-color: var(--color-input);
+}
+[data-variant='mono'] input.h-9:focus-visible {
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* шапка отчёта: чипы в рамках, значения зелёным */
+[data-variant='mono'] header.relative {
+  border-bottom: 1px dashed var(--color-border);
+  padding-bottom: 8px;
+}
+[data-variant='mono'] header.relative h1::before {
+  content: '$ ';
+  color: var(--color-primary);
+}
+[data-variant='mono'] header span.rounded-full {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  padding: 1px 8px;
+  font-size: 11.5px;
+}
+[data-variant='mono'] header span.rounded-full b {
+  color: var(--color-primary);
+}
+[data-variant='mono'] header span.rounded-full.text-crit-fg b {
+  color: var(--color-crit-fg);
+}
+[data-variant='mono'] header span.rounded-full.text-retry-fg b {
+  color: var(--color-retry-fg);
+}
+
+/* хотспоты: рамка, заголовок «# » */
+[data-variant='mono'] .ring-crit-soft {
+  --tw-ring-color: var(--color-border);
+  background: var(--color-card);
+  margin-top: 10px;
+}
+[data-variant='mono'] .ring-crit-soft h2 {
+  background: transparent;
+  border-bottom: 1px dashed var(--color-border);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+}
+[data-variant='mono'] .ring-crit-soft h2::before,
+[data-variant='mono'] aside.fixed h3::before,
+[data-variant='mono'] aside.w-72 h2::before,
+[data-variant='mono'] main h2::before,
+[data-variant='mono'] legend::before,
+[data-variant='mono'] main label.text-sm::before {
+  content: '# ';
+  color: var(--color-primary);
+}
+[data-variant='mono'] .ring-crit-soft button:hover {
+  background: var(--color-selected);
+}
+
+/* стейджи: рамки, заголовки стейджей на тёмной плашке, полоски прямоугольные */
+[data-variant='mono'] .ring-border.ring-1 {
+  --tw-ring-color: var(--color-border);
+  background: var(--color-card);
+  margin-bottom: 12px;
+}
+[data-variant='mono'] [data-id].h-8 {
+  background: #0b1222;
+  border-bottom: 1px solid var(--color-border);
+}
+[data-variant='mono'] [data-id].h-8 .bg-card {
+  background: #0b1222;
+}
+[data-variant='mono'] [data-id].h-8 .text-\[13px\]::before {
+  content: '[';
+  color: var(--color-muted-foreground);
+}
+[data-variant='mono'] [data-id].h-8 .text-\[13px\]::after {
+  content: ']';
+  color: var(--color-muted-foreground);
+}
+[data-variant='mono'] [data-id][data-selected] {
+  outline: 1px solid var(--color-primary);
+  outline-offset: -1px;
+}
+[data-variant='mono'] [data-id]:hover:not([data-selected]) {
+  background: var(--color-selected);
+}
+[data-variant='mono'] [data-id] .bg-ok,
+[data-variant='mono'] [data-id] .bg-run,
+[data-variant='mono'] [data-id] .bg-crit,
+[data-variant='mono'] [data-id] .bg-fail,
+[data-variant='mono'] [data-id] .bg-idle {
+  background-image: repeating-linear-gradient(90deg, transparent 0 5px, rgb(0 0 0 / 0.25) 5px 6px);
+}
+[data-variant='mono'] .sticky.top-0 {
+  background: var(--color-background);
+  border-bottom: 1px dashed var(--color-border);
+}
+
+/* метки стабильности: [ok] / [3/5] */
+[data-variant='mono'] .bg-pill-ok-bg,
+[data-variant='mono'] .bg-pill-mid-bg,
+[data-variant='mono'] .bg-pill-bad-bg,
+[data-variant='mono'] .bg-pill-run-bg {
+  border: 1px solid currentColor;
+  padding: 0 5px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* панель: как tmux-пейн */
+[data-variant='mono'] aside.fixed {
+  border-left: 1px solid var(--color-border);
+  background: var(--color-card);
+}
+[data-variant='mono'] aside.fixed h2 {
+  color: var(--color-primary);
+}
+[data-variant='mono'] aside.fixed h2::before {
+  content: '> ';
+  color: var(--color-muted-foreground);
+}
+[data-variant='mono'] aside.fixed p.bg-secondary {
+  background: transparent;
+  border: 1px dashed var(--color-border);
+}
+[data-variant='mono'] aside.fixed .grid-cols-3 > div {
+  background: transparent;
+  border: 1px solid var(--color-border);
+}
+[data-variant='mono'] aside.fixed .grid-cols-3 b {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+[data-variant='mono'] aside.fixed h3 {
+  color: var(--color-foreground);
+  letter-spacing: 0.08em;
+}
+[data-variant='mono'] aside.fixed .text-primary {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* форма */
+[data-variant='mono'] aside.w-72 {
+  background: #0b1222;
+  border-right: 1px solid var(--color-border);
+}
+[data-variant='mono'] aside.w-72 h2,
+[data-variant='mono'] main h2,
+[data-variant='mono'] legend {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+}
+[data-variant='mono'] aside.w-72 button.flex-col[aria-current] {
+  box-shadow: inset 2px 0 var(--color-primary);
+}
+[data-variant='mono'] header.bg-card {
+  background: #0b1222;
+  border-bottom: 1px solid var(--color-border);
+}
+[data-variant='mono'] main .rounded-xl.border.bg-card {
+  background: var(--color-card);
+  border-color: var(--color-border);
+}
+[data-variant='mono'] main h1 {
+  color: var(--color-primary);
+}
+[data-variant='mono'] main h1::before {
+  content: '~/';
+  color: var(--color-muted-foreground);
+}
+[data-variant='mono'] li > button.grid {
+  border-color: transparent;
+  border-bottom-color: var(--color-border);
+  background: transparent;
+  padding: 6px 8px;
+}
+[data-variant='mono'] li > button.grid:hover {
+  background: var(--color-selected);
+}
+[data-variant='mono'] li > button.grid span.rounded-full {
+  border: 1px solid currentColor;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  padding: 0 5px;
+}
+[data-variant='mono'] div.border-b.bg-card.px-4 {
+  background: #0b1222;
+}
+[data-variant='mono'] .rounded-md.border.bg-secondary\/40,
+[data-variant='mono'] .rounded-md.border.border-warn {
+  background: transparent;
+  border-style: dashed;
+}
+
+/* ============================================================================
+ * C · NATIVE — как системное окно macOS/Windows: сайдбар-source list, тулбар, push-кнопки с градиентом,
+ * inset-grouped карточки 10px, инспектор справа на сером, системный синий как accent.
+ * ========================================================================== */
+:root[data-variant='native'] {
+  --radius: 0.5rem;
+  --color-background: #ffffff;
+  --color-foreground: #1d1d1f;
+  --color-card: #ffffff;
+  --color-card-foreground: #1d1d1f;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1d1d1f;
+  --color-primary: #0a7cff;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f2f2f7;
+  --color-secondary-foreground: #1d1d1f;
+  --color-muted: #f5f5f7;
+  --color-muted-foreground: #6e6e73;
+  --color-accent: #eeeef2;
+  --color-accent-foreground: #1d1d1f;
+  --color-destructive: #d0281f;
+  --color-border: #d8d8dc;
+  --color-input: #c9c9cf;
+  --color-ring: #0a7cff;
+  --color-selected: #dbe8ff;
+  --color-ok: #34c759;
+  --color-fail: #ff3b30;
+  --color-warn: #ffcc00;
+  --color-run: #0a7cff;
+  --color-idle: #c7c7cc;
+  --color-queued: #e5e5ea;
+  --color-thin: #d1d1d6;
+  --color-wait: #e5e5ea;
+  --color-crit: #ff9500;
+  --color-crit-fg: #b35f00;
+  --color-crit-soft: #ffd9a8;
+  --color-crit-bg: #fff7eb;
+  --color-over-b: #ffe2bf;
+  --color-retry-b: #ffd0cd;
+  --color-retry-fg: #d0281f;
+  --color-dep-up: #0a7cff;
+  --color-dep-down: #1f8a3b;
+  --color-pill-ok-bg: #e3f7e8;
+  --color-pill-ok-fg: #1f8a3b;
+  --color-pill-mid-bg: #fff5cc;
+  --color-pill-mid-fg: #8a6400;
+  --color-pill-bad-bg: #ffe3e1;
+  --color-pill-bad-fg: #d0281f;
+  --color-pill-run-bg: #e1eeff;
+  --color-pill-run-fg: #0a5fd0;
+  --proto-chrome: #f5f5f7;
+  --proto-sidebar: #ececf0;
+}
+:root.dark[data-variant='native'] {
+  --color-background: #1e1e1e;
+  --color-foreground: #f5f5f7;
+  --color-card: #262626;
+  --color-card-foreground: #f5f5f7;
+  --color-popover: #2c2c2e;
+  --color-popover-foreground: #f5f5f7;
+  --color-primary: #0a84ff;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #2c2c2e;
+  --color-secondary-foreground: #f5f5f7;
+  --color-muted: #2a2a2a;
+  --color-muted-foreground: #a1a1a6;
+  --color-accent: #333336;
+  --color-accent-foreground: #f5f5f7;
+  --color-destructive: #ff6961;
+  --color-border: #3a3a3c;
+  --color-input: #48484a;
+  --color-ring: #0a84ff;
+  --color-selected: #1f3a5f;
+  --color-ok: #30d158;
+  --color-fail: #ff453a;
+  --color-warn: #ffd60a;
+  --color-run: #0a84ff;
+  --color-idle: #48484a;
+  --color-queued: #3a3a3c;
+  --color-thin: #48484a;
+  --color-wait: #3a3a3c;
+  --color-crit: #ff9f0a;
+  --color-crit-fg: #ffb84d;
+  --color-crit-soft: #5a3d10;
+  --color-crit-bg: #2a2416;
+  --color-over-b: #4a3a1c;
+  --color-retry-b: #4a2422;
+  --color-retry-fg: #ff6961;
+  --color-dep-up: #64d2ff;
+  --color-dep-down: #30d158;
+  --color-pill-ok-bg: #1d3a27;
+  --color-pill-ok-fg: #4ade80;
+  --color-pill-mid-bg: #3b3414;
+  --color-pill-mid-fg: #ffd60a;
+  --color-pill-bad-bg: #3f1f1d;
+  --color-pill-bad-fg: #ff6961;
+  --color-pill-run-bg: #1c2d4a;
+  --color-pill-run-fg: #64d2ff;
+  --proto-chrome: #2b2b2d;
+  --proto-sidebar: #242426;
+}
+html[data-variant='native'] {
+  font-family: var(--proto-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+[data-variant='native'] .shadow-sm {
+  box-shadow: none;
+}
+
+/* push-кнопки и поля как в macOS */
+[data-variant='native'] button.bg-primary,
+[data-variant='native'] a.bg-primary {
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: linear-gradient(#3a97ff, var(--color-primary));
+  box-shadow:
+    0 0.5px 1px rgb(0 0 0 / 0.25),
+    inset 0 0.5px 0 rgb(255 255 255 / 0.25);
+  font-weight: 500;
+}
+[data-variant='native'] button.border.bg-card:not(.grid),
+[data-variant='native'] button.h-9.border {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border-color: rgb(0 0 0 / 0.12);
+  background: linear-gradient(var(--color-card), var(--color-secondary));
+  box-shadow: 0 0.5px 1px rgb(0 0 0 / 0.15);
+}
+:root.dark[data-variant='native'] button.border.bg-card:not(.grid),
+:root.dark[data-variant='native'] button.h-9.border {
+  border-color: rgb(255 255 255 / 0.1);
+  background: linear-gradient(#5a5a5e, #4a4a4e);
+}
+[data-variant='native'] button.h-8,
+[data-variant='native'] button.h-9 {
+  height: 26px;
+}
+[data-variant='native'] input.h-9 {
+  height: 26px;
+  border-radius: 6px;
+  border-color: rgb(0 0 0 / 0.18);
+  box-shadow: inset 0 0.5px 1px rgb(0 0 0 / 0.08);
+  padding: 0 8px;
+}
+:root.dark[data-variant='native'] input.h-9 {
+  border-color: rgb(255 255 255 / 0.12);
+  background: #1a1a1a;
+}
+[data-variant='native'] input.h-9:focus-visible {
+  --tw-ring-shadow: 0 0 0 3px rgb(10 124 255 / 0.35);
+  border-color: var(--color-primary);
+}
+[data-variant='native'] input[type='checkbox'] {
+  width: 14px;
+  height: 14px;
+}
+[data-variant='native'] [role='group'] {
+  gap: 0;
+  padding: 1px;
+  border-radius: 6px;
+  background: var(--color-secondary);
+}
+[data-variant='native'] [role='group'] button {
+  height: 22px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+[data-variant='native'] [role='group'] button.bg-secondary {
+  background: var(--color-card);
+  box-shadow: 0 0.5px 2px rgb(0 0 0 / 0.2);
+  font-weight: 500;
+}
+
+/* форма: source-list сайдбар, тулбар, inset-grouped карточки */
+[data-variant='native'] aside.w-72 {
+  width: 15rem;
+  background: var(--proto-sidebar);
+  border-right: 1px solid var(--color-border);
+  padding: 12px 10px;
+}
+[data-variant='native'] aside.w-72 h2 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  padding-left: 8px;
+}
+[data-variant='native'] aside.w-72 button.flex-col {
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+[data-variant='native'] aside.w-72 button.flex-col .text-sm {
+  font-weight: 400;
+}
+[data-variant='native'] aside.w-72 button.flex-col[aria-current] {
+  background: var(--color-primary);
+  color: #fff;
+}
+[data-variant='native'] aside.w-72 button.flex-col[aria-current] .text-muted-foreground {
+  color: rgb(255 255 255 / 0.75);
+}
+[data-variant='native'] aside.w-72 button.flex-col .text-xs {
+  font-size: 11px;
+}
+[data-variant='native'] header.bg-card {
+  background: var(--proto-chrome);
+  padding: 8px 16px 10px;
+  align-items: center;
+}
+[data-variant='native'] header.bg-card label {
+  display: none;
+}
+[data-variant='native'] header.bg-card .mt-6 {
+  margin-top: 0;
+}
+[data-variant='native'] main > .max-w-4xl {
+  max-width: none;
+  padding: 16px 20px;
+  background: var(--proto-chrome);
+  min-height: 100%;
+}
+[data-variant='native'] main .rounded-xl.border.bg-card {
+  border-radius: 10px;
+  border-color: rgb(0 0 0 / 0.1);
+  padding: 16px 18px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+:root.dark[data-variant='native'] main .rounded-xl.border.bg-card {
+  border-color: rgb(255 255 255 / 0.08);
+}
+[data-variant='native'] main h1 {
+  font-size: 17px;
+}
+[data-variant='native'] main label.text-sm,
+[data-variant='native'] legend {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+[data-variant='native'] .flex-col.gap-1\.5 > ul {
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+[data-variant='native'] li > button.grid {
+  border: 0;
+  border-radius: 0;
+  padding: 5px 10px;
+  font-size: 12.5px;
+}
+[data-variant='native'] li:nth-child(even) > button.grid {
+  background: var(--color-muted);
+}
+[data-variant='native'] li > button.grid:hover {
+  background: var(--color-selected);
+}
+[data-variant='native'] li > button.grid span.rounded-full {
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 0 6px;
+}
+[data-variant='native'] div.border-b.bg-card.px-4 {
+  background: var(--proto-chrome);
+}
+[data-variant='native'] [role='dialog'].rounded-xl {
+  border-radius: 12px;
+  background: var(--proto-chrome);
+  box-shadow:
+    0 20px 60px rgb(0 0 0 / 0.3),
+    0 0 0 0.5px rgb(0 0 0 / 0.2);
+}
+
+/* отчёт: шапка-тулбар, чипы как теги Finder, стейджи — grouped boxes, инспектор справа */
+[data-variant='native'] header.relative {
+  padding-top: 8px;
+}
+[data-variant='native'] header.relative h1 {
+  font-size: 15px;
+  font-weight: 600;
+}
+[data-variant='native'] header span.rounded-full {
+  border: 0;
+  background: var(--color-secondary);
+  border-radius: 6px;
+  padding: 2px 9px;
+}
+[data-variant='native'] header span.rounded-full.text-crit-fg {
+  background: var(--color-crit-bg);
+}
+[data-variant='native'] header span.rounded-full.text-retry-fg {
+  background: var(--color-pill-bad-bg);
+}
+[data-variant='native'] .ring-crit-soft {
+  --tw-ring-color: rgb(0 0 0 / 0.1);
+  border-radius: 10px;
+  background: var(--color-card);
+}
+[data-variant='native'] .ring-crit-soft h2 {
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: 13px;
+  padding: 8px 12px 2px;
+}
+[data-variant='native'] .ring-crit-soft h2::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-crit);
+  margin-right: 8px;
+  vertical-align: 1px;
+}
+[data-variant='native'] .ring-crit-soft button {
+  padding: 3px 12px;
+}
+[data-variant='native'] .ring-border.ring-1 {
+  --tw-ring-color: rgb(0 0 0 / 0.1);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+:root.dark[data-variant='native'] .ring-border.ring-1,
+:root.dark[data-variant='native'] .ring-crit-soft {
+  --tw-ring-color: rgb(255 255 255 / 0.1);
+}
+[data-variant='native'] [data-id].h-8 {
+  background: var(--color-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+[data-variant='native'] [data-id].h-8 .bg-card {
+  background: var(--color-muted);
+}
+[data-variant='native'] [data-id].h-\[26px\]:nth-child(odd) {
+  background: color-mix(in srgb, var(--color-muted) 50%, transparent);
+}
+[data-variant='native'] [data-id][data-selected] {
+  background: var(--color-primary) !important; /* zebra-правило ниже специфичнее */
+  color: #fff;
+}
+[data-variant='native'] [data-id][data-selected] .text-muted-foreground,
+[data-variant='native'] [data-id][data-selected] .text-crit-fg,
+[data-variant='native'] [data-id][data-selected] .text-retry-fg {
+  color: rgb(255 255 255 / 0.85);
+}
+[data-variant='native'] [data-id][data-selected] .bg-selected {
+  background: var(--color-primary);
+}
+[data-variant='native'] [data-id][data-selected] .bg-pill-ok-bg,
+[data-variant='native'] [data-id][data-selected] .bg-pill-mid-bg,
+[data-variant='native'] [data-id][data-selected] .bg-pill-bad-bg {
+  background: rgb(255 255 255 / 0.2);
+  color: #fff;
+}
+[data-variant='native'] [data-id] .h-2\.5 {
+  height: 12px;
+  top: calc(50% - 6px);
+  border-radius: 3px;
+}
+[data-variant='native'] .sticky.top-0 {
+  background: var(--color-background);
+}
+[data-variant='native'] .bg-pill-ok-bg,
+[data-variant='native'] .bg-pill-mid-bg,
+[data-variant='native'] .bg-pill-bad-bg,
+[data-variant='native'] .bg-pill-run-bg {
+  border-radius: 4px;
+  font-weight: 500;
+}
+[data-variant='native'] aside.fixed {
+  background: var(--proto-chrome);
+  border-left: 1px solid var(--color-border);
+  box-shadow: none;
+}
+[data-variant='native'] aside.fixed h2 {
+  font-size: 15px;
+}
+[data-variant='native'] aside.fixed p.bg-secondary {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+[data-variant='native'] aside.fixed .grid-cols-3 > div {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+[data-variant='native'] aside.fixed .grid-cols-3 small {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11px;
+}
+[data-variant='native'] aside.fixed h3 {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
+[data-variant='native'] aside.fixed .text-primary {
+  color: var(--color-primary);
+}

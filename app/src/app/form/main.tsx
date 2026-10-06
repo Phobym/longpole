@@ -18,6 +18,11 @@ const queryClient = new QueryClient({
 const browserLocale = (): Locale => (navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en')
 
 async function main() {
+  // ПРОТОТИП: в браузере без Tauri — мок моста и переключатель вариантов дизайна
+  if (import.meta.env.DEV) {
+    await import('../prototype/mock')
+    void import('../prototype/switcher').then((m) => m.mountSwitcher())
+  }
   const root = document.getElementById('root')
   if (!root) throw new Error('нет #root в index.html')
   const settings = await getSettings()

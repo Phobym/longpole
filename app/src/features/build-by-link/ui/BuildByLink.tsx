@@ -15,6 +15,8 @@ export function BuildByLink({ tokenBlock }: { tokenBlock?: (host: string, retry:
   const focusRequested = useFocusRequested()
   const { start, busy, progressLabel, error } = useBuild()
   const failure = fieldError(error, 'url') ?? messageError(error)
+  const needsToken = failure?.code === 'noToken' && tokenBlock ? failure.params.host : null
+  const showError = failure !== undefined && !needsToken
 
   useEffect(() => {
     if (!focusRequested) return
@@ -23,38 +25,41 @@ export function BuildByLink({ tokenBlock }: { tokenBlock?: (host: string, retry:
   }, [focusRequested])
 
   return (
-    <form
-      noValidate // ошибку ссылки показывает ядро, а не подсказка браузера
-      className="flex flex-col gap-1.5"
-      onSubmit={(e) => {
-        e.preventDefault()
-        start(linkForm(url))
-      }}
-    >
-      <label htmlFor={id} className="text-sm font-medium">
-        {t('form.link.label')}
-      </label>
-      <div className="flex gap-2">
-        <Input
-          ref={input}
-          id={id}
-          aria-invalid={failure !== undefined}
-          aria-describedby={failure ? `${id}-error` : undefined}
-          type="url"
-          placeholder={t('form.link.placeholder')}
-          value={url}
-          onChange={(e) => setLinkUrl(e.target.value)}
-        />
-        <Button type="submit" disabled={busy} className="shrink-0">
-          {busy ? progressLabel : t('form.link.build')}
-        </Button>
-      </div>
-      {failure && !(failure.code === 'noToken' && tokenBlock) && (
-        <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
-          {errorText(failure)}
-        </p>
-      )}
-      {failure?.code === 'noToken' && tokenBlock?.(failure.params.host, () => start(linkForm(url)))}
-    </form>
+    <div className="flex flex-col gap-1.5">
+      <form
+        noValidate // ошибку ссылки показывает ядро, а не подсказка браузера
+        className="flex flex-col gap-1.5"
+        onSubmit={(e) => {
+          e.preventDefault()
+          start(linkForm(url))
+        }}
+      >
+        <label htmlFor={id} className="text-sm font-medium">
+          {t('form.link.label')}
+        </label>
+        <div className="flex gap-2">
+          <Input
+            ref={input}
+            id={id}
+            aria-invalid={failure !== undefined}
+            aria-describedby={showError ? `${id}-error` : undefined}
+            type="url"
+            placeholder={t('form.link.placeholder')}
+            value={url}
+            onChange={(e) => setLinkUrl(e.target.value)}
+          />
+          <Button type="submit" disabled={busy} className="shrink-0">
+            {busy ? progressLabel : t('form.link.build')}
+          </Button>
+        </div>
+        {showError && (
+          <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
+            {errorText(failure)}
+          </p>
+        )}
+      </form>
+      {/* у блока токена своя форма — соседом, не внутри: вложенный submit всплыл бы и повторно запустил сборку */}
+      {needsToken && tokenBlock?.(needsToken, () => start(linkForm(url)))}
+    </div>
   )
 }

@@ -11,6 +11,7 @@ export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => voi
   const errorText = useErrorText()
   const id = useId()
   const [token, setToken] = useState('')
+  const [saving, setSaving] = useState(false)
   const { save, error } = useSaveToken()
   const failure = messageError(error)
   // страница токенов GitLab с готовым именем и scope; `https` уходит в системный браузер через on_navigation
@@ -20,13 +21,15 @@ export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => voi
       className="flex flex-col gap-2 rounded-md border border-warn bg-secondary/40 p-3"
       onSubmit={async (e) => {
         e.preventDefault()
-        if (await save(host, token)) onSaved()
+        setSaving(true)
+        const saved = await save(host, token).finally(() => setSaving(false))
+        if (saved) onSaved()
       }}
     >
       <p className="text-sm font-medium">{t('form.token.need', { host })}</p>
       <p className="text-xs text-muted-foreground">
         {t('form.token.scope')}{' '}
-        <a href={createUrl} target="_blank" rel="noopener" className="text-primary hover:underline">
+        <a href={createUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
           {t('form.token.create', { host })}
         </a>
       </p>
@@ -40,7 +43,7 @@ export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => voi
           {errorText(failure)}
         </p>
       )}
-      <Button type="submit" className="self-start">
+      <Button type="submit" className="self-start" disabled={saving}>
         {t('form.host.saveToken')}
       </Button>
     </form>

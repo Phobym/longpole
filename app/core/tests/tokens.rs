@@ -9,7 +9,9 @@ use keyring_core::mock::{Cred, Store};
 use keyring_core::{CredentialStore, Entry, Error as KeyringError};
 use pipeline_trace_core::error::{Error, ErrorCode};
 use pipeline_trace_core::hosts::normalize_host;
-use pipeline_trace_core::tokens::{Glab, SERVICE, TokenStore, find_token};
+use pipeline_trace_core::tokens::{
+    Glab, HostInfo, SERVICE, TokenSource, TokenStore, find_token, list_hosts,
+};
 use tempfile::TempDir;
 
 struct Fixture {
@@ -336,6 +338,46 @@ fn ошибка_хранилища_не_маскируется_отсутств�
     f.fail_next("h", KeyringError::TooLong("user".into(), 1));
     let err = find(&f, &Env::new(), glab_of(None, Some("from-glab"))).unwrap_err();
     assert_eq!(err.code, ErrorCode::Storage);
+}
+
+#[test]
+fn list_hosts_связка_потом_glab_потом_env_без_дублей() {
+    let f = fixture();
+    f.tokens.set("b.example", "t").unwrap();
+    f.tokens.set("a.example", "t").unwrap();
+    let env = |name: &str| match name {
+        "GITLAB_TOKEN" => Some("env-token".to_string()),
+        "GITLAB_HOST" => Some("https://env.example/".to_string()),
+        _ => None,
+    };
+    let glab = |args: &[&str]| match args {
+        ["config", "get", "host"] => Some("glab.example".to_string()),
+        ["config", "get", "token", "--host", "glab.example"] => Some("glab-token".to_string()),
+        _ => None,
+    };
+    let info = |host: &str, source: TokenSource| HostInfo {
+        host: host.into(),
+        source,
+    };
+    assert_eq!(
+        list_hosts(&f.tokens, &env, &glab).unwrap(),
+        vec![
+            info("a.example", TokenSource::Keychain),
+            info("b.example", TokenSource::Keychain),
+            info("glab.example", TokenSource::Glab),
+            info("env.example", TokenSource::Env),
+        ]
+    );
+
+    // хост glab уже в связке — не дублируется; без GITLAB_TOKEN env-хоста нет
+    f.tokens.set("glab.example", "t").unwrap();
+    let no_env = |_: &str| None;
+    let hosts: Vec<String> = list_hosts(&f.tokens, &no_env, &glab)
+        .unwrap()
+        .into_iter()
+        .map(|h| h.host)
+        .collect();
+    assert_eq!(hosts, ["a.example", "b.example", "glab.example"]);
 }
 
 // --- glab ---

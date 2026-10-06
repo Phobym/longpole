@@ -96,16 +96,6 @@ impl Settings {
         self.get()
     }
 
-    /// Тонкая обёртка для Tauri-команды `set_locale`.
-    // ponytail: убрать в задаче 6, когда оболочка перейдёт на `update`.
-    pub fn set_locale(&self, locale: Locale) -> Result<(), Error> {
-        self.update(SettingsPatch {
-            locale: Some(locale),
-            ..Default::default()
-        })
-        .map(|_| ())
-    }
-
     /// Проект убран из списка: он больше не «последний».
     pub fn forget_project(&self, project: &ProjectRef) -> Result<(), Error> {
         let _guard = json_file::lock(&self.lock);

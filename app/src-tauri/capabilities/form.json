@@ -17,9 +17,13 @@
     "allow-report",
     "allow-find-report",
     "allow-set-current-report",
-    "allow-get-locale",
-    "allow-set-locale",
+    "allow-add-project",
+    "allow-remove-project",
+    "allow-saved-projects",
+    "allow-get-settings",
+    "allow-set-settings",
     "dialog:allow-ask",
-    "dialog:allow-message"
+    "dialog:allow-message",
+    "dialog:allow-open"
   ]
 }

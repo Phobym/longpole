@@ -16,8 +16,11 @@ const COMMANDS: &[&str] = &[
     "report",
     "find_report",
     "set_current_report",
-    "get_locale",
-    "set_locale",
+    "add_project",
+    "remove_project",
+    "saved_projects",
+    "get_settings",
+    "set_settings",
 ];
 
 /// Собранный шаблон отчёта (`npm run build`): `include_str!` в `reports.rs` читает его.

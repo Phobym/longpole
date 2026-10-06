@@ -34,8 +34,11 @@ fn main() {
             commands::report,
             commands::find_report,
             commands::set_current_report,
-            commands::get_locale,
-            commands::set_locale,
+            commands::add_project,
+            commands::remove_project,
+            commands::saved_projects,
+            commands::get_settings,
+            commands::set_settings,
         ])
         .setup(|app| {
             app.manage(AppState::new(&app.path().app_data_dir()?));
@@ -116,7 +119,7 @@ mod tests {
             .filter_map(|permission| permission.strip_prefix("allow-"))
             .map(|name| name.replace('-', "_"))
             .collect();
-        assert_eq!(in_build.len(), 15);
+        assert_eq!(in_build.len(), 18);
         assert_eq!(in_build, in_handler);
         assert_eq!(in_build, in_capability);
     }

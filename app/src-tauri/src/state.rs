@@ -31,7 +31,6 @@ pub struct AppState {
     pub tokens: TokenStore,
     pub history: History,
     pub settings: Settings,
-    #[expect(dead_code, reason = "команды проектов приходят в задаче 6")]
     pub projects: Projects,
     /// от старого к новому; id растут
     reports: Mutex<VecDeque<(u32, ReportEntry)>>,

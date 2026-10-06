@@ -2,17 +2,19 @@
 //! Все `async`: синхронная команда Tauri исполняется на главном потоке, а тут файлы и связка ключей.
 
 use pipeline_trace_core::browse::{
-    Page, Pipeline, Project, list_branches, list_projects, recent_pipelines,
+    Page, Pipeline, Project, fetch_project, list_branches, list_projects, recent_pipelines,
 };
 use pipeline_trace_core::error::{CmdError, Error, ErrorCode};
 use pipeline_trace_core::gitlab::Client;
 use pipeline_trace_core::history::{HistoryEntry, HistoryLabel, NewEntry};
 use pipeline_trace_core::hosts::normalize_host;
+use pipeline_trace_core::projects::SavedProject;
 use pipeline_trace_core::render::render;
 use pipeline_trace_core::report::{BuildEnv, Progress, build_report};
-use pipeline_trace_core::request::{Form, Request, parse_form};
-use pipeline_trace_core::schema::{Locale, Meta, Report};
-use pipeline_trace_core::tokens::{Glab, find_token};
+use pipeline_trace_core::request::{Form, ProjectRef, Request, parse_form, parse_project_input};
+use pipeline_trace_core::schema::{Meta, Report};
+use pipeline_trace_core::settings::{AppSettings, SettingsPatch};
+use pipeline_trace_core::tokens::{Glab, HostInfo, find_token, list_hosts};
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, State, Webview};
 use time::OffsetDateTime;
@@ -58,10 +60,21 @@ async fn client_for(app: &AppHandle, host: &str) -> Result<Client, Error> {
     .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))?
 }
 
+/// Хосты с источником токена; `glab` запускается — поэтому в пуле блокирующих задач.
 #[tauri::command]
-pub async fn hosts(webview: Webview, state: State<'_, AppState>) -> Cmd<Vec<String>> {
+pub async fn hosts(app: AppHandle, webview: Webview) -> Cmd<Vec<HostInfo>> {
     ensure_form(&webview)?;
-    Ok(state.tokens.hosts()?)
+    tauri::async_runtime::spawn_blocking(move || {
+        let glab = Glab::find();
+        list_hosts(
+            &app.state::<AppState>().tokens,
+            &|name| std::env::var(name).ok(),
+            &|args| glab.as_ref().and_then(|glab| glab.value(args)),
+        )
+    })
+    .await
+    .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))?
+    .map_err(Into::into)
 }
 
 #[tauri::command]
@@ -231,22 +244,70 @@ pub async fn set_current_report(
 }
 
 #[tauri::command]
-pub async fn get_locale(webview: Webview, state: State<'_, AppState>) -> Cmd<Locale> {
+pub async fn saved_projects(
+    webview: Webview,
+    state: State<'_, AppState>,
+) -> Cmd<Vec<SavedProject>> {
     ensure_form(&webview)?;
-    Ok(state.locale())
+    Ok(state.projects.list()?)
 }
 
-/// Сохраняет язык и пересобирает меню; открытые отчёты не меняются.
+/// Разбор ввода (может читать `.git/config`), проверка доступа через GraphQL, запись в `projects.json`.
 #[tauri::command]
-pub async fn set_locale(
+pub async fn add_project(
     app: AppHandle,
     webview: Webview,
     state: State<'_, AppState>,
-    locale: Locale,
-) -> Cmd<()> {
+    input: String,
+) -> Cmd<SavedProject> {
     ensure_form(&webview)?;
-    state.settings.set_locale(locale)?;
-    let rebuilt = menu::build(&app, locale).and_then(|menu| app.set_menu(menu).map(drop));
-    rebuilt.map_err(window_error)?;
-    Ok(())
+    let project = tauri::async_runtime::spawn_blocking(move || parse_project_input(&input))
+        .await
+        .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))??;
+    let gql = client_for(&app, &project.host).await?;
+    let found = fetch_project(&gql, &project.path).await?;
+    let list = state
+        .projects
+        .add(project.clone(), &found.name, OffsetDateTime::now_utc())?;
+    let saved = list
+        .into_iter()
+        .find(|p| p.host == project.host && p.path == project.path)
+        .ok_or_else(|| Error::new(ErrorCode::Storage).with("detail", "проект не записался"))?;
+    Ok(saved)
+}
+
+#[tauri::command]
+pub async fn remove_project(
+    webview: Webview,
+    state: State<'_, AppState>,
+    project: ProjectRef,
+) -> Cmd<Vec<SavedProject>> {
+    ensure_form(&webview)?;
+    state.settings.forget_project(&project)?;
+    Ok(state.projects.remove(&project)?)
+}
+
+#[tauri::command]
+pub async fn get_settings(webview: Webview, state: State<'_, AppState>) -> Cmd<AppSettings> {
+    ensure_form(&webview)?;
+    Ok(state.settings.get()?)
+}
+
+/// Частичное обновление; смена языка пересобирает меню.
+#[tauri::command]
+pub async fn set_settings(
+    app: AppHandle,
+    webview: Webview,
+    state: State<'_, AppState>,
+    patch: SettingsPatch,
+) -> Cmd<AppSettings> {
+    ensure_form(&webview)?;
+    let locale = patch.locale;
+    let settings = state.settings.update(patch)?;
+    if let Some(locale) = locale {
+        menu::build(&app, locale)
+            .and_then(|menu| app.set_menu(menu).map(drop))
+            .map_err(window_error)?;
+    }
+    Ok(settings)
 }

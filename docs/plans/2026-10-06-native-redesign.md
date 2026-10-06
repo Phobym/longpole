@@ -1183,3 +1183,18 @@ git add -A app/src
 git commit -m "style(web): правки по приёмке редизайна"
 ```
 Закрыть задачу в GitHub Issues комментарием со ссылкой на ветку `proto/redesign-variants` и этот план; снять worktree эталона: `git worktree remove ../redisign-proto`.
+
+---
+
+### Правки по финальному ревью ветки (после задачи 9)
+
+Одним коммитом `style(web): правки по финальному ревью редизайна`, спека обновлена соответственно:
+
+- `theme.css`, `@theme static`: `--text-xs: 11px; --text-sm: 12.5px; --text-base: 13px; --text-lg: 15px; --text-xl: 17px` — при корне 13px rem-шкала давала 9,75px у `text-xs`.
+- `button.tsx`: верх градиента `from-[#1570e6]` (белый текст ≥ 4,5:1 по всей высоте).
+- `SavedProjectItem.tsx`: подпись активного проекта `text-primary-foreground` без `/75`.
+- `StabilityPill.tsx`: на выделенной строке `group-data-[selected]:bg-black/15` вместо `bg-white/20`.
+- `NodeLane.tsx`: `THICK` получает `group-data-[selected]:ring-1 group-data-[selected]:ring-white/70`; `StageMeta` — `group-hover:bg-accent`.
+- `KeysHelp.tsx`: без `text-muted-foreground`.
+- `TopPipelines.tsx`: у «GitLab ↗» убран `text-muted-foreground` (остаётся `text-[11px]`).
+- `DepTag.tsx`: удалён мёртвый `group-data-[selected]:bg-primary` (тег не рисуется на выделенной строке).

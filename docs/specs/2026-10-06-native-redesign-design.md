@@ -53,13 +53,13 @@
 | pill-bad bg/fg | `#ffe3e1` / `#bf231a` | `#3f1f1d` / `#ff6961` | |
 | pill-run bg/fg | `#e1eeff` / `#0a5fd0` | `#1c2d4a` / `#64d2ff` | |
 
-`--radius: 0.5rem` (md = 6px — контролы; lg = 8px — KPI, список пайплайнов; xl = 12px — диалог). Карточки стейджей и формы — 10px, задаётся на месте. `theme-color` в `report.html` — `#ffffff` / `#1e1e1e`.
+`--radius: 8px` (в px, не rem: корень 13px; md = 6px — контролы; lg = 8px — KPI, список пайплайнов; xl = 12px — диалог). Карточки стейджей и формы — 10px, задаётся на месте. `theme-color` в `report.html` — `#ffffff` / `#1e1e1e`.
 
-Шрифт: системный стек `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", "Segoe UI", system-ui, Roboto, sans-serif`, `-webkit-font-smoothing: antialiased`, базовый размер 13px (`html`), отчёт 12,5px как сейчас, `tabular-nums` как сейчас.
+Шрифт: системный стек `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", "Segoe UI", system-ui, Roboto, sans-serif`, `-webkit-font-smoothing: antialiased`, базовый размер 13px (`html`), отчёт 12,5px как сейчас, `tabular-nums` как сейчас. Шкала Tailwind переопределена в px, иначе при корне 13px `text-xs` даёт 9,75px: `--text-xs: 11px`, `--text-sm: 12.5px`, `--text-base: 13px`, `--text-lg: 15px`, `--text-xl: 17px`.
 
 ## 3. Примитивы `shared/ui`
 
-- **Button**. Высота 26px (`sm` — 22px, `icon` — 26×26), радиус 6px, шрифт 13px/500. `default`: градиент `linear-gradient(#3a97ff, primary)`, тень `0 .5px 1px rgb(0 0 0/.25), inset 0 .5px 0 rgb(255 255 255/.25)`. `outline`: градиент `card → secondary`, рамка `rgb(0 0 0/.12)` (в тёмной `rgb(255 255 255/.1)`, градиент `#5a5a5e → #4a4a4e`), тень `0 .5px 1px rgb(0 0 0/.15)`. `ghost` и `secondary` — без градиента, как сейчас. `destructive` — на `destructive` без градиента.
+- **Button**. Высота 26px (`sm` — 22px, `icon` — 26×26), радиус 6px, шрифт 13px/500. `default`: градиент `linear-gradient(#1570e6, primary)` (верхняя точка не светлее: белый текст ≥ 4,5:1 по всей высоте), тень `0 .5px 1px rgb(0 0 0/.25), inset 0 .5px 0 rgb(255 255 255/.25)`. `outline`: градиент `card → secondary`, рамка `rgb(0 0 0/.12)` (в тёмной `rgb(255 255 255/.1)`, градиент `#5a5a5e → #4a4a4e`), тень `0 .5px 1px rgb(0 0 0/.15)`. `ghost` и `secondary` — без градиента, как сейчас. `destructive` — на `destructive` без градиента.
 - **Input** и `inputClasses` (Combobox). Высота 26px, радиус 6px, рамка `rgb(0 0 0/.18)` (тёмная: `rgb(255 255 255/.12)`, фон `#1a1a1a`), внутренняя тень `inset 0 .5px 1px rgb(0 0 0/.08)`, отступ 8px; фокус — рамка `primary` и общая утилита `focus-ring`.
 - **SelectTrigger**. Как `outline`-кнопка, 26px.
 - **Segmented** (новый, `shared/ui/segmented.tsx`). `role="group"` с подложкой `secondary`, радиус 6px, отступ 1px; пункт 22px, радиус 5px, 12px; активный — `card`, тень `0 .5px 2px rgb(0 0 0/.2)`, 500. Заменяет пары ghost/secondary кнопок в ThemeSwitch и обоих LanguageSwitch.
@@ -72,8 +72,8 @@
 
 ## 4. Форма
 
-- **Сайдбар** (`widgets/projects-sidebar`): ширина 15rem, фон `sidebar`, правая hairline, отступ 12×10px. Заголовки секций 11px/600 `muted-foreground`, без капса. Пункты (`SavedProjectItem`, `HistoryEntryItem`): радиус 6px, отступ 4×8px, имя 400; активный проект — фон `primary`, текст белый, подпись `rgb(255 255 255/.75)`; hover — `accent`.
-- **Шапка** (`widgets/app-header`, `features/build-by-link`): фон `chrome`, нижняя hairline, отступ 8×16px, элементы по центру. Видимый label поля убирается, текст «Вставь ссылку на пайплайн или MR» остаётся плейсхолдером и `aria-label`. Шестерёнка без `mt-6`.
+- **Сайдбар** (`widgets/projects-sidebar`): ширина 15rem, фон `sidebar`, правая hairline, отступ 12×10px. Заголовки секций 11px/600 `muted-foreground`, без капса. Пункты (`SavedProjectItem`, `HistoryEntryItem`): радиус 6px, отступ 4×8px, имя 400; активный проект — фон `primary`, текст и подпись белые (полупрозрачный белый на `primary` не проходит 4,5:1); hover — `accent`.
+- **Шапка** (`widgets/app-header`, `features/build-by-link`): фон `chrome`, нижняя hairline, отступ 8×16px, элементы по верху (под полем могут появиться ошибка и блок токена). Видимый label поля убирается, текст «Вставь ссылку на пайплайн или MR» остаётся плейсхолдером и `aria-label`. Шестерёнка без `mt-6`.
 - **Контент** (`app/form/router.tsx` Layout): область под шапкой на `chrome`, без `max-w-4xl`, отступ 16×20px; страницы — одна Card.
 - **Экран проекта**: h1 17px/600; подписи полей («Ветка», «Статусы», «Сколько пайплайнов») — 11px капсом `muted-foreground`, трекинг .02em (общий класс `labelClasses` в `shared/ui/input.tsx`).
 - **Список пайплайнов** (`PagedList`, `PipelineRow`): `ul` без промежутков, рамка `border`, радиус 8px, `overflow: hidden`; строки без собственных рамок и радиуса, отступ 5×10px, 12,5px, чётные — `muted`, hover — `selected`, колонки `4rem 5.5rem 1fr 9rem 8.5rem 4.5rem` (чтобы «52 минуты назад» не переносилось).
@@ -83,12 +83,12 @@
 
 ## 5. Отчёт
 
-- **Шапка** (`widgets/report-header`): h1 15px/600; чипы — `Badge chip` по § 3 (теги, без рамок); RU/EN — `Segmented`; `?` — `outline` 22px.
+- **Шапка** (`widgets/report-header`): h1 15px/600; чипы — `Badge chip` по § 3 (теги, без рамок); RU/EN — `Segmented`; `?` — `outline` 22px, цвет текста наследуется (не `muted-foreground`: на тёмном градиенте не проходит 4,5:1).
 - **«Куда направить силы»** (`widgets/hotspots`): Card 10px с рамкой `rgb(0 0 0/.1)`, без оранжевого фона заголовка; заголовок 13px `foreground` с оранжевой точкой 8px слева; пункты — отступ 3×12px.
 - **Карточки стейджей** (`StageCard`): радиус 10px, рамка `rgb(0 0 0/.1)` (тёмная `.08` белого), тень `0 1px 2px rgb(0 0 0/.04)`, отступ снизу 10px.
-- **Строки** (`Row`): строка стейджа — фон `muted`, нижняя hairline; строки джоб — нечётные на `muted/50` (zebra); hover — `accent`; выделенная — фон `primary`, текст белый, подписи `rgb(255 255 255/.85)`, `StageMeta`/`DepTag` подложка `primary`, метки стабильности `rgb(255 255 255/.2)` с белым текстом; фокус — как сейчас.
+- **Строки** (`Row`): строка стейджа — фон `muted`, нижняя hairline; строки джоб — нечётные на `muted/50` (zebra); hover — `accent`; выделенная — фон `primary`, весь текст белый, `StageMeta` подложка `primary` (на hover строки стейджа — `accent`), метки стабильности на `rgb(0 0 0/.15)` с белым текстом; толстые полоски на выделенной строке — с белой обводкой 1px (`run` совпадает с `primary`); фокус — как сейчас.
 - **Полоски** (`NodeLane`): толстая 12px, радиус 3px; остальное без изменений.
-- **Панель деталей** (`DetailPanel`): фон `chrome`, левая hairline, без тени. `Verdict` и KPI — плитки `card` с рамкой `border`, радиус 8px; подписи KPI 11px без капса; заголовки секций (`Section`) 11px/600 `muted-foreground` без капса, трекинг .02em; ссылки — `link`.
+- **Панель деталей** (`DetailPanel`): фон `chrome`, левая hairline, без тени. `Verdict` и KPI — плитки `card` с рамкой `border`, радиус 8px; подписи KPI 11px без капса; заголовки секций (`Section`) 11px/600 `muted-foreground` без капса, трекинг .02em; все ссылки — `link`, включая «GitLab ↗» в «Самых долгих» (размер 11px остаётся).
 - **Ось** (`Waterfall` sticky): фон `background`.
 
 ## 6. Реализация и чистка
@@ -102,6 +102,6 @@
 
 - `npm run typecheck`, `npm run lint:fsd`, `npm run build` зелёные; в `dist-report/report.html` нет `data-variant` и мока.
 - Скриншоты в браузере (`npm run dev`, мок) четырёх экранов — проект, настройки, диалог, отчёт с открытой панелью — в светлой и тёмной теме совпадают с прототипом `?variant=native` по раскладке и цветам.
-- Контраст: `muted-foreground` на `background`, `chrome`, `sidebar` и `selected`; белый на `primary`; `link` на `background`, `card` и `chrome`; `pill-*-fg` на `pill-*-bg`; `crit-fg` на `crit-bg`; `retry-fg` на `pill-bad-bg`; `dep-down` на `card` — ≥ 4,5:1 в обеих темах (проверка любым калькулятором WCAG).
+- Контраст: `muted-foreground` на `background`, `chrome`, `sidebar` и `selected`; белый на `primary` и на верхней точке градиента кнопки; `link` на `background`, `card` и `chrome`; `pill-*-fg` на `pill-*-bg`; `crit-fg` на `crit-bg`; `retry-fg` на `pill-bad-bg`; `dep-down` на `card`; текст `outline`-кнопок на их градиенте в тёмной теме — ≥ 4,5:1 в обеих темах (проверка любым калькулятором WCAG). Полупрозрачный текст и полупрозрачные подложки под текстом не используются.
 - Клавиатура: Tab-обход, фокус виден на кнопках, полях, строках отчёта и пунктах сайдбара; Esc, ↑/↓, ←/→, `[`/`]`, `0`, `Cmd+S`, `Cmd+,`, `Cmd+Shift+N` работают как до редизайна.
 - Сохранённый HTML-отчёт открывается с `file://` в браузере с тем же видом (CSP на хешах не нарушен).

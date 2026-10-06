@@ -21,9 +21,9 @@ function Layout() {
   )
 }
 
-export function ReportPage({ report }: { report: Report }) {
+export function ReportPage({ report, embedded }: { report: Report; embedded?: boolean }) {
   return (
-    <ReportViewProvider report={report}>
+    <ReportViewProvider report={report} embedded={embedded}>
       <Layout />
     </ReportViewProvider>
   )

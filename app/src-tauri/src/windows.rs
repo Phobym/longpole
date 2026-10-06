@@ -1,4 +1,4 @@
-//! Окна: форма и отчёты, запрет навигации и новых окон.
+//! Окно формы: запрет навигации и новых окон.
 
 use tauri::webview::NewWindowResponse;
 use tauri::{
@@ -6,10 +6,7 @@ use tauri::{
 };
 use tauri_plugin_opener::OpenerExt;
 
-use crate::state::AppState;
-
 pub const FORM: &str = "form";
-const REPORT_SCHEME: &str = "report";
 const APP_SCHEME: &str = "tauri";
 
 /// Origin своей схемы: `<схема>://localhost` (macOS, Linux) или `http://<схема>.localhost` (Windows), без порта.
@@ -24,16 +21,6 @@ fn is_origin(url: &Url, scheme: &str) -> bool {
             .is_some_and(|host| host.strip_suffix(".localhost") == Some(scheme)),
         _ => false,
     }
-}
-
-/// Адрес окна отчёта: ядро по нему зовёт обработчик `report://` с label окна.
-fn report_url() -> Url {
-    let url = if cfg!(windows) {
-        "http://report.localhost/"
-    } else {
-        "report://localhost/"
-    };
-    url.parse().expect("верный адрес")
 }
 
 /// `https` — в системный браузер; остальное (в том числе `file://`) не открываем.
@@ -76,7 +63,6 @@ fn open(
             NewWindowResponse::Deny
         })
         .build()?;
-    app.state::<AppState>().focus(spec.label);
     Ok(window)
 }
 
@@ -104,10 +90,9 @@ pub fn create_form(app: &AppHandle) -> tauri::Result<()> {
     window.set_min_size(Some(LogicalSize::new(900.0, 640.0)))
 }
 
-/// Окно, которому адресованы ⌘S и пункты меню: получившее фокус последним, если оно ещё есть.
-pub fn focused(app: &AppHandle) -> Option<WebviewWindow> {
-    let label = app.state::<AppState>().focused_label()?;
-    app.get_webview_window(&label)
+/// Окно формы — единственное окно; ему адресованы ⌘S и пункты «Вид».
+pub fn form(app: &AppHandle) -> Option<WebviewWindow> {
+    app.get_webview_window(FORM)
 }
 
 /// «Новый отчёт»: фокус на форму или создать заново.
@@ -117,17 +102,6 @@ pub fn show_form(app: &AppHandle) -> tauri::Result<()> {
     };
     form.unminimize()?;
     form.set_focus()
-}
-
-/// Окно отчёта; `title` фиксируется при создании.
-pub fn create_report(app: &AppHandle, label: &str, title: &str) -> tauri::Result<()> {
-    let spec = Spec {
-        label,
-        url: WebviewUrl::CustomProtocol(report_url()),
-        title,
-        size: LogicalSize::new(1440.0, 900.0),
-    };
-    open(app, spec, |url| is_origin(url, REPORT_SCHEME)).map(drop)
 }
 
 #[cfg(test)]
@@ -142,23 +116,18 @@ mod tests {
     fn own_origin_on_every_platform() {
         assert!(own("tauri", "tauri://localhost/index.html"));
         assert!(own("tauri", "http://tauri.localhost/"));
-        assert!(own("report", "report://localhost/"));
-        assert!(own("report", "http://report.localhost/"));
-        assert!(own("report", "http://report.localhost/#x"));
     }
 
     #[test]
     fn foreign_origin_is_refused() {
-        assert!(!own("report", "https://gitlab.example.com/"));
-        assert!(!own("report", "tauri://localhost/"));
-        assert!(!own("tauri", "report://localhost/"));
-        assert!(!own("report", "file:///etc/passwd"));
+        assert!(!own("tauri", "https://gitlab.example.com/"));
+        assert!(!own("tauri", "file:///etc/passwd"));
         // поддомен чужого хоста, похожий на свой
-        assert!(!own("report", "http://report.localhost.evil.com/"));
-        assert!(!own("report", "report://evil.com/"));
+        assert!(!own("tauri", "http://tauri.localhost.evil.com/"));
+        assert!(!own("tauri", "tauri://evil.com/"));
         // схемы и порты, которых в спеке нет
-        assert!(!own("report", "https://report.localhost/"));
-        assert!(!own("report", "http://report.localhost:8443/"));
-        assert!(!own("report", "report://localhost:8443/"));
+        assert!(!own("tauri", "https://tauri.localhost/"));
+        assert!(!own("tauri", "http://tauri.localhost:8443/"));
+        assert!(!own("tauri", "tauri://localhost:8443/"));
     }
 }

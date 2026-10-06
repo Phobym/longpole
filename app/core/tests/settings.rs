@@ -1,8 +1,9 @@
 //! `settings.json` с языком интерфейса и выбор языка по системной локали.
 
 use pipeline_trace_core::error::ErrorCode;
+use pipeline_trace_core::request::ProjectRef;
 use pipeline_trace_core::schema::Locale;
-use pipeline_trace_core::settings::Settings;
+use pipeline_trace_core::settings::{AppSettings, Settings, SettingsPatch, Theme};
 use tempfile::TempDir;
 
 fn settings() -> (TempDir, Settings) {
@@ -35,7 +36,12 @@ fn выбор_языка_сохраняется_и_переживает_пере
     } else {
         Locale::Ru
     };
-    settings.set_locale(other).unwrap();
+    settings
+        .update(SettingsPatch {
+            locale: Some(other),
+            ..Default::default()
+        })
+        .unwrap();
     assert_eq!(settings.locale().unwrap(), other);
 
     let again = Settings::new(dir.path().join("data").join("settings.json"));
@@ -50,4 +56,64 @@ fn битый_файл_настроек_это_ошибка_storage() {
     std::fs::create_dir_all(dir.path().join("data")).unwrap();
     std::fs::write(dir.path().join("data").join("settings.json"), "[").unwrap();
     assert_eq!(settings.locale().unwrap_err().code, ErrorCode::Storage);
+}
+
+#[test]
+fn без_файла_тема_системная_последнего_проекта_нет() {
+    let (_dir, settings) = settings();
+    let got = settings.get().unwrap();
+    assert_eq!(got.theme, Theme::System);
+    assert_eq!(got.last_project, None);
+    assert_eq!(got.locale, Locale::system());
+}
+
+#[test]
+fn патч_меняет_только_переданное_и_переживает_перезапуск() {
+    let (dir, settings) = settings();
+    settings
+        .update(SettingsPatch {
+            theme: Some(Theme::Dark),
+            ..Default::default()
+        })
+        .unwrap();
+    let project = ProjectRef {
+        host: "h.example".into(),
+        path: "g/p".into(),
+    };
+    let got = settings
+        .update(SettingsPatch {
+            last_project: Some(project.clone()),
+            ..Default::default()
+        })
+        .unwrap();
+    assert_eq!(got.theme, Theme::Dark);
+    assert_eq!(got.last_project, Some(project.clone()));
+
+    let again = Settings::new(dir.path().join("data").join("settings.json"));
+    assert_eq!(
+        again.get().unwrap(),
+        AppSettings {
+            locale: Locale::system(),
+            theme: Theme::Dark,
+            last_project: Some(project.clone()),
+        }
+    );
+    again.forget_project(&project).unwrap();
+    assert_eq!(again.get().unwrap().last_project, None);
+}
+
+#[test]
+fn старый_файл_только_с_locale_читается() {
+    let (dir, settings) = settings();
+    std::fs::create_dir_all(dir.path().join("data")).unwrap();
+    std::fs::write(
+        dir.path().join("data").join("settings.json"),
+        "{\"locale\":\"en\"}",
+    )
+    .unwrap();
+    let got = settings.get().unwrap();
+    assert_eq!(
+        (got.locale, got.theme, got.last_project),
+        (Locale::En, Theme::System, None)
+    );
 }

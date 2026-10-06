@@ -19,6 +19,19 @@ static LINK: LazyLock<Regex> = LazyLock::new(|| {
 /// Сегмент из одних точек (`..`) — не путь проекта; `regex` без lookahead, поэтому проверяем отдельно.
 static SEGMENT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[A-Za-z0-9_.-]+$").expect("верный шаблон"));
+/// `https://[user[:token]@]host/group/project[.git][/]`; хвост `/-/…` (страницы проекта) отрезает `parse_remote`.
+static REPO_HTTP: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^https?://(?:[^@/]+@)?([^/]+)/(.+?)(?:\.git)?/?$").expect("верный шаблон")
+});
+/// `ssh://[user@]host[:port]/group/project[.git]`; порт — ssh, в хост GitLab не входит.
+static REPO_SSH: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^ssh://(?:[^@/]+@)?([^/:]+)(?::[0-9]+)?/(.+?)(?:\.git)?/?$")
+        .expect("верный шаблон")
+});
+/// `[user@]host:group/project[.git]` — scp-форма git.
+static REPO_SCP: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^(?:[^@/:]+@)?([A-Za-z0-9.-]+):([^/].*?)(?:\.git)?/?$").expect("верный шаблон")
+});
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
@@ -117,6 +130,82 @@ impl Request {
             | Request::Aggregate { project, .. } => project,
         }
     }
+}
+
+/// Проект на хосте: результат разбора ввода «Добавить проект» и ключ `projects.json`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProjectRef {
+    pub host: String,
+    pub path: String,
+}
+
+/// Ссылка на репозиторий, пайплайн или MR, ssh-URL или абсолютный путь к папке с клоном → хост и путь.
+pub fn parse_project_input(input: &str) -> Result<ProjectRef, Error> {
+    let input = input.trim();
+    let dir = std::path::Path::new(input);
+    if dir.is_absolute() {
+        let url = remote_origin(dir)?;
+        return parse_remote(url.trim()).map_err(|_| Error::new(ErrorCode::ProjectDirNoRemote));
+    }
+    parse_remote(input)
+}
+
+fn parse_remote(input: &str) -> Result<ProjectRef, Error> {
+    let invalid = || Error::new(ErrorCode::ProjectInputInvalid);
+    let caps = LINK
+        .captures(input)
+        .or_else(|| REPO_HTTP.captures(input))
+        .or_else(|| REPO_SSH.captures(input))
+        .or_else(|| REPO_SCP.captures(input))
+        .ok_or_else(invalid)?;
+    let host = caps[1].to_string();
+    if !is_valid_host(&host) {
+        return Err(invalid());
+    }
+    let tail_cut = caps[2].split("/-/").next().unwrap_or_default();
+    let path = project(tail_cut).map_err(|_| invalid())?;
+    Ok(ProjectRef { host, path })
+}
+
+// ponytail: наивный разбор `.git/config` — без `[include]`, `url.<base>.insteadOf` и значений в кавычках; если реальные конфиги ломаются, нужен настоящий парсер git-config.
+/// `url` из `[remote "origin"]` в `.git/config`; worktree (`.git` — файл `gitdir:`) ведёт к общему `config`.
+fn remote_origin(dir: &std::path::Path) -> Result<String, Error> {
+    let no_remote = || Error::new(ErrorCode::ProjectDirNoRemote);
+    let git = dir.join(".git");
+    let git_dir = if git.is_file() {
+        let text = std::fs::read_to_string(&git).map_err(|_| no_remote())?;
+        let target = text
+            .trim()
+            .strip_prefix("gitdir:")
+            .ok_or_else(no_remote)?
+            .trim();
+        let git_dir = dir.join(target);
+        match std::fs::read_to_string(git_dir.join("commondir")) {
+            Ok(common) => git_dir.join(common.trim()),
+            Err(_) => git_dir,
+        }
+    } else {
+        git
+    };
+    let config = std::fs::read_to_string(git_dir.join("config")).map_err(|_| no_remote())?;
+    let mut in_origin = false;
+    for line in config.lines() {
+        let line = line.trim();
+        if line.starts_with('[') {
+            in_origin = line == "[remote \"origin\"]";
+            continue;
+        }
+        if !in_origin {
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("url")
+            && let Some(url) = rest.trim_start().strip_prefix('=')
+        {
+            return Ok(url.trim().to_string());
+        }
+    }
+    Err(no_remote())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

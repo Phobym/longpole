@@ -1,7 +1,7 @@
 use std::path::Path;
 
 /// Команды формы: на каждую `allow-<имя>` в `capabilities/form.json`. Без манифеста свои команды
-/// доступны любому локальному окну, включая `report://`; список должен совпадать с `generate_handler!`.
+/// доступны любому локальному окну; список должен совпадать с `generate_handler!`.
 const COMMANDS: &[&str] = &[
     "hosts",
     "set_token",
@@ -13,8 +13,14 @@ const COMMANDS: &[&str] = &[
     "branches",
     "pipelines",
     "build",
-    "get_locale",
-    "set_locale",
+    "report",
+    "find_report",
+    "set_current_report",
+    "add_project",
+    "remove_project",
+    "saved_projects",
+    "get_settings",
+    "set_settings",
 ];
 
 /// Собранный шаблон отчёта (`npm run build`): `include_str!` в `reports.rs` читает его.

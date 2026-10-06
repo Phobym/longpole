@@ -87,6 +87,17 @@ struct WireProject {
     repository: Option<RootRef>,
 }
 
+impl From<WireProject> for Project {
+    fn from(p: WireProject) -> Self {
+        Project {
+            full_path: p.full_path,
+            name: p.name_with_namespace,
+            last_activity_at: p.last_activity_at,
+            default_branch: p.repository.and_then(|r| r.root_ref),
+        }
+    }
+}
+
 /// Проекты, где пользователь участник, — от недавно активных.
 pub async fn list_projects(
     gql: &impl Gql,
@@ -100,12 +111,18 @@ pub async fn list_projects(
         json!({ "search": search, "after": after }),
     )
     .await?;
-    Ok(Page::from_connection(data.projects, |p| Project {
-        full_path: p.full_path,
-        name: p.name_with_namespace,
-        last_activity_at: p.last_activity_at,
-        default_branch: p.repository.and_then(|r| r.root_ref),
-    }))
+    Ok(Page::from_connection(data.projects, Project::from))
+}
+
+const PROJECT_QUERY: &str = "query($project: ID!) {
+  project(fullPath: $project) { fullPath nameWithNamespace lastActivityAt repository { rootRef } }
+}";
+
+/// Один проект по пути: проверка доступа при добавлении в «Мои проекты».
+pub async fn fetch_project(gql: &impl Gql, path: &str) -> Result<Project, Error> {
+    let found: WireProject =
+        query_project(gql, PROJECT_QUERY, json!({ "project": path }), path).await?;
+    Ok(found.into())
 }
 
 const BRANCHES_QUERY: &str = "query($project: ID!, $pattern: String!) {

@@ -47,7 +47,7 @@ function RootChips({ root }: { root: ReportNode }) {
 
 /** Заголовок, чипы пайплайна или агрегата, «← к агрегату», язык и подсказка по управлению. */
 export function ReportHeader() {
-  const { report, tree } = useReportView()
+  const { report, tree, embedded } = useReportView()
   const { t } = useTranslation()
   const { meta } = report
   const root = tree.nodes[tree.root]
@@ -56,8 +56,9 @@ export function ReportHeader() {
   const subject = isAggNode(root) ? (meta.label ?? t('report.allPipelines')) : root.name
 
   useEffect(() => {
+    if (embedded) return
     document.title = `pipeline-trace · ${meta.project} · ${subject}`
-  }, [meta.project, subject])
+  }, [embedded, meta.project, subject])
 
   return (
     <header className="relative flex flex-wrap items-center gap-2 pt-3.5 pb-2.5">
@@ -83,7 +84,7 @@ export function ReportHeader() {
       </Chip>
       <BackToAggregate />
       <div className="ml-auto flex items-center gap-2">
-        <LanguageSwitch />
+        {!embedded && <LanguageSwitch />}
         <KeysHelp />
       </div>
     </header>

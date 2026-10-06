@@ -1,4 +1,4 @@
-//! Файлы данных приложения: `history.json`, `settings.json`, список хостов.
+//! Файлы данных приложения: `history.json`, `settings.json`, `projects.json`, список хостов.
 
 use std::fs;
 use std::io::ErrorKind;

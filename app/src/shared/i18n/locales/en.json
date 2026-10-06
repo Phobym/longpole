@@ -9,7 +9,7 @@
     "tooManyJobs": "Pipeline {{pipeline}} in project {{project}}: more than {{limit}} jobs, loading stopped",
     "mrHasNoPipeline": "MR !{{iid}} in project {{project}} has no pipeline",
     "noPipelines": "No pipelines matched the filters: check the branch and statuses",
-    "noToken": "No token for {{host}}: add it in the form (the “Token” field)",
+    "noToken": "A token for {{host}} is needed",
     "emptyToken": "Empty token",
     "keychainUnavailable": "The system keychain is unavailable: set GITLAB_TOKEN and GITLAB_HOST or install libsecret",
     "storage": "Could not read or write the app data: {{detail}}",
@@ -20,6 +20,9 @@
     "invalidStatuses": "Select at least one status or “any”",
     "forbidden": "The request did not come from the form window",
     "window": "Could not open the window: {{detail}}",
+    "projectInputInvalid": "Doesn't look like a GitLab project link or a folder path",
+    "projectDirNoRemote": "The folder has no git repository with an origin remote",
+    "reportExpired": "The report is no longer in memory, build it again",
     "ipc": "Could not run the command: {{detail}}"
   },
   "form": {
@@ -33,15 +36,12 @@
       "step": "Loading {{loaded}} of {{total}}…"
     },
     "history": {
-      "title": "History",
       "clear": "Clear",
       "clearConfirm": "Clear the request history?",
       "empty": "Nothing yet",
       "remove": "Remove from history: {{label}}"
     },
     "projects": {
-      "title": "Projects",
-      "back": "← Projects",
       "search": "Search projects",
       "searchPlaceholder": "Name or path…",
       "activity": "activity {{time}}"
@@ -55,7 +55,6 @@
       "label": "Host",
       "add": "+ Add host…",
       "saved": "{{host}} — token saved",
-      "hint": "Add a token for this host to browse its projects.",
       "placeholder": "gitlab.example.com",
       "token": "Token",
       "saveToken": "Save token",
@@ -71,6 +70,47 @@
       "last": "How many pipelines",
       "build_one": "Aggregate of {{value}} pipeline",
       "build_other": "Aggregate of {{value}} pipelines"
+    },
+    "settingsButton": "Settings",
+    "sidebar": {
+      "projects": "My projects",
+      "add": "+ Add",
+      "recent": "Recent",
+      "removeProject": "Remove from the list: {{name}}"
+    },
+    "empty": {
+      "title": "Add your first project",
+      "text": "Paste a GitLab repository link or pick a folder with a clone.",
+      "add": "+ Add project"
+    },
+    "addProject": {
+      "title": "Add project",
+      "placeholder": "https://gitlab.example.com/group/project or a folder path",
+      "hint": "A repository, pipeline or MR link works.",
+      "pickFolder": "Pick folder…",
+      "findOnHost": "Find in the host's project list",
+      "add": "Add"
+    },
+    "token": {
+      "need": "A token for {{host}} is needed",
+      "scope": "Personal Access Token with the read_api scope.",
+      "create": "Create on {{host}} ↗",
+      "stored": "Stored in the system keychain."
+    },
+    "settings": {
+      "title": "Settings",
+      "back": "← Back",
+      "hosts": "Hosts and tokens",
+      "noHosts": "No hosts yet",
+      "addHost": "Add host",
+      "linuxHint": "On Linux the token is stored in Secret Service (gnome-keyring, KWallet). Without it, use glab or the GITLAB_TOKEN and GITLAB_HOST variables.",
+      "source": { "keychain": "keychain", "glab": "glab", "env": "environment variables" },
+      "theme": "Theme",
+      "themes": { "system": "System", "light": "Light", "dark": "Dark" }
+    },
+    "reportView": {
+      "back": "← Back",
+      "loading": "Loading the report…"
     }
   },
   "report": {

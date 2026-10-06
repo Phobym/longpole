@@ -25,12 +25,12 @@ export const normalizeHost = (raw: string) =>
 export function useHostState() {
   const { data: saved = [], isPending, error } = useQuery(hostsQuery)
   const picked = useHostStore((s) => s.picked)
-  const host = picked.kind === 'auto' ? (saved[0] ?? null) : picked.kind === 'host' ? picked.host : null
+  const host = picked.kind === 'auto' ? (saved[0]?.host ?? null) : picked.kind === 'host' ? picked.host : null
   return {
     host,
     saved,
     /** Текущий хост, если для него сохранён токен. */
-    tokenHost: host !== null && saved.includes(host) ? host : null,
+    tokenHost: host !== null && saved.some((h) => h.host === host) ? host : null,
     ready: !isPending,
     error: apiError(error),
   }

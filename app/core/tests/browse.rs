@@ -5,7 +5,7 @@ use std::sync::Mutex;
 
 use fixtures::{assert_error, fake_gql};
 use pipeline_trace_core::browse::{
-    Commit, Page, Pipeline, Project, list_branches, list_projects, recent_pipelines,
+    Commit, Page, Pipeline, Project, fetch_project, list_branches, list_projects, recent_pipelines,
 };
 use pipeline_trace_core::error::ErrorCode;
 use serde_json::json;
@@ -157,5 +157,31 @@ async fn нет_проекта_это_ошибка_с_кодом() {
         recent_pipelines(&gql, "no/such", None, None).await,
         ErrorCode::ProjectNotFound,
         &params,
+    );
+}
+
+#[tokio::test]
+async fn fetch_project_поля_и_project_not_found_при_null() {
+    let gql = fake_gql(|v| {
+        if v["project"] == "g/p" {
+            json!({ "project": { "fullPath": "g/p", "nameWithNamespace": "G / P", "lastActivityAt": null,
+                                 "repository": { "rootRef": "main" } } })
+        } else {
+            json!({ "project": null })
+        }
+    });
+    assert_eq!(
+        fetch_project(&gql, "g/p").await.unwrap(),
+        Project {
+            full_path: "g/p".into(),
+            name: "G / P".into(),
+            last_activity_at: None,
+            default_branch: Some("main".into()),
+        }
+    );
+    assert_error(
+        fetch_project(&gql, "g/none").await,
+        ErrorCode::ProjectNotFound,
+        &[("host", "h.example"), ("project", "g/none")],
     );
 }

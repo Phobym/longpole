@@ -4,10 +4,10 @@ import { createRoot } from 'react-dom/client'
 import { ReportPage } from '../../pages/report'
 import { fixtures, type Locale, type Report } from '../../shared/api'
 import { initI18n } from '../../shared/i18n'
+import { applyTheme } from '../../shared/lib/theme'
 import '../../shared/ui/theme.css'
 
-// В окне приложения язык — из отчёта; сохранённый файл в браузере открывается на языке браузера.
-const inApp = location.protocol === 'report:' || location.hostname === 'report.localhost'
+// Сохранённый файл открывается в браузере на языке браузера.
 const browserLocale = (): Locale => (navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en')
 
 async function readReport(): Promise<Report> {
@@ -23,6 +23,7 @@ async function readReport(): Promise<Report> {
 }
 
 async function main() {
+  applyTheme('system')
   const root = document.getElementById('root')
   if (!root) throw new Error('нет #root в report.html')
   let report: Report
@@ -33,8 +34,7 @@ async function main() {
     root.textContent = i18next.t('report.loadFailed', { detail: String(e) })
     return
   }
-  const locale = inApp ? report.meta.locale : browserLocale()
-  await initI18n(locale)
+  await initI18n(browserLocale())
   createRoot(root).render(
     <StrictMode>
       <ReportPage report={report} />

@@ -16,6 +16,8 @@ type ReportView = {
   getView: () => View
   /** применяется не чаще раза в кадр */
   setView: (view: View) => void
+  /** отчёт на экране формы: без своего переключателя языка и заголовка окна */
+  embedded: boolean
 }
 
 const ReportViewContext = createContext<ReportView | null>(null)
@@ -26,7 +28,7 @@ export function useReportView(): ReportView {
   return value
 }
 
-export function ReportViewProvider({ report, children }: { report: Report; children: ReactNode }) {
+export function ReportViewProvider({ report, embedded = false, children }: { report: Report; embedded?: boolean; children: ReactNode }) {
   const reducer = useMemo(() => createReducer(report), [report])
   const [state, dispatch] = useReducer(reducer, report, (r) => openState(r, initialRef(r)))
 
@@ -53,8 +55,8 @@ export function ReportViewProvider({ report, children }: { report: Report; child
   const full = useMemo(() => fullView(tree), [tree])
 
   const value = useMemo<ReportView>(
-    () => ({ report, tree, state, dispatch, crit, rel, fullView: full, getView, setView }),
-    [report, tree, state, crit, rel, full, getView, setView],
+    () => ({ report, tree, state, dispatch, crit, rel, fullView: full, getView, setView, embedded }),
+    [report, tree, state, crit, rel, full, getView, setView, embedded],
   )
   return <ReportViewContext value={value}>{children}</ReportViewContext>
 }

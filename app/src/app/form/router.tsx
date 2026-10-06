@@ -1,41 +1,72 @@
-import { createHashHistory, createRootRoute, createRoute, createRouter, Outlet, useRouter } from '@tanstack/react-router'
+import { createHashHistory, createRootRoute, createRoute, createRouter, Outlet, useMatches, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { HistorySidebar } from '../../widgets/history-sidebar'
-import { LanguageSwitch } from '../../widgets/language-switch'
+import { useGoBack } from '../../shared/lib/useGoBack'
+import { openAddProject } from '../../features/add-project'
+import { HomePage } from '../../pages/home'
 import { ProjectPage } from '../../pages/project'
-import { ProjectsPage } from '../../pages/projects'
+import { SettingsPage } from '../../pages/settings'
+import { ReportRoute } from './report-route'
+import { AddProjectDialog } from '../../widgets/add-project-dialog'
+import { AppHeader } from '../../widgets/app-header'
+import { ProjectsSidebar } from '../../widgets/projects-sidebar'
+
+const isMac = navigator.platform.startsWith('Mac')
+const mod = (e: KeyboardEvent) => (isMac ? e.metaKey : e.ctrlKey)
 
 function Layout() {
-  const router = useRouter()
-  // Esc на экране «Проект» — назад к «Проектам». Один обработчик на всё приложение; открытый Popover/Select
-  // гасит Esc сам (`defaultPrevented`), поэтому первый Esc закрывает его, второй возвращает к «Проектам».
+  const navigate = useNavigate()
+  const goBack = useGoBack()
+  const onReport = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/report/$id') })
+  const onSettings = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/settings') })
+
+  // Один обработчик клавиш на приложение. Открытый оверлей (Popover/Select) и выделенная строка отчёта гасят Esc сами (`defaultPrevented`):
+  // первый Esc закрывает оверлей или снимает выделение, второй уводит с отчёта или настроек.
+  // Слушаем `window`, а не `document`: он срабатывает после document-слушателей независимо от порядка их регистрации.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.defaultPrevented) return
-      if (router.state.matches.some((m) => m.routeId === '/project/$host/$')) void router.navigate({ to: '/' })
+      if (e.defaultPrevented) return
+      if (e.key === 'Escape' && (onReport || onSettings)) {
+        goBack()
+      } else if (mod(e) && e.shiftKey && e.key.toLowerCase() === 'n') {
+        e.preventDefault()
+        openAddProject()
+      } else if (mod(e) && e.key === ',') {
+        e.preventDefault()
+        void navigate({ to: '/settings' })
+      }
     }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [router])
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [goBack, navigate, onReport, onSettings])
 
+  // отчёту нужна вся ширина: без сайдбара и шапки
+  if (onReport) {
+    return (
+      <main className="h-screen overflow-y-auto">
+        <Outlet />
+        <AddProjectDialog />
+      </main>
+    )
+  }
   return (
     <div className="flex h-screen">
-      <HistorySidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-4xl flex-col gap-3 p-6">
-          <div className="flex justify-end">
-            <LanguageSwitch />
+      <ProjectsSidebar />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AppHeader />
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto flex max-w-4xl flex-col gap-3 p-6">
+            <Outlet />
           </div>
-          <Outlet />
-        </div>
-      </main>
+          <AddProjectDialog />
+        </main>
+      </div>
     </div>
   )
 }
 
 const rootRoute = createRootRoute({ component: Layout })
 
-const projectsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: ProjectsPage })
+const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: HomePage })
 
 // Хост — параметр, путь проекта (`group/sub/project`) — splat, ветка — `?ref=`.
 const projectRoute = createRoute({
@@ -52,8 +83,11 @@ const projectRoute = createRoute({
   },
 })
 
+export const reportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/report/$id', component: ReportRoute })
+const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: SettingsPage })
+
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([projectsRoute, projectRoute]),
+  routeTree: rootRoute.addChildren([homeRoute, projectRoute, reportRoute, settingsRoute]),
   history: createHashHistory(),
 })
 

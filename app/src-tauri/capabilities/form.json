@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "form",
-  "description": "Окно формы; окна report-<n> не входят ни в одну capability",
+  "description": "Единственное окно приложения",
   "windows": ["form"],
   "permissions": [
     "allow-hosts",
@@ -14,9 +14,16 @@
     "allow-branches",
     "allow-pipelines",
     "allow-build",
-    "allow-get-locale",
-    "allow-set-locale",
+    "allow-report",
+    "allow-find-report",
+    "allow-set-current-report",
+    "allow-add-project",
+    "allow-remove-project",
+    "allow-saved-projects",
+    "allow-get-settings",
+    "allow-set-settings",
     "dialog:allow-ask",
-    "dialog:allow-message"
+    "dialog:allow-message",
+    "dialog:allow-open"
   ]
 }

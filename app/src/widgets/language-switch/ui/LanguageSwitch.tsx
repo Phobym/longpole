@@ -1,6 +1,6 @@
-import { setLocale, type Locale } from '../../../shared/api'
+import { useUpdateSettings } from '../../../entities/settings'
+import type { Locale } from '../../../shared/api'
 import { changeLocale, useTranslation } from '../../../shared/i18n'
-import { showError } from '../../../shared/lib/dialogs'
 import { Button } from '../../../shared/ui/button'
 
 const LOCALES: Locale[] = ['ru', 'en']
@@ -8,10 +8,10 @@ const LOCALES: Locale[] = ['ru', 'en']
 /** RU/EN: форма перерисовывается сразу, ядро запоминает язык и пересобирает меню. */
 export function LanguageSwitch() {
   const { t, i18n } = useTranslation()
+  const update = useUpdateSettings()
   const choose = async (locale: Locale) => {
     await changeLocale(locale)
-    const result = await setLocale(locale)
-    if (!result.ok) await showError(result.error)
+    await update({ locale })
   }
   return (
     <div role="group" aria-label={t('form.language')} className="flex gap-0.5">

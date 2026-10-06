@@ -7,6 +7,8 @@ use std::process::{Command, Stdio};
 use std::sync::Arc;
 
 use keyring_core::{CredentialStore, Entry, Error as KeyringError};
+use serde::Serialize;
+use ts_rs::TS;
 
 use crate::error::{Error, ErrorCode};
 use crate::hosts::{HostList, bare, normalize_host};
@@ -149,6 +151,57 @@ pub fn find_token(
         }
     }
     Err(Error::new(ErrorCode::NoToken).with("host", host))
+}
+
+/// Откуда у хоста токен; «Удалить» в настройках есть только у `Keychain`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "lowercase")]
+#[ts(export)]
+pub enum TokenSource {
+    Keychain,
+    Glab,
+    Env,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
+pub struct HostInfo {
+    pub host: String,
+    pub source: TokenSource,
+}
+
+/// Хосты, для которых токен найдётся: связка ключей (по алфавиту), хост `glab` по умолчанию, `GITLAB_HOST`.
+pub fn list_hosts(
+    store: &TokenStore,
+    env: &dyn Fn(&str) -> Option<String>,
+    glab: &dyn Fn(&[&str]) -> Option<String>,
+) -> Result<Vec<HostInfo>, Error> {
+    let mut hosts: Vec<HostInfo> = store
+        .hosts()?
+        .into_iter()
+        .map(|host| HostInfo {
+            host,
+            source: TokenSource::Keychain,
+        })
+        .collect();
+    let mut push = |host: String, source: TokenSource| {
+        if !hosts.iter().any(|h| h.host == host) {
+            hosts.push(HostInfo { host, source });
+        }
+    };
+    if let Some(host) = glab(&["config", "get", "host"]).map(|h| bare(&h).to_string())
+        && glab(&["config", "get", "token", "--host", &host]).is_some()
+    {
+        push(host, TokenSource::Glab);
+    }
+    if env("GITLAB_TOKEN").is_some_and(|t| !t.is_empty())
+        && let Some(host) = env("GITLAB_HOST")
+            .map(|h| bare(&h).to_string())
+            .filter(|h| !h.is_empty())
+    {
+        push(host, TokenSource::Env);
+    }
+    Ok(hosts)
 }
 
 /// Приложение из GUI не наследует `PATH` терминала, поэтому после него смотрим типовые каталоги.

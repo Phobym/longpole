@@ -68,7 +68,7 @@
 - **DialogContent**. Радиус 12px, фон `chrome`, тень `0 20px 60px rgb(0 0 0/.3), 0 0 0 .5px rgb(0 0 0/.2)`.
 - **Popover, Command** — без изменений, кроме радиуса из токена.
 - Чекбоксы — нативные 14×14 (`accent-primary` остаётся).
-- **Фокус** — одна утилита `focus-ring` в `theme.css` (`@utility`): `outline: none`, на `:focus-visible` — `inset 0 0 0 1px ring` и ореол `0 0 0 3px ring/35%`. Внутренняя линия даёт ≥ 3:1 там, где ореол бледный, и не режется `overflow: hidden` у контейнеров списков. Заменяет `outline-hidden focus-visible:ring-…` во всех контролах, пунктах сайдбара и строках списков.
+- **Фокус** — одна утилита `focus-ring` в `theme.css` (`@utility`): `outline: 2px solid transparent` (в режиме высокой контрастности Windows box-shadow не рисуется, outline — да), на `:focus-visible` — `inset 0 0 0 1px ring`, под ней `inset 0 0 0 2px background` и ореол `0 0 0 3px ring/35%`. На светлом контроле видна линия `ring` (≥ 3:1), на залитом `primary` (кнопка, активный проект) — линия цвета фона; внутренние линии не режутся `overflow: hidden` у контейнеров списков. Заменяет `outline-hidden focus-visible:ring-…` во всех контролах, пунктах сайдбара и строках списков.
 
 ## 4. Форма
 

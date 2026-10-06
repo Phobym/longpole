@@ -15,7 +15,7 @@ type Props<T extends string> = {
 /** Сегментированный переключатель как в macOS: подложка `secondary`, активный пункт приподнят тенью. */
 export function Segmented<T extends string>({ label, value, options, onChange, size = 'sm' }: Props<T>) {
   return (
-    <div role="group" aria-label={label} className="inline-flex rounded-md bg-secondary p-px">
+    <div role="group" aria-label={label} className="inline-flex w-fit rounded-md bg-secondary p-px">
       {options.map((option) => {
         const active = option.value === value
         return (

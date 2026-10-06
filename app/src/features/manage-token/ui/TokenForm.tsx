@@ -6,7 +6,7 @@ import { Input } from '../../../shared/ui/input'
 import { useSaveToken } from '../model/useSaveToken'
 
 /** Хост и токен; `defaultHost` — выбранный хост без токена. Токен после сохранения прочитать нельзя нигде. */
-export function TokenForm({ defaultHost }: { defaultHost: string }) {
+export function TokenForm({ defaultHost, onSaved }: { defaultHost: string; onSaved?: () => void }) {
   const { t } = useTranslation()
   const errorText = useErrorText()
   const id = useId()
@@ -17,9 +17,9 @@ export function TokenForm({ defaultHost }: { defaultHost: string }) {
   return (
     <form
       className="flex flex-col gap-2 rounded-md border bg-secondary/40 p-3"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault()
-        void save(host, token)
+        if (await save(host, token)) onSaved?.()
       }}
     >
       <label htmlFor={`${id}-host`} className="text-sm font-medium">

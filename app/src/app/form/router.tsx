@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { openAddProject } from '../../features/add-project'
 import { HomePage } from '../../pages/home'
 import { ProjectPage } from '../../pages/project'
+import { SettingsPage } from '../../pages/settings'
 import { ReportRoute } from './report-route'
 import { AddProjectDialog } from '../../widgets/add-project-dialog'
 import { AppHeader } from '../../widgets/app-header'
@@ -82,8 +83,7 @@ const projectRoute = createRoute({
 })
 
 export const reportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/report/$id', component: ReportRoute })
-// Заглушка до задачи 11.
-const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: () => null })
+const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: SettingsPage })
 
 export const router = createRouter({
   routeTree: rootRoute.addChildren([homeRoute, projectRoute, reportRoute, settingsRoute]),

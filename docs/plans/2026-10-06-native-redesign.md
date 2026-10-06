@@ -786,6 +786,11 @@ git commit -m "feat(web): форма — source-list сайдбар, шапка-
         {t('form.host.label')}
       </label>
 ```
+`app/src/features/search-projects/ui/ProjectSearch.tsx` (подпись поля поиска в диалоге):
+```tsx
+      <label htmlFor={id} className={labelClasses}>
+```
+(импорт `labelClasses` дописать в существующий импорт из `'../../../shared/ui/input'`.)
 `TokenBlock.tsx` — подпись `form.host.token`; `TokenForm.tsx` — подписи `form.host.label` и `form.host.token`: тот же `className={labelClasses}`. Абзац `form.token.need` остаётся `text-sm font-medium`.
 
 Текстовые ссылки — на токене `link` (спека, § 2: `primary` как цвет текста не проходит 4,5:1 на `chrome` и в тёмной теме): в `TokenBlock.tsx` у `<a href={createUrl}>` класс `text-link hover:underline` вместо `text-primary hover:underline`; в `app/src/widgets/add-project-dialog/ui/AddProjectDialog.tsx` у кнопки «Найти в списке проектов хоста» — `self-start text-sm text-link hover:underline`.
@@ -906,7 +911,7 @@ Run: `cd app && npm run typecheck && npm run lint:fsd && npm run check:locales; 
 - [ ] **Step 9: Commit**
 
 ```bash
-git add app/src/pages app/src/features app/src/entities/pipeline app/src/entities/project app/src/widgets/language-switch
+git add app/src/pages app/src/features app/src/entities/pipeline app/src/entities/project app/src/widgets/language-switch app/src/widgets/add-project-dialog
 git commit -m "feat(web): экран проекта, настройки и диалог на новых примитивах — подписи, zebra-списки, Segmented"
 ```
 

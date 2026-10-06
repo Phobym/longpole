@@ -151,7 +151,7 @@ git commit -m "chore(web): мок моста Tauri для dev в браузер�
 - Modify: `app/report.html:5-6`
 
 **Interfaces:**
-- Produces: токены из спеки, § 2, включая новые `--color-chrome`, `--color-sidebar` (утилиты `bg-chrome`, `bg-sidebar`); вариант `dark:`; `--radius: 8px`. Все следующие задачи опираются на эти имена.
+- Produces: токены из спеки, § 2, включая новые `--color-chrome`, `--color-sidebar`, `--color-link` (утилиты `bg-chrome`, `bg-sidebar`, `text-link`); вариант `dark:`; `--radius: 8px`. Все следующие задачи опираются на эти имена.
 
 - [ ] **Step 1: Переписать `app/src/shared/ui/theme.css`**
 
@@ -180,7 +180,7 @@ git commit -m "chore(web): мок моста Tauri для dev в браузер�
   --color-secondary: #f2f2f7;
   --color-secondary-foreground: #1d1d1f;
   --color-muted: #f5f5f7;
-  --color-muted-foreground: #6e6e73;
+  --color-muted-foreground: #636368;
   --color-accent: #eeeef2;
   --color-accent-foreground: #1d1d1f;
   --color-destructive: #d0281f;
@@ -188,6 +188,8 @@ git commit -m "chore(web): мок моста Tauri для dev в браузер�
   --color-input: #c9c9cf;
   --color-ring: #0a6fe6;
   --color-selected: #dbe8ff;
+  /* текстовые ссылки: primary как заливка с белым текстом и как цвет текста не проходят 4,5:1 одновременно */
+  --color-link: #0b63cc;
 
   /* домен: статусы, критический путь, повторы и превышения, связи */
   --color-ok: #34c759;
@@ -199,22 +201,22 @@ git commit -m "chore(web): мок моста Tauri для dev в браузер�
   --color-thin: #d1d1d6;
   --color-wait: #e5e5ea;
   --color-crit: #ff9500;
-  --color-crit-fg: #b35f00;
+  --color-crit-fg: #a35500;
   --color-crit-soft: #ffd9a8;
   --color-crit-bg: #fff7eb;
   --color-over-a: var(--color-crit);
   --color-over-b: #ffe2bf;
   --color-retry-a: var(--color-fail);
   --color-retry-b: #ffd0cd;
-  --color-retry-fg: #d0281f;
+  --color-retry-fg: #bf231a;
   --color-dep-up: #0a6fe6;
-  --color-dep-down: #1f8a3b;
+  --color-dep-down: #187232;
   --color-pill-ok-bg: #e3f7e8;
-  --color-pill-ok-fg: #1f8a3b;
+  --color-pill-ok-fg: #187232;
   --color-pill-mid-bg: #fff5cc;
   --color-pill-mid-fg: #8a6400;
   --color-pill-bad-bg: #ffe3e1;
-  --color-pill-bad-fg: #d0281f;
+  --color-pill-bad-fg: #bf231a;
   --color-pill-run-bg: #e1eeff;
   --color-pill-run-fg: #0a5fd0;
 
@@ -252,7 +254,8 @@ git commit -m "chore(web): мок моста Tauri для dev в браузер�
   --color-border: #3a3a3c;
   --color-input: #48484a;
   --color-ring: #1f6fdc;
-  --color-selected: #1f3a5f;
+  --color-selected: #18304f;
+  --color-link: #5aa2ff;
   --color-ok: #30d158;
   --color-fail: #ff453a;
   --color-warn: #ffd60a;
@@ -325,7 +328,7 @@ git commit -m "chore(web): мок моста Tauri для dev в браузер�
 Run: `cd app && npm run typecheck && npm run build; cd -`
 Expected: зелёно. В браузере `http://localhost:5173/` — фон белый, кнопка «Построить» синяя (`#0a6fe6`), шрифт системный 13px; `http://localhost:5173/report.html?fixture=aggregate` — полоски success зелёные, критический путь оранжевый. Тёмная тема: в консоли `document.documentElement.classList.add('dark')` — фон `#1e1e1e`.
 
-Контраст (любой калькулятор WCAG): `#6e6e73` на `#ffffff` ≈ 5,1; на `#f5f5f7` ≈ 4,7; `#ffffff` на `#0a6fe6` ≈ 4,6; `#a1a1a6` на `#262626` ≈ 5,8; `#ffffff` на `#1f6fdc` ≈ 4,9. Все ≥ 4,5.
+Контраст (любой калькулятор WCAG): `#636368` на `#ffffff` ≈ 6,0, на `#f5f5f7` ≈ 5,5, на сайдбаре `#ececf0` ≈ 5,1; `#ffffff` на `#0a6fe6` ≈ 4,7; `#0b63cc` на `#f5f5f7` ≈ 5,3; `#a35500` на `#fff7eb` ≈ 5,1; `#bf231a` на `#ffe3e1` ≈ 5,0; `#187232` на `#e3f7e8` ≈ 5,4; тёмная: `#a1a1a6` на `#262626` ≈ 5,8 и на `#18304f` ≈ 5,2; `#ffffff` на `#1f6fdc` ≈ 4,8; `#5aa2ff` на `#2b2b2d` ≈ 5,4. Все ≥ 4,5.
 
 - [ ] **Step 4: Commit**
 
@@ -767,6 +770,8 @@ git commit -m "feat(web): форма — source-list сайдбар, шапка-
 ```
 `TokenBlock.tsx` — подпись `form.host.token`; `TokenForm.tsx` — подписи `form.host.label` и `form.host.token`: тот же `className={labelClasses}`. Абзац `form.token.need` остаётся `text-sm font-medium`.
 
+Текстовые ссылки — на токене `link` (спека, § 2: `primary` как цвет текста не проходит 4,5:1 на `chrome` и в тёмной теме): в `TokenBlock.tsx` у `<a href={createUrl}>` класс `text-link hover:underline` вместо `text-primary hover:underline`; в `app/src/widgets/add-project-dialog/ui/AddProjectDialog.tsx` у кнопки «Найти в списке проектов хоста» — `self-start text-sm text-link hover:underline`.
+
 - [ ] **Step 2: Заголовок проекта, `app/src/pages/project/ui/ProjectPage.tsx`**
 
 Было: `<h1 translate="no" className="truncate text-xl font-semibold">`
@@ -1044,9 +1049,10 @@ git commit -m "feat(web): отчёт — теги шапки, карточки �
 - Modify: `app/src/widgets/detail-panel/ui/Verdict.tsx:45`
 - Modify: `app/src/widgets/detail-panel/ui/Kpis.tsx:5-13`
 - Modify: `app/src/widgets/detail-panel/ui/Section.tsx` (целиком)
+- Modify: `app/src/widgets/detail-panel/ui/GitlabLink.tsx:7`, `TopPipelines.tsx:28,45` (`text-primary` → `text-link`)
 
 **Interfaces:**
-- Consumes: `bg-chrome` (задача 3).
+- Consumes: `bg-chrome`, `text-link` (задача 3).
 
 - [ ] **Step 1: `DetailPanel.tsx`**
 
@@ -1085,12 +1091,16 @@ export const Section = ({ title, children }: { title: string; children: ReactNod
 )
 ```
 
-- [ ] **Step 5: Проверить**
+- [ ] **Step 5: Ссылки панели на токене `link`**
+
+В `GitlabLink.tsx` заменить `cn('text-primary', className)` на `cn('text-link', className)`. В `TopPipelines.tsx` заменить оба `text-primary` (кнопка `OpenTree` с именем пайплайна и кнопка «Все N») на `text-link`. Причина — спека, § 2: `primary` как цвет текста на `chrome` и в тёмной теме не проходит 4,5:1.
+
+- [ ] **Step 6: Проверить**
 
 Run: `cd app && npm run typecheck; cd -`
-В браузере: клик по строке — панель на сером без тени с hairline слева, вывод и три KPI — белые плитки с рамкой, подписи KPI и заголовки секций без капса. Тёмная тема: панель `#2b2b2d`, плитки `#262626`. `×` и Esc закрывают.
+В браузере: клик по строке — панель на сером без тени с hairline слева, вывод и три KPI — белые плитки с рамкой, подписи KPI и заголовки секций без капса. Тёмная тема: панель `#2b2b2d`, плитки `#262626`. `×` и Esc закрывают. Ссылки «GitLab ↗» и `#N` — синие `link`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add app/src/widgets/detail-panel
@@ -1124,7 +1134,7 @@ Expected: раскладка и цвета совпадают; допустим�
 
 - [ ] **Step 3: Контраст**
 
-Проверить калькулятором WCAG пары из спеки, § 7, в обеих темах: `muted-foreground` на `background` и `chrome`; `primary-foreground` на `primary`; `pill-*-fg` на `pill-*-bg`; `crit-fg` на `crit-bg`; `retry-fg` на `pill-bad-bg`. Expected: все ≥ 4,5:1. Если пара не проходит — затемнить `*-fg` в `theme.css` и повторить.
+Проверить калькулятором WCAG пары из спеки, § 7, в обеих темах: `muted-foreground` на `background`, `chrome`, `sidebar` и `selected`; `primary-foreground` на `primary`; `link` на `background`, `card` и `chrome`; `pill-*-fg` на `pill-*-bg`; `crit-fg` на `crit-bg`; `retry-fg` на `pill-bad-bg`; `dep-down` на `card`. Expected: все ≥ 4,5:1. Если пара не проходит — затемнить `*-fg` в `theme.css` и повторить.
 
 - [ ] **Step 4: Клавиатура**
 

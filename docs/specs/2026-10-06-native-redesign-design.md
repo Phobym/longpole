@@ -21,7 +21,7 @@
 
 ## 2. Токены
 
-`@theme static` в `theme.css`; значения светлой темы в `:root`, тёмной — в `:root.dark`. Домашние токены статусов и критического пути остаются с теми же именами, меняются значения. Новые токены — `--color-chrome` (фон «хрома» окна: тулбар, фон контента, инспектор, диалог) и `--color-sidebar`.
+`@theme static` в `theme.css`; значения светлой темы в `:root`, тёмной — в `:root.dark`. Домашние токены статусов и критического пути остаются с теми же именами, меняются значения. Новые токены — `--color-chrome` (фон «хрома» окна: тулбар, фон контента, инспектор, диалог), `--color-sidebar` и `--color-link` (цвет текстовых ссылок: `primary` одновременно как заливка с белым текстом и как цвет текста на `chrome` и в тёмной теме 4,5:1 не даёт).
 
 | Токен | Светлая | Тёмная | Где |
 |---|---|---|---|
@@ -31,25 +31,26 @@
 | sidebar (новый) | `#ececf0` | `#242426` | сайдбар |
 | card | `#ffffff` | `#262626` | карточки, KPI, поповеры |
 | popover | `#ffffff` | `#2c2c2e` | |
-| primary | `#0a6fe6` | `#1f6fdc` | кнопка, выделение, ссылки; белый текст ≥ 4,5:1 |
+| primary | `#0a6fe6` | `#1f6fdc` | кнопка, выделение; белый текст ≥ 4,5:1 |
+| link (новый) | `#0b63cc` | `#5aa2ff` | текстовые ссылки: «GitLab ↗», `#N` в панели, «Найти в списке…», ссылка на создание токена |
 | primary-foreground | `#ffffff` | `#ffffff` | |
 | secondary | `#f2f2f7` | `#2c2c2e` | теги шапки отчёта, подложка сегментов |
 | muted | `#f5f5f7` | `#2a2a2a` | строки стейджей, zebra |
-| muted-foreground | `#6e6e73` | `#a1a1a6` | подписи (5,1:1 на белом, 4,7:1 на chrome) |
+| muted-foreground | `#636368` | `#a1a1a6` | подписи (≥ 5,1:1 на белом, chrome, sidebar, selected) |
 | accent | `#eeeef2` | `#333336` | hover |
 | border | `#d8d8dc` | `#3a3a3c` | hairline |
 | input | `#c9c9cf` | `#48484a` | рамки полей |
 | ring | = primary | = primary | фокус |
-| selected | `#dbe8ff` | `#1f3a5f` | hover строк списка пайплайнов и хостов |
+| selected | `#dbe8ff` | `#18304f` | hover строк списка пайплайнов и хостов |
 | destructive | `#d0281f` | `#ff6961` | |
 | ok / fail / warn / run / idle | `#34c759` / `#ff3b30` / `#ffcc00` / `#0a6fe6` / `#c7c7cc` | `#30d158` / `#ff453a` / `#ffd60a` / `#1f6fdc` / `#48484a` | полоски |
 | queued / thin / wait | `#e5e5ea` / `#d1d1d6` / `#e5e5ea` | `#3a3a3c` / `#48484a` / `#3a3a3c` | |
-| crit / crit-fg / crit-soft / crit-bg | `#ff9500` / `#b35f00` / `#ffd9a8` / `#fff7eb` | `#ff9f0a` / `#ffb84d` / `#5a3d10` / `#2a2416` | критический путь |
-| over-b / retry-b / retry-fg | `#ffe2bf` / `#ffd0cd` / `#d0281f` | `#4a3a1c` / `#4a2422` / `#ff6961` | штриховки |
-| dep-up / dep-down | `#0a6fe6` / `#1f8a3b` | `#64d2ff` / `#30d158` | связи |
-| pill-ok bg/fg | `#e3f7e8` / `#1f8a3b` | `#1d3a27` / `#4ade80` | метки стабильности |
+| crit / crit-fg / crit-soft / crit-bg | `#ff9500` / `#a35500` / `#ffd9a8` / `#fff7eb` | `#ff9f0a` / `#ffb84d` / `#5a3d10` / `#2a2416` | критический путь |
+| over-b / retry-b / retry-fg | `#ffe2bf` / `#ffd0cd` / `#bf231a` | `#4a3a1c` / `#4a2422` / `#ff6961` | штриховки |
+| dep-up / dep-down | `#0a6fe6` / `#187232` | `#64d2ff` / `#30d158` | связи |
+| pill-ok bg/fg | `#e3f7e8` / `#187232` | `#1d3a27` / `#4ade80` | метки стабильности |
 | pill-mid bg/fg | `#fff5cc` / `#8a6400` | `#3b3414` / `#ffd60a` | |
-| pill-bad bg/fg | `#ffe3e1` / `#d0281f` | `#3f1f1d` / `#ff6961` | |
+| pill-bad bg/fg | `#ffe3e1` / `#bf231a` | `#3f1f1d` / `#ff6961` | |
 | pill-run bg/fg | `#e1eeff` / `#0a5fd0` | `#1c2d4a` / `#64d2ff` | |
 
 `--radius: 0.5rem` (md = 6px — контролы; lg = 8px — KPI, список пайплайнов; xl = 12px — диалог). Карточки стейджей и формы — 10px, задаётся на месте. `theme-color` в `report.html` — `#ffffff` / `#1e1e1e`.
@@ -86,7 +87,7 @@
 - **Карточки стейджей** (`StageCard`): радиус 10px, рамка `rgb(0 0 0/.1)` (тёмная `.08` белого), тень `0 1px 2px rgb(0 0 0/.04)`, отступ снизу 10px.
 - **Строки** (`Row`): строка стейджа — фон `muted`, нижняя hairline; строки джоб — нечётные на `muted/50` (zebra); hover — `accent`; выделенная — фон `primary`, текст белый, подписи `rgb(255 255 255/.85)`, `StageMeta`/`DepTag` подложка `primary`, метки стабильности `rgb(255 255 255/.2)` с белым текстом; фокус — как сейчас.
 - **Полоски** (`NodeLane`): толстая 12px, радиус 3px; остальное без изменений.
-- **Панель деталей** (`DetailPanel`): фон `chrome`, левая hairline, без тени. `Verdict` и KPI — плитки `card` с рамкой `border`, радиус 8px; подписи KPI 11px без капса; заголовки секций (`Section`) 11px/600 `muted-foreground` без капса, трекинг .02em; ссылки `primary`.
+- **Панель деталей** (`DetailPanel`): фон `chrome`, левая hairline, без тени. `Verdict` и KPI — плитки `card` с рамкой `border`, радиус 8px; подписи KPI 11px без капса; заголовки секций (`Section`) 11px/600 `muted-foreground` без капса, трекинг .02em; ссылки — `link`.
 - **Ось** (`Waterfall` sticky): фон `background`.
 
 ## 6. Реализация и чистка
@@ -100,6 +101,6 @@
 
 - `npm run typecheck`, `npm run lint:fsd`, `npm run build` зелёные; в `dist-report/report.html` нет `data-variant` и мока.
 - Скриншоты в браузере (`npm run dev`, мок) четырёх экранов — проект, настройки, диалог, отчёт с открытой панелью — в светлой и тёмной теме совпадают с прототипом `?variant=native` по раскладке и цветам.
-- Контраст: `muted-foreground` на `background` и `chrome`, белый на `primary`, `pill-*-fg` на `pill-*-bg`, `crit-fg` на `crit-bg` — ≥ 4,5:1 в обеих темах (проверка любым калькулятором WCAG).
+- Контраст: `muted-foreground` на `background`, `chrome`, `sidebar` и `selected`; белый на `primary`; `link` на `background`, `card` и `chrome`; `pill-*-fg` на `pill-*-bg`; `crit-fg` на `crit-bg`; `retry-fg` на `pill-bad-bg`; `dep-down` на `card` — ≥ 4,5:1 в обеих темах (проверка любым калькулятором WCAG).
 - Клавиатура: Tab-обход, фокус виден на кнопках, полях, строках отчёта и пунктах сайдбара; Esc, ↑/↓, ←/→, `[`/`]`, `0`, `Cmd+S`, `Cmd+,`, `Cmd+Shift+N` работают как до редизайна.
 - Сохранённый HTML-отчёт открывается с `file://` в браузере с тем же видом (CSP на хешах не нарушен).

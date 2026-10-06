@@ -1,0 +1,34 @@
+# Те же быстрые проверки, что в .github/workflows/ci.yml; на PR CI отключён, этот хук — основной барьер.
+# clippy и cargo test долгие для pre-commit — они в pre-push.
+pre-commit:
+  parallel: true
+  commands:
+    typecheck:
+      root: app/
+      glob: 'app/**/*.{ts,tsx,json}'
+      run: npm run typecheck
+    lint-fsd:
+      root: app/
+      glob: 'app/src/**/*.{ts,tsx}'
+      run: npm run lint:fsd
+    check-locales:
+      root: app/
+      glob: 'app/src/**/*.{ts,tsx,json}'
+      run: npm run check:locales
+    cargo-fmt:
+      root: app/
+      glob: 'app/**/*.rs'
+      run: cargo fmt --all --check
+
+pre-push:
+  parallel: true
+  commands:
+    cargo-clippy:
+      root: app/
+      glob: 'app/**/*.{rs,toml}'
+      # generate_context! требует dist/ и dist-report/ — как в CI, сначала build.
+      run: npm run build && cargo clippy --workspace --all-targets -- -D warnings
+    cargo-test:
+      root: app/
+      glob: 'app/**/*.{rs,toml}'
+      run: cargo test -p pipeline-trace-core

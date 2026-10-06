@@ -44,6 +44,12 @@ pub enum ErrorCode {
     Forbidden,
     /// окно или меню не создались: `detail` — текст ошибки Tauri
     Window,
+    /// поле ввода проекта: не ссылка на проект GitLab, не ssh-URL и не путь к папке
+    ProjectInputInvalid,
+    /// папка без `.git` или без `remote "origin"`
+    ProjectDirNoRemote,
+    /// отчёт вытеснен из памяти: `id`
+    ReportExpired,
 }
 
 /// Ошибка ядра: код и параметры, без готового текста.

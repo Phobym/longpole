@@ -116,12 +116,12 @@
 
 | Код | Текст (ru) |
 |---|---|
-| `project_input_invalid` | Не похоже на ссылку на проект GitLab или путь к папке |
-| `project_dir_no_remote` | В папке нет git-репозитория с remote `origin` |
-| `project_not_found` | Проект не найден или нет доступа на {host} |
-| `token_missing` | Нужен токен для {host} |
-| `token_rejected` | {host} не принял токен |
-| `report_expired` | Отчёт больше не в памяти, построй заново |
+| `projectInputInvalid` | Не похоже на ссылку на проект GitLab или путь к папке |
+| `projectDirNoRemote` | В папке нет git-репозитория с remote `origin` |
+| `projectNotFound` (существующий) | Проект {project} на {host} не найден или нет доступа |
+| `noToken` (существующий, текст меняется) | Нужен токен для {host} |
+| `unauthorized` (существующий) | GitLab {host} ответил {status}: токен недействителен или нет доступа |
+| `reportExpired` | Отчёт больше не в памяти, построй заново |
 
 ## 7. Тесты
 

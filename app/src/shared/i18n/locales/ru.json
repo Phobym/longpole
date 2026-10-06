@@ -20,6 +20,9 @@
     "invalidStatuses": "Выбери хотя бы один статус или «любой»",
     "forbidden": "Запрос не из окна формы",
     "window": "Не удалось открыть окно: {{detail}}",
+    "projectInputInvalid": "Не похоже на ссылку на проект GitLab или путь к папке",
+    "projectDirNoRemote": "В папке нет git-репозитория с remote origin",
+    "reportExpired": "Отчёт больше не в памяти, построй заново",
     "ipc": "Не удалось выполнить команду: {{detail}}"
   },
   "form": {

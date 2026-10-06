@@ -20,6 +20,9 @@
     "invalidStatuses": "Select at least one status or “any”",
     "forbidden": "The request did not come from the form window",
     "window": "Could not open the window: {{detail}}",
+    "projectInputInvalid": "Doesn't look like a GitLab project link or a folder path",
+    "projectDirNoRemote": "The folder has no git repository with an origin remote",
+    "reportExpired": "The report is no longer in memory, build it again",
     "ipc": "Could not run the command: {{detail}}"
   },
   "form": {

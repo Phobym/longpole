@@ -29,8 +29,8 @@ export function HostSelect({ onChange, children }: { onChange: () => void; child
           </SelectTrigger>
           <SelectContent>
             {saved.map((h) => (
-              <SelectItem key={h} value={h}>
-                {t('form.host.saved', { host: h })}
+              <SelectItem key={h.host} value={h.host}>
+                {t('form.host.saved', { host: h.host })}
               </SelectItem>
             ))}
             {/* хост из истории или ссылки, токена для которого ещё нет: временный пункт, чтобы список показывал текущий хост */}

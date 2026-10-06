@@ -9,7 +9,7 @@
     "tooManyJobs": "Пайплайн {{pipeline}} в проекте {{project}}: больше {{limit}} джоб, загрузка остановлена",
     "mrHasNoPipeline": "У MR !{{iid}} в проекте {{project}} нет пайплайна",
     "noPipelines": "Под фильтры не попал ни один пайплайн: проверь ветку и статусы",
-    "noToken": "Нет токена для {{host}}: добавь его в форме (поле «Токен»)",
+    "noToken": "Нужен токен для {{host}}",
     "emptyToken": "Пустой токен",
     "keychainUnavailable": "Системная связка ключей недоступна: задай GITLAB_TOKEN и GITLAB_HOST или установи libsecret",
     "storage": "Не удалось прочитать или записать данные приложения: {{detail}}",
@@ -76,6 +76,46 @@
       "build_few": "Агрегат по {{value}} пайплайнам",
       "build_many": "Агрегат по {{value}} пайплайнам",
       "build_other": "Агрегат по {{value}} пайплайнам"
+    },
+    "settingsButton": "Настройки",
+    "sidebar": {
+      "projects": "Мои проекты",
+      "add": "+ Добавить",
+      "recent": "Недавние",
+      "removeProject": "Убрать из списка: {{name}}"
+    },
+    "empty": {
+      "title": "Добавь первый проект",
+      "text": "Вставь ссылку на репозиторий GitLab или выбери папку с клоном.",
+      "add": "+ Добавить проект"
+    },
+    "addProject": {
+      "title": "Добавить проект",
+      "placeholder": "https://gitlab.example.com/group/project или путь к папке",
+      "hint": "Подойдёт ссылка на репозиторий, пайплайн или MR.",
+      "pickFolder": "Выбрать папку…",
+      "findOnHost": "Найти в списке проектов хоста",
+      "add": "Добавить"
+    },
+    "token": {
+      "need": "Нужен токен для {{host}}",
+      "scope": "Personal Access Token со scope read_api.",
+      "create": "Создать на {{host}} ↗",
+      "stored": "Хранится в системной связке ключей."
+    },
+    "settings": {
+      "title": "Настройки",
+      "back": "← Назад",
+      "hosts": "Хосты и токены",
+      "noHosts": "Пока нет ни одного хоста",
+      "addHost": "Добавить хост",
+      "source": { "keychain": "связка ключей", "glab": "glab", "env": "переменные окружения" },
+      "theme": "Тема",
+      "themes": { "system": "Системная", "light": "Светлая", "dark": "Тёмная" }
+    },
+    "reportView": {
+      "back": "← Назад",
+      "loading": "Загрузка отчёта…"
     }
   },
   "report": {

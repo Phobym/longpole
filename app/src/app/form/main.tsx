@@ -2,8 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { getLocale, type Locale } from '../../shared/api'
+import { settingsQuery } from '../../entities/settings'
+import { getSettings, type Locale } from '../../shared/api'
 import { initI18n } from '../../shared/i18n'
+import { applyTheme } from '../../shared/lib/theme'
 import '../../shared/ui/theme.css'
 import { router } from './router'
 
@@ -12,14 +14,16 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false, staleTime: 60_000 } },
 })
 
-// Вне Tauri (vite в браузере) `get_locale` недоступна — тогда язык браузера.
+// Вне Tauri (vite в браузере) `get_settings` недоступна — тогда язык браузера.
 const browserLocale = (): Locale => (navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en')
 
 async function main() {
   const root = document.getElementById('root')
   if (!root) throw new Error('нет #root в index.html')
-  const locale = await getLocale()
-  const initial = locale.ok ? locale.value : browserLocale()
+  const settings = await getSettings()
+  const initial = settings.ok ? settings.value.locale : browserLocale()
+  applyTheme(settings.ok ? settings.value.theme : 'system')
+  if (settings.ok) queryClient.setQueryData(settingsQuery.queryKey, settings.value)
   await initI18n(initial)
   createRoot(root).render(
     <StrictMode>

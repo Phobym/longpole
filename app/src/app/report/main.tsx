@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { ReportPage } from '../../pages/report'
 import { fixtures, type Locale, type Report } from '../../shared/api'
 import { initI18n } from '../../shared/i18n'
+import { applyTheme } from '../../shared/lib/theme'
 import '../../shared/ui/theme.css'
 
 // В окне приложения язык — из отчёта; сохранённый файл в браузере открывается на языке браузера.
@@ -23,6 +24,7 @@ async function readReport(): Promise<Report> {
 }
 
 async function main() {
+  applyTheme('system')
   const root = document.getElementById('root')
   if (!root) throw new Error('нет #root в report.html')
   let report: Report

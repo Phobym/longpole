@@ -20,4 +20,6 @@ export default defineConfig([
     ],
     rules: { 'fsd/insignificant-slice': 'off' },
   },
+  // `settings` — имя из спеки (настройки приложения, одна сущность); единственное число («setting») звучало бы как одна настройка.
+  { files: ['./src/entities/settings/**'], rules: { 'fsd/inconsistent-naming': 'off' } },
 ])

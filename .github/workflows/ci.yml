@@ -1,16 +1,15 @@
 name: ci
 
 on:
-  pull_request:
-    paths-ignore: ['docs/**', '**.md']
+  # На PR CI не гоняем: проверки идут локально, в pre-commit (lefthook.yml).
   push:
     branches: [main]
     paths-ignore: ['docs/**', '**.md']
 
-# Новый пуш в PR отменяет прошлый прогон; прогоны main доходят до конца — они сохраняют кеш.
+# Прогоны main доходят до конца — они сохраняют кеш.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 env:
   # Отладочная информация в CI не нужна: target/ и кеш меньше, линковка быстрее.

@@ -1,41 +1,66 @@
-import { createHashHistory, createRootRoute, createRoute, createRouter, Outlet, useRouter } from '@tanstack/react-router'
+import { createHashHistory, createRootRoute, createRoute, createRouter, Outlet, useMatches, useNavigate, useRouter } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { HistorySidebar } from '../../widgets/history-sidebar'
-import { LanguageSwitch } from '../../widgets/language-switch'
+import { openAddProject } from '../../features/add-project'
+import { HomePage } from '../../pages/home'
 import { ProjectPage } from '../../pages/project'
-import { ProjectsPage } from '../../pages/projects'
+import { AppHeader } from '../../widgets/app-header'
+import { ProjectsSidebar } from '../../widgets/projects-sidebar'
+
+const isMac = navigator.platform.startsWith('Mac')
+const mod = (e: KeyboardEvent) => (isMac ? e.metaKey : e.ctrlKey)
 
 function Layout() {
   const router = useRouter()
-  // Esc на экране «Проект» — назад к «Проектам». Один обработчик на всё приложение; открытый Popover/Select
-  // гасит Esc сам (`defaultPrevented`), поэтому первый Esc закрывает его, второй возвращает к «Проектам».
+  const navigate = useNavigate()
+  const onReport = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/report/$id') })
+  const onSettings = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/settings') })
+
+  // Один обработчик клавиш на приложение. Открытый Popover/Select гасит Esc сам (`defaultPrevented`):
+  // первый Esc закрывает его, второй уводит с отчёта или настроек.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.defaultPrevented) return
-      if (router.state.matches.some((m) => m.routeId === '/project/$host/$')) void router.navigate({ to: '/' })
+      if (e.defaultPrevented) return
+      if (e.key === 'Escape' && (onReport || onSettings)) {
+        if (router.history.canGoBack()) router.history.back()
+        else void navigate({ to: '/' })
+      } else if (mod(e) && e.shiftKey && e.key.toLowerCase() === 'n') {
+        e.preventDefault()
+        openAddProject()
+      } else if (mod(e) && e.key === ',') {
+        e.preventDefault()
+        void navigate({ to: '/settings' })
+      }
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [router])
+  }, [router, navigate, onReport, onSettings])
 
+  // отчёту нужна вся ширина: без сайдбара и шапки
+  if (onReport) {
+    return (
+      <main className="h-screen overflow-y-auto">
+        <Outlet />
+      </main>
+    )
+  }
   return (
     <div className="flex h-screen">
-      <HistorySidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-4xl flex-col gap-3 p-6">
-          <div className="flex justify-end">
-            <LanguageSwitch />
+      <ProjectsSidebar />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AppHeader />
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto flex max-w-4xl flex-col gap-3 p-6">
+            <Outlet />
           </div>
-          <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }
 
 const rootRoute = createRootRoute({ component: Layout })
 
-const projectsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: ProjectsPage })
+const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: HomePage })
 
 // Хост — параметр, путь проекта (`group/sub/project`) — splat, ветка — `?ref=`.
 const projectRoute = createRoute({
@@ -52,8 +77,12 @@ const projectRoute = createRoute({
   },
 })
 
+// Заглушки до задач 10 и 11.
+export const reportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/report/$id', component: () => null })
+const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: () => null })
+
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([projectsRoute, projectRoute]),
+  routeTree: rootRoute.addChildren([homeRoute, projectRoute, reportRoute, settingsRoute]),
   history: createHashHistory(),
 })
 

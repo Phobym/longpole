@@ -43,8 +43,6 @@
       "remove": "Remove from history: {{label}}"
     },
     "projects": {
-      "title": "Projects",
-      "back": "← Projects",
       "search": "Search projects",
       "searchPlaceholder": "Name or path…",
       "activity": "activity {{time}}"

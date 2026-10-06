@@ -43,8 +43,6 @@
       "remove": "Удалить из истории: {{label}}"
     },
     "projects": {
-      "title": "Проекты",
-      "back": "← Проекты",
       "search": "Поиск проекта",
       "searchPlaceholder": "Название или путь…",
       "activity": "активность {{time}}"

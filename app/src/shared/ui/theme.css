@@ -121,4 +121,13 @@
     @apply bg-background text-foreground;
     font-variant-numeric: tabular-nums;
   }
+  /* Tailwind v4 не ставит указатель кнопкам; пункты Radix Select и cmdk — role option */
+  button:not(:disabled),
+  a[href],
+  summary,
+  label:has(> input:not(:disabled)),
+  [role='option'],
+  [role='menuitem'] {
+    cursor: pointer;
+  }
 }

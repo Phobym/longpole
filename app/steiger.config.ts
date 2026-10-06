@@ -6,18 +6,14 @@ export default defineConfig([
   // Слайсы отчёта нарезаны спекой (§ 8), а страница у него одна: виджеты `waterfall`, `report-header`, `hotspots`,
   // `detail-panel` и фичи `timeline-navigation`, `group-toggle`, `keys-help` имеют ровно одного потребителя —
   // слияние нарушило бы спеку. Правило не считает ссылки из файлов, для которых оно выключено, поэтому в список
-  // входят и слайсы с несколькими потребителями, но только из этих виджетов (`entities/{node,report}`, `node-selection`, `tree-switch`).
+  // входят и слайсы с несколькими потребителями, но только из этих виджетов (`entities/node`, `node-selection`, `tree-switch`, `build-aggregate`).
   // Убрать, когда появится вторая страница, которая их использует.
-  // Форма нарезана так же (спека, § 7): страниц стало четыре, многие слайсы нужны только одной.
-  // `language-switch` без потребителя до экрана настроек (задача 11).
+  // Остальное — слайсы формы (спека, § 7) с одним потребителем после редизайна первого запуска.
   {
     files: [
-      './src/widgets/{waterfall,report-header,hotspots,detail-panel}/**',
-      './src/features/{timeline-navigation,group-toggle,keys-help,node-selection,tree-switch}/**',
-      './src/entities/{node,report}/**',
-      './src/widgets/{pipelines-list,aggregate-block,projects-sidebar,app-header,add-project-dialog,language-switch}/**',
-      './src/features/{manage-token,select-branch,history-actions,build-aggregate,add-project,choose-theme,build-by-link,search-projects}/**',
-      './src/entities/{pipeline,saved-project,settings,history-entry,host,project}/**',
+      './src/widgets/{waterfall,report-header,hotspots,detail-panel,pipelines-list,aggregate-block,language-switch}/**',
+      './src/features/{timeline-navigation,group-toggle,keys-help,select-branch,history-actions,choose-theme,build-aggregate,node-selection,tree-switch}/**',
+      './src/entities/{pipeline,node}/**',
     ],
     rules: { 'fsd/insignificant-slice': 'off' },
   },

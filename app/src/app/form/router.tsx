@@ -1,5 +1,6 @@
-import { createHashHistory, createRootRoute, createRoute, createRouter, Outlet, useMatches, useNavigate, useRouter } from '@tanstack/react-router'
+import { createHashHistory, createRootRoute, createRoute, createRouter, Outlet, useMatches, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { useGoBack } from '../../shared/lib/useGoBack'
 import { openAddProject } from '../../features/add-project'
 import { HomePage } from '../../pages/home'
 import { ProjectPage } from '../../pages/project'
@@ -13,8 +14,8 @@ const isMac = navigator.platform.startsWith('Mac')
 const mod = (e: KeyboardEvent) => (isMac ? e.metaKey : e.ctrlKey)
 
 function Layout() {
-  const router = useRouter()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const onReport = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/report/$id') })
   const onSettings = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/settings') })
 
@@ -24,8 +25,7 @@ function Layout() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return
       if (e.key === 'Escape' && (onReport || onSettings)) {
-        if (router.history.canGoBack()) router.history.back()
-        else void navigate({ to: '/' })
+        goBack()
       } else if (mod(e) && e.shiftKey && e.key.toLowerCase() === 'n') {
         e.preventDefault()
         openAddProject()
@@ -36,7 +36,7 @@ function Layout() {
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [router, navigate, onReport, onSettings])
+  }, [goBack, navigate, onReport, onSettings])
 
   // отчёту нужна вся ширина: без сайдбара и шапки
   if (onReport) {

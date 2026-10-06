@@ -1,7 +1,8 @@
-import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
 import { apiError, setCurrentReport } from '../../shared/api'
 import { useTranslation } from '../../shared/i18n'
+import { useGoBack } from '../../shared/lib/useGoBack'
 import { showError } from '../../shared/lib/dialogs'
 import { Button } from '../../shared/ui/button'
 import { isReportId, useReportById } from '../../entities/report'
@@ -13,7 +14,7 @@ export function ReportRoute() {
   const { id } = useParams({ from: '/report/$id' })
   const reportId = Number(id)
   const navigate = useNavigate()
-  const router = useRouter()
+  const back = useGoBack()
   const valid = isReportId(reportId)
   const { data, error, isPending } = useReportById(reportId)
 
@@ -36,11 +37,6 @@ export function ReportRoute() {
     reported.current = true
     void showError(failure).then(() => navigate({ to: '/', replace: true }))
   }, [error, navigate])
-
-  const back = () => {
-    if (router.history.canGoBack()) router.history.back()
-    else void navigate({ to: '/' })
-  }
 
   if (!valid) return null
   if (isPending || !data) return <p className="p-6 text-sm text-muted-foreground">{t('form.reportView.loading')}</p>

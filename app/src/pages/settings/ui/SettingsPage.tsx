@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { apiError } from '../../../shared/api'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
+import { useGoBack } from '../../../shared/lib/useGoBack'
 import { Button } from '../../../shared/ui/button'
 import { Card } from '../../../shared/ui/card'
 import { ThemeSwitch } from '../../../features/choose-theme'
@@ -13,15 +13,10 @@ import { LanguageSwitch } from '../../../widgets/language-switch'
 export function SettingsPage() {
   const { t } = useTranslation()
   const errorText = useErrorText()
-  const navigate = useNavigate()
-  const router = useRouter()
   const { data: hosts = [], error } = useQuery(hostsQuery)
   const [adding, setAdding] = useState(false)
   const failure = apiError(error)
-  const back = () => {
-    if (router.history.canGoBack()) router.history.back()
-    else void navigate({ to: '/' })
-  }
+  const back = useGoBack()
   return (
     <Card>
       <div className="flex items-center gap-3">
@@ -51,13 +46,18 @@ export function SettingsPage() {
           ))}
         </ul>
         {adding ? (
-          <TokenForm defaultHost="" onSaved={() => setAdding(false)} />
+          <>
+            <TokenForm defaultHost="" onSaved={() => setAdding(false)} />
+            <Button type="button" variant="ghost" className="self-start" onClick={() => setAdding(false)}>
+              {t('form.cancel')}
+            </Button>
+          </>
         ) : (
           <Button type="button" variant="outline" className="self-start" onClick={() => setAdding(true)}>
             {t('form.settings.addHost')}
           </Button>
         )}
-        {navigator.platform.startsWith('Linux') && <p className="text-xs text-muted-foreground">{t('errors.keychainUnavailable')}</p>}
+        {navigator.platform.startsWith('Linux') && <p className="text-xs text-muted-foreground">{t('form.settings.linuxHint')}</p>}
       </section>
 
       <section className="flex flex-col gap-2">

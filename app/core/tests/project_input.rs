@@ -44,6 +44,25 @@ fn ссылка_на_пайплайн_и_mr_даёт_проект() {
 }
 
 #[test]
+fn ссылка_на_подстраницу_проекта_режет_хвост_дефис() {
+    for (input, path) in [
+        ("https://h.example/g/p/-/tree/main", "g/p"),
+        ("https://h.example/g/sub/p/-/jobs/1", "g/sub/p"),
+        ("https://h.example/g/p/-/pipelines", "g/p"),
+    ] {
+        assert_eq!(parse_project_input(input), r("h.example", path), "{input}");
+    }
+}
+
+#[test]
+fn https_с_userinfo_и_токеном_не_попадает_в_хост() {
+    assert_eq!(
+        parse_project_input("https://oauth2:secret@gitlab.example.com/group/project.git"),
+        r("gitlab.example.com", "group/project")
+    );
+}
+
+#[test]
 fn ssh_url_scp_и_с_портом_без_порта_в_хосте() {
     assert_eq!(
         parse_project_input("git@gitlab.example.com:group/project.git"),
@@ -68,6 +87,7 @@ fn мусор_это_project_input_invalid() {
         "https://h.example/single",
         "https://h.example/g/../p",
         "ftp://h/g/p",
+        "git@h.example:/abs/path",
     ] {
         assert_eq!(
             parse_project_input(input).unwrap_err().code,

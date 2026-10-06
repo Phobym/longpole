@@ -19,9 +19,10 @@ static LINK: LazyLock<Regex> = LazyLock::new(|| {
 /// Сегмент из одних точек (`..`) — не путь проекта; `regex` без lookahead, поэтому проверяем отдельно.
 static SEGMENT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[A-Za-z0-9_.-]+$").expect("верный шаблон"));
-/// `https://host/group/project[.git][/]`; хвост `/-/…` раньше отрезает `LINK`.
-static REPO_HTTP: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^https?://([^/]+)/(.+?)(?:\.git)?/?$").expect("верный шаблон"));
+/// `https://[user[:token]@]host/group/project[.git][/]`; хвост `/-/…` (страницы проекта) отрезает `parse_remote`.
+static REPO_HTTP: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^https?://(?:[^@/]+@)?([^/]+)/(.+?)(?:\.git)?/?$").expect("верный шаблон")
+});
 /// `ssh://[user@]host[:port]/group/project[.git]`; порт — ssh, в хост GitLab не входит.
 static REPO_SSH: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^ssh://(?:[^@/]+@)?([^/:]+)(?::[0-9]+)?/(.+?)(?:\.git)?/?$")
@@ -162,10 +163,12 @@ fn parse_remote(input: &str) -> Result<ProjectRef, Error> {
     if !is_valid_host(&host) {
         return Err(invalid());
     }
-    let path = project(&caps[2]).map_err(|_| invalid())?;
+    let tail_cut = caps[2].split("/-/").next().unwrap_or_default();
+    let path = project(tail_cut).map_err(|_| invalid())?;
     Ok(ProjectRef { host, path })
 }
 
+// ponytail: наивный разбор `.git/config` — без `[include]`, `url.<base>.insteadOf` и значений в кавычках; если реальные конфиги ломаются, нужен настоящий парсер git-config.
 /// `url` из `[remote "origin"]` в `.git/config`; worktree (`.git` — файл `gitdir:`) ведёт к общему `config`.
 fn remote_origin(dir: &std::path::Path) -> Result<String, Error> {
     let no_remote = || Error::new(ErrorCode::ProjectDirNoRemote);

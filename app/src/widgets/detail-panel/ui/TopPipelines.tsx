@@ -33,7 +33,7 @@ export function TopPipelines({ node }: { node: AggNode }) {
               <span className={cn('block h-1.5 rounded-[3px]', x.retries ? 'bg-fail' : 'bg-ok')} style={{ width: `${(ms / longest) * 100}%` }} />
             </span>
             <span className="text-right">{duration(ms)}</span>
-            <GitlabLink url={pipeline.url} className="text-[11px] text-muted-foreground">
+            <GitlabLink url={pipeline.url} className="text-[11px]">
               {t('report.panel.gitlab')}
             </GitlabLink>
           </div>

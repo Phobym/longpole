@@ -9,7 +9,7 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-linear-to-b from-[#3a97ff] to-primary text-primary-foreground shadow-[0_0.5px_1px_rgb(0_0_0/0.25),inset_0_0.5px_0_rgb(255_255_255/0.25)] hover:brightness-105',
+          'bg-linear-to-b from-[#1570e6] to-primary text-primary-foreground shadow-[0_0.5px_1px_rgb(0_0_0/0.25),inset_0_0.5px_0_rgb(255_255_255/0.25)] hover:brightness-105',
         destructive: 'bg-destructive text-background hover:bg-destructive/90',
         outline:
           'border border-black/12 bg-linear-to-b from-card to-secondary shadow-[0_0.5px_1px_rgb(0_0_0/0.15)] hover:from-secondary dark:border-white/10 dark:from-[#5a5a5e] dark:to-[#4a4a4e] dark:hover:from-[#4a4a4e]',

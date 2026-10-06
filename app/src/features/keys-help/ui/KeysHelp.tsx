@@ -12,7 +12,7 @@ export function KeysHelp() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" className="size-[22px] text-muted-foreground" aria-label={t('report.help')}>
+        <Button variant="outline" size="icon" className="size-[22px]" aria-label={t('report.help')}>
           ?
         </Button>
       </PopoverTrigger>

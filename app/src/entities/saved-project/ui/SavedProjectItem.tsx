@@ -23,7 +23,7 @@ export function SavedProjectItem({ project, active, onOpen, onRemove }: Props) {
         <span translate="no" className="truncate text-sm">
           {project.name}
         </span>
-        <span translate="no" className={cn('truncate text-[11px]', active ? 'text-primary-foreground/75' : 'text-muted-foreground')}>
+        <span translate="no" className={cn('truncate text-[11px]', active ? 'text-primary-foreground' : 'text-muted-foreground')}>
           {project.host}
         </span>
       </button>

@@ -15,7 +15,7 @@ export default defineConfig([
       './src/widgets/{waterfall,report-header,hotspots,detail-panel}/**',
       './src/features/{timeline-navigation,group-toggle,keys-help,node-selection,tree-switch}/**',
       './src/entities/{node,report}/**',
-      './src/widgets/{projects-panel,pipelines-list,aggregate-block,projects-sidebar,app-header,add-project-dialog,language-switch}/**',
+      './src/widgets/{pipelines-list,aggregate-block,projects-sidebar,app-header,add-project-dialog,language-switch}/**',
       './src/features/{manage-token,select-branch,history-actions,build-aggregate,add-project,choose-theme,build-by-link,search-projects}/**',
       './src/entities/{pipeline,saved-project,settings,history-entry,host,project}/**',
     ],

@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { openAddProject } from '../../features/add-project'
 import { HomePage } from '../../pages/home'
 import { ProjectPage } from '../../pages/project'
+import { AddProjectDialog } from '../../widgets/add-project-dialog'
 import { AppHeader } from '../../widgets/app-header'
 import { ProjectsSidebar } from '../../widgets/projects-sidebar'
 
@@ -40,6 +41,7 @@ function Layout() {
     return (
       <main className="h-screen overflow-y-auto">
         <Outlet />
+        <AddProjectDialog />
       </main>
     )
   }
@@ -52,6 +54,7 @@ function Layout() {
           <div className="mx-auto flex max-w-4xl flex-col gap-3 p-6">
             <Outlet />
           </div>
+          <AddProjectDialog />
         </main>
       </div>
     </div>

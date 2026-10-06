@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { fieldError, messageError } from '../../../shared/api'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
@@ -6,7 +6,7 @@ import { Input } from '../../../shared/ui/input'
 import { linkForm, useBuild } from '../../../entities/history-entry'
 import { markFocusHandled, setLinkUrl, useFocusRequested, useLinkUrl } from '../model/link'
 
-export function BuildByLink() {
+export function BuildByLink({ tokenBlock }: { tokenBlock?: (host: string, retry: () => void) => ReactNode }) {
   const { t } = useTranslation()
   const errorText = useErrorText()
   const id = useId()
@@ -49,11 +49,12 @@ export function BuildByLink() {
           {busy ? progressLabel : t('form.link.build')}
         </Button>
       </div>
-      {failure && (
+      {failure && !(failure.code === 'noToken' && tokenBlock) && (
         <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
           {errorText(failure)}
         </p>
       )}
+      {failure?.code === 'noToken' && tokenBlock?.(failure.params.host, () => start(linkForm(url)))}
     </form>
   )
 }

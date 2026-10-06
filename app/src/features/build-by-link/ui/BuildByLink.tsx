@@ -11,6 +11,8 @@ export function BuildByLink({ tokenBlock }: { tokenBlock?: (host: string, retry:
   const errorText = useErrorText()
   const id = useId()
   const input = useRef<HTMLInputElement>(null)
+  // повтор после токена — той ссылкой, что отправили, а не текущим полем
+  const submitted = useRef('')
   const url = useLinkUrl()
   const focusRequested = useFocusRequested()
   const { start, busy, progressLabel, error } = useBuild()
@@ -31,6 +33,7 @@ export function BuildByLink({ tokenBlock }: { tokenBlock?: (host: string, retry:
         className="flex flex-col gap-1.5"
         onSubmit={(e) => {
           e.preventDefault()
+          submitted.current = url
           start(linkForm(url))
         }}
       >
@@ -59,7 +62,7 @@ export function BuildByLink({ tokenBlock }: { tokenBlock?: (host: string, retry:
         )}
       </form>
       {/* у блока токена своя форма — соседом, не внутри: вложенный submit всплыл бы и повторно запустил сборку */}
-      {needsToken && tokenBlock?.(needsToken, () => start(linkForm(url)))}
+      {needsToken && tokenBlock?.(needsToken, () => start(linkForm(submitted.current)))}
     </div>
   )
 }

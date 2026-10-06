@@ -71,7 +71,7 @@ function AddProjectBody() {
       {needsToken && <TokenBlock host={needsToken} onSaved={() => add(lastInput ?? input)} />}
       {/* кнопки вне формы и привязаны к ней через form=, чтобы блок токена стоял сразу под полем */}
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={closeAddProject}>
+        <Button type="button" variant="ghost" disabled={busy} onClick={closeAddProject}>
           {t('form.cancel')}
         </Button>
         <Button type="submit" form={`${id}-form`} disabled={busy || input.trim() === ''}>

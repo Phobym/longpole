@@ -44,8 +44,8 @@ export function ProjectsSidebar() {
       return
     }
     if (form.mode === 'link') {
+      // поле ссылки — в шапке, она всегда на экране; `/` увёл бы на последний проект
       fillLink(form.url)
-      void navigate({ to: '/' })
       return
     }
     if (host !== currentHost) resetSearch()
@@ -83,7 +83,7 @@ export function ProjectsSidebar() {
         </ul>
       </Section>
       <Section title={t('form.sidebar.recent')} action={entries.length > 0 && <ClearHistoryButton />}>
-        {entries.length === 0 && <p className="text-sm text-muted-foreground">{t('form.history.empty')}</p>}
+        {entries.length === 0 && !historyError && <p className="text-sm text-muted-foreground">{t('form.history.empty')}</p>}
         <ul className="flex flex-col gap-0.5">
           {entries.map((entry) => (
             <li key={entry.at} className="flex items-center gap-1">

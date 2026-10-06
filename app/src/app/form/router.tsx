@@ -53,8 +53,9 @@ function Layout() {
       <ProjectsSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto flex max-w-4xl flex-col gap-3 p-6">
+        {/* контент на «хроме» окна, страница — одна inset-grouped карточка на всю ширину */}
+        <main className="flex-1 overflow-y-auto bg-chrome">
+          <div className="flex min-h-full flex-col gap-3 px-5 py-4">
             <Outlet />
           </div>
           <AddProjectDialog />

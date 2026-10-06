@@ -14,12 +14,12 @@ export function HistoryEntryItem({ entry, onOpen }: { entry: HistoryEntry; onOpe
     <button
       type="button"
       onClick={onOpen}
-      className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-md px-2 py-1.5 text-left outline-hidden hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-md px-2 py-1 text-left focus-ring hover:bg-accent"
     >
-      <span translate="no" className="truncate text-sm font-medium">
+      <span translate="no" className="truncate text-sm">
         {label}
       </span>
-      <span className="flex gap-2 text-xs text-muted-foreground">
+      <span className="flex gap-2 text-[11px] text-muted-foreground">
         <span translate="no" className="truncate">
           {entry.host}
         </span>

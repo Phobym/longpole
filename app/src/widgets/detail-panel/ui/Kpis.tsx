@@ -4,8 +4,8 @@ import { duration } from '../../../shared/lib/format'
 
 function Kpi({ name, value, small }: { name: string; value: string; small?: string }) {
   return (
-    <div className="min-w-0 rounded-lg bg-secondary px-2.5 py-2 whitespace-nowrap">
-      <small className="block text-[10.5px] tracking-[.04em] text-muted-foreground uppercase">{name}</small>
+    <div className="min-w-0 rounded-lg border bg-card px-2.5 py-2 whitespace-nowrap">
+      <small className="block text-[11px] text-muted-foreground">{name}</small>
       <b className="mt-0.5 block text-[17px] font-semibold">{value}</b>
       {small && <i className="text-[11px] text-muted-foreground not-italic">{small}</i>}
     </div>

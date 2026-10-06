@@ -26,21 +26,21 @@ export function TopPipelines({ node }: { node: AggNode }) {
         const ms = x.end - x.start
         return (
           <div key={x.tree} className="grid min-h-[22px] grid-cols-[64px_1fr_48px_auto] items-center gap-2">
-            <OpenTree index={x.tree} className="cursor-pointer text-left text-primary">
+            <OpenTree index={x.tree} className="cursor-pointer text-left text-link">
               {pipeline.name}
             </OpenTree>
             <span>
               <span className={cn('block h-1.5 rounded-[3px]', x.retries ? 'bg-fail' : 'bg-ok')} style={{ width: `${(ms / longest) * 100}%` }} />
             </span>
             <span className="text-right">{duration(ms)}</span>
-            <GitlabLink url={pipeline.url} className="text-[11px] text-muted-foreground">
+            <GitlabLink url={pipeline.url} className="text-[11px]">
               {t('report.panel.gitlab')}
             </GitlabLink>
           </div>
         )
       })}
       {all.length > TOP && (
-        <button type="button" className="mt-1.5 cursor-pointer text-primary" aria-expanded={expanded} onClick={() => dispatch({ type: 'toggleShowAll' })}>
+        <button type="button" className="mt-1.5 cursor-pointer text-link" aria-expanded={expanded} onClick={() => dispatch({ type: 'toggleShowAll' })}>
           {expanded ? t('report.panel.collapseAll') : t('report.panel.showAll', { count: all.length })}
         </button>
       )}

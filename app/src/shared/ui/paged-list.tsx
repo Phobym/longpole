@@ -24,7 +24,8 @@ export function PagedList<T>({ query, children }: Props<T>) {
           {failure && errorText(failure)}
         </p>
       )}
-      <ul className="flex flex-col gap-1.5">{items.map(children)}</ul>
+      {/* рамка и zebra — у контейнера, строки без своих рамок (спека, § 4); пустой список не рисует пустую рамку */}
+      <ul className="flex flex-col overflow-hidden rounded-lg border empty:hidden">{items.map(children)}</ul>
       {/* после ошибки первой страницы данных нет и `hasNextPage` ложно; после ошибки следующей кнопка нужна для повтора */}
       {query.hasNextPage && (
         <Button type="button" variant="ghost" className="self-start" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>

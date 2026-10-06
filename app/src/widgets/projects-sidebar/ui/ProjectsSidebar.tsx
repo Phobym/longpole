@@ -17,7 +17,7 @@ function Section({ title, action, children }: { title: string; action?: ReactNod
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">{title}</h2>
+        <h2 className="px-2 text-[11px] font-semibold text-muted-foreground">{title}</h2>
         {action}
       </div>
       {children}
@@ -56,7 +56,7 @@ export function ProjectsSidebar() {
 
   const error = projectsError ?? historyError
   return (
-    <aside className="flex w-72 shrink-0 flex-col gap-5 overflow-y-auto border-r bg-card p-4">
+    <aside className="flex w-60 shrink-0 flex-col gap-5 overflow-y-auto border-r bg-sidebar px-2.5 py-3">
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {errorText(error)}

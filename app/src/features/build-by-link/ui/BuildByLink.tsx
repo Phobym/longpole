@@ -37,7 +37,7 @@ export function BuildByLink({ tokenBlock }: { tokenBlock?: (host: string, retry:
           start(linkForm(url))
         }}
       >
-        <label htmlFor={id} className="text-sm font-medium">
+        <label htmlFor={id} className="sr-only">
           {t('form.link.label')}
         </label>
         <div className="flex gap-2">

@@ -2,7 +2,7 @@ import type { Stability } from '../../../shared/api'
 import { useTranslation } from '../../../shared/i18n'
 import { Badge } from '../../../shared/ui/badge'
 
-const PILL = 'px-[7px] py-0 text-[10.5px] leading-4 font-normal'
+const PILL = 'px-[7px] py-0 text-[10.5px] leading-4 group-data-[selected]:bg-black/15 group-data-[selected]:text-primary-foreground'
 
 /** «стабильна» / «↻ k из N»: жёлтая при ретраях менее чем в 30% запусков, красная иначе. */
 export function StabilityPill({ stability }: { stability: Stability | undefined }) {

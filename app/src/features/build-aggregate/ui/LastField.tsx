@@ -1,7 +1,7 @@
 import { useId } from 'react'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { type ErrorBody } from '../../../shared/api'
-import { Input } from '../../../shared/ui/input'
+import { Input, labelClasses } from '../../../shared/ui/input'
 import { setAggLast, useAggLast } from '../model/aggSettings'
 
 export function LastField({ error }: { error?: ErrorBody }) {
@@ -11,7 +11,7 @@ export function LastField({ error }: { error?: ErrorBody }) {
   const last = useAggLast()
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium">
+      <label htmlFor={id} className={labelClasses}>
         {t('form.aggregate.last')}
       </label>
       <Input id={id} aria-invalid={error !== undefined} aria-describedby={error ? `${id}-error` : undefined} type="number" min={1} max={500} className="w-32" value={last} onChange={(e) => setAggLast(e.target.value)} />

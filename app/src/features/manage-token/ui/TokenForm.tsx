@@ -2,7 +2,7 @@ import { useId, useState } from 'react'
 import { messageError } from '../../../shared/api'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
-import { Input } from '../../../shared/ui/input'
+import { Input, labelClasses } from '../../../shared/ui/input'
 import { useSaveToken } from '../model/useSaveToken'
 
 /** Хост и токен; `defaultHost` — выбранный хост без токена. Токен после сохранения прочитать нельзя нигде. */
@@ -22,11 +22,11 @@ export function TokenForm({ defaultHost, onSaved }: { defaultHost: string; onSav
         if (await save(host, token)) onSaved?.()
       }}
     >
-      <label htmlFor={`${id}-host`} className="text-sm font-medium">
+      <label htmlFor={`${id}-host`} className={labelClasses}>
         {t('form.host.label')}
       </label>
       <Input id={`${id}-host`} aria-invalid={failure !== undefined} aria-describedby={failure ? `${id}-error` : undefined} translate="no" placeholder={t('form.host.placeholder')} value={host} onChange={(e) => setHost(e.target.value)} />
-      <label htmlFor={`${id}-token`} className="text-sm font-medium">
+      <label htmlFor={`${id}-token`} className={labelClasses}>
         {t('form.host.token')}
       </label>
       <Input id={`${id}-token`} type="password" autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false} value={token} onChange={(e) => setToken(e.target.value)} />

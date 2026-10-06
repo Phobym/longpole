@@ -18,7 +18,7 @@ export function ProjectPage(target: ProjectRef) {
   }, [update, target.host, target.project])
   return (
     <Card>
-      <h1 translate="no" className="truncate text-xl font-semibold">
+      <h1 translate="no" className="truncate text-[17px] font-semibold">
         {name ?? target.project}
       </h1>
       <BranchSelect {...target} onCommit={(branch) => void openProject({ ...target, branch: branch || undefined, name, replace: true })} />

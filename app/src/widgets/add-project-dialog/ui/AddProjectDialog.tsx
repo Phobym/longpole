@@ -78,7 +78,7 @@ function AddProjectBody() {
           {busy ? t('form.loading') : t('form.addProject.add')}
         </Button>
       </div>
-      <button type="button" aria-expanded={browse} aria-controls={`${id}-browse`} className="self-start text-sm text-primary hover:underline" onClick={() => setBrowse((b) => !b)}>
+      <button type="button" aria-expanded={browse} aria-controls={`${id}-browse`} className="self-start text-sm text-link hover:underline" onClick={() => setBrowse((b) => !b)}>
         {t('form.addProject.findOnHost')} <span aria-hidden>{browse ? '▾' : '▸'}</span>
       </button>
       {browse && (

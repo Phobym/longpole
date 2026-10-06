@@ -42,7 +42,7 @@ export function Verdict({ node }: { node: ReportNode }) {
 
   if (!parts.length) return null
   return (
-    <p className="mb-3 rounded-lg bg-secondary px-2.5 py-2">
+    <p className="mb-3 rounded-lg border bg-card px-2.5 py-2">
       {parts.map((part, i) => (
         <Fragment key={i}>
           {i > 0 && ' '}

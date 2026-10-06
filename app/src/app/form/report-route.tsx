@@ -1,5 +1,5 @@
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { apiError, setCurrentReport } from '../../shared/api'
 import { useTranslation } from '../../shared/i18n'
 import { showError } from '../../shared/lib/dialogs'
@@ -14,24 +14,35 @@ export function ReportRoute() {
   const reportId = Number(id)
   const navigate = useNavigate()
   const router = useRouter()
+  const valid = Number.isInteger(reportId)
   const { data, error, isPending } = useReportById(reportId)
 
   useEffect(() => {
+    if (!valid) return
     void setCurrentReport(reportId)
     return () => void setCurrentReport(null)
-  }, [reportId])
+  }, [reportId, valid])
 
-  const failure = apiError(error)
+  // Битый id (`/report/abc`): показывать нечего, сразу домой.
   useEffect(() => {
-    if (!failure) return
+    if (!valid) void navigate({ to: '/', replace: true })
+  }, [valid, navigate])
+
+  // `apiError` для чужих ошибок каждый раз отдаёт новый объект, поэтому диалог — раз за монтирование (и один при двойном эффекте StrictMode).
+  const reported = useRef(false)
+  useEffect(() => {
+    const failure = apiError(error)
+    if (!failure || reported.current) return
+    reported.current = true
     void showError(failure).then(() => navigate({ to: '/', replace: true }))
-  }, [failure, navigate])
+  }, [error, navigate])
 
   const back = () => {
     if (router.history.canGoBack()) router.history.back()
     else void navigate({ to: '/' })
   }
 
+  if (!valid) return null
   if (isPending || !data) return <p className="p-6 text-sm text-muted-foreground">{t('form.reportView.loading')}</p>
   const title = `${data.meta.project} · ${data.meta.label ?? t('report.allPipelines')}`
   return (

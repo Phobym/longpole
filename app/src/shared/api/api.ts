@@ -56,7 +56,13 @@ export const report = async (id: number): Promise<Result<Report>> => {
   return r.ok ? { ok: true, value: JSON.parse(r.value) as Report } : r
 }
 export const findReport = (host: string, request: Request) => call<number | null>('find_report', { host, request })
-export const setCurrentReport = (id: number | null) => call<null>('set_current_report', { id })
+let currentReportChain: Promise<unknown> = Promise.resolve()
+/** Вызовы идут строго по порядку: размонтирование (null) не должно обогнать монтирование нового id. */
+export const setCurrentReport = (id: number | null) => {
+  const next = currentReportChain.then(() => call<null>('set_current_report', { id }))
+  currentReportChain = next.catch(() => undefined)
+  return next
+}
 export const savedProjects = () => call<SavedProject[]>('saved_projects')
 export const addProject = (input: string) => call<SavedProject>('add_project', { input })
 export const removeProject = (project: ProjectRef) => call<SavedProject[]>('remove_project', { project })

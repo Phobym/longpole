@@ -14,7 +14,7 @@ export function HistoryEntryItem({ entry, onOpen }: { entry: HistoryEntry; onOpe
     <button
       type="button"
       onClick={onOpen}
-      className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-md px-2 py-1 text-left outline-hidden hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-primary/35"
+      className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-md px-2 py-1 text-left focus-ring hover:bg-accent"
     >
       <span translate="no" className="truncate text-sm">
         {label}

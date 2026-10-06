@@ -95,7 +95,8 @@
   --color-destructive: #ff6961;
   --color-border: #3a3a3c;
   --color-input: #48484a;
-  --color-ring: #1f6fdc;
+  /* ring светлее primary: сплошная линия фокуса должна давать ≥ 3:1 на chrome */
+  --color-ring: #5aa2ff;
   --color-selected: #18304f;
   --color-link: #5aa2ff;
   --color-ok: #30d158;
@@ -123,6 +124,19 @@
   --color-pill-bad-fg: #ff6961;
   --color-pill-run-bg: #1c2d4a;
   --color-pill-run-fg: #64d2ff;
+}
+
+/*
+ * Фокус как в macOS: ореол 3px на 35% и сплошная внутренняя линия 1px цвета ring — она даёт ≥ 3:1 там, где ореол слишком бледный,
+ * и не режется `overflow: hidden` контейнеров списков. Одна утилита вместо повторения четырёх классов в каждом контроле.
+ */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    box-shadow:
+      inset 0 0 0 1px var(--color-ring),
+      0 0 0 3px color-mix(in srgb, var(--color-ring) 35%, transparent);
+  }
 }
 
 @layer base {

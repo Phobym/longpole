@@ -16,7 +16,7 @@ export function SavedProjectItem({ project, active, onOpen, onRemove }: Props) {
         aria-current={active ? 'page' : undefined}
         onClick={onOpen}
         className={cn(
-          'flex min-w-0 flex-1 flex-col rounded-md px-2 py-1 text-left outline-hidden focus-visible:ring-[3px] focus-visible:ring-primary/35',
+          'flex min-w-0 flex-1 flex-col rounded-md px-2 py-1 text-left focus-ring',
           active ? 'bg-primary text-primary-foreground' : 'hover:bg-accent',
         )}
       >
@@ -31,7 +31,7 @@ export function SavedProjectItem({ project, active, onOpen, onRemove }: Props) {
         type="button"
         aria-label={t('form.sidebar.removeProject', { name: project.name })}
         onClick={onRemove}
-        className="rounded-md p-1 text-muted-foreground opacity-0 outline-hidden group-hover:opacity-100 hover:bg-accent focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:ring-primary/35"
+        className="rounded-md p-1 text-muted-foreground opacity-0 focus-ring group-hover:opacity-100 hover:bg-accent focus-visible:opacity-100"
       >
         <XIcon className="size-4" />
       </button>

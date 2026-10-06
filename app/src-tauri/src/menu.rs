@@ -4,10 +4,10 @@ use pipeline_trace_core::schema::Locale;
 use tauri::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu, SubmenuBuilder};
 use tauri::{AppHandle, Manager, Wry};
 
-use crate::reports::save_last_focused;
+use crate::reports::save_current;
 use crate::state::AppState;
 use crate::strings::{Strings, strings};
-use crate::windows::{focused, show_form};
+use crate::windows::{form, show_form};
 
 const ZOOM_STEP: f64 = 1.2;
 
@@ -132,7 +132,7 @@ fn window_menu(app: &AppHandle, s: &Strings) -> tauri::Result<Submenu<Wry>> {
 }
 
 fn zoom(app: &AppHandle, change: impl Fn(f64) -> f64) -> tauri::Result<()> {
-    let Some(window) = focused(app) else {
+    let Some(window) = form(app) else {
         return Ok(());
     };
     // замок масштаба `AppState` не держится во время `set_zoom`: тот ходит в главный поток
@@ -143,7 +143,7 @@ pub fn on_event(app: &AppHandle, event: MenuEvent) {
     let done = match event.id().as_ref() {
         "new" => show_form(app),
         "save" => {
-            save_last_focused(app);
+            save_current(app);
             Ok(())
         }
         "quit" => {
@@ -153,10 +153,10 @@ pub fn on_event(app: &AppHandle, event: MenuEvent) {
         "zoom_reset" => zoom(app, |_| 1.0),
         "zoom_in" => zoom(app, |z| z * ZOOM_STEP),
         "zoom_out" => zoom(app, |z| z / ZOOM_STEP),
-        "fullscreen" => focused(app).map_or(Ok(()), |w| {
+        "fullscreen" => form(app).map_or(Ok(()), |w| {
             w.is_fullscreen().and_then(|on| w.set_fullscreen(!on))
         }),
-        "minimize" => focused(app).map_or(Ok(()), |w| w.minimize()),
+        "minimize" => form(app).map_or(Ok(()), |w| w.minimize()),
         _ => Ok(()),
     };
     if let Err(e) = done {

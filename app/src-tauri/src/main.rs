@@ -14,14 +14,12 @@ use crate::state::AppState;
 fn main() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        // скрипт плагина открывает `target=_blank` через IPC, а окнам отчёта IPC запрещён:
-        // ссылки открывает Rust из `on_navigation`/`on_new_window`
+        // ссылки `https` открывает Rust из `on_navigation`/`on_new_window`, скрипт плагина не нужен
         .plugin(
             tauri_plugin_opener::Builder::new()
                 .open_js_links_on_click(false)
                 .build(),
         )
-        .register_uri_scheme_protocol("report", reports::serve)
         .invoke_handler(tauri::generate_handler![
             commands::hosts,
             commands::set_token,
@@ -33,6 +31,9 @@ fn main() {
             commands::branches,
             commands::pipelines,
             commands::build,
+            commands::report,
+            commands::find_report,
+            commands::set_current_report,
             commands::get_locale,
             commands::set_locale,
         ])
@@ -45,11 +46,8 @@ fn main() {
         })
         .on_menu_event(menu::on_event)
         .on_window_event(|window, event| {
-            let state = window.state::<AppState>();
-            match event {
-                WindowEvent::Focused(true) => state.focus(window.label()),
-                WindowEvent::Destroyed => state.forget(window.label()),
-                _ => {}
+            if let WindowEvent::Destroyed = event {
+                window.state::<AppState>().forget(window.label());
             }
         })
         .build(tauri::generate_context!())
@@ -81,7 +79,7 @@ fn on_run_event(app: &AppHandle, event: RunEvent) {
 fn on_run_event(_: &AppHandle, _: RunEvent) {}
 
 /// Три списка команд — `COMMANDS` в `build.rs`, `generate_handler!` и `capabilities/form.json` — ведутся
-/// вручную: команда, пропущенная в одном, либо открыта окнам отчётов, либо не вызывается из формы.
+/// вручную: команда, пропущенная в одном, либо открыта любому локальному окну, либо не вызывается из формы.
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeSet;
@@ -118,7 +116,7 @@ mod tests {
             .filter_map(|permission| permission.strip_prefix("allow-"))
             .map(|name| name.replace('-', "_"))
             .collect();
-        assert_eq!(in_build.len(), 12);
+        assert_eq!(in_build.len(), 15);
         assert_eq!(in_build, in_handler);
         assert_eq!(in_build, in_capability);
     }

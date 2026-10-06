@@ -1,4 +1,4 @@
-//! Словарь Rust: только меню, заголовок окна отчёта и ошибка сохранения; остальное переводит фронтенд.
+//! Словарь Rust: только меню и ошибка сохранения; остальное переводит фронтенд.
 
 use pipeline_trace_core::schema::Locale;
 
@@ -29,8 +29,6 @@ pub struct Strings {
     pub window: &'static str,
     pub minimize: &'static str,
     pub maximize: &'static str,
-    /// `meta.label == null` в заголовке окна отчёта
-    pub all_pipelines: &'static str,
     pub save_error: &'static str,
 }
 
@@ -61,7 +59,6 @@ const RU: Strings = Strings {
     window: "Окно",
     minimize: "Свернуть",
     maximize: "Развернуть",
-    all_pipelines: "все пайплайны",
     save_error: "Не удалось сохранить отчёт",
 };
 
@@ -92,7 +89,6 @@ const EN: Strings = Strings {
     window: "Window",
     minimize: "Minimize",
     maximize: "Zoom",
-    all_pipelines: "all pipelines",
     save_error: "Could not save the report",
 };
 

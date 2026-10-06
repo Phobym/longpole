@@ -1,7 +1,7 @@
 use std::path::Path;
 
 /// Команды формы: на каждую `allow-<имя>` в `capabilities/form.json`. Без манифеста свои команды
-/// доступны любому локальному окну, включая `report://`; список должен совпадать с `generate_handler!`.
+/// доступны любому локальному окну; список должен совпадать с `generate_handler!`.
 const COMMANDS: &[&str] = &[
     "hosts",
     "set_token",
@@ -13,6 +13,9 @@ const COMMANDS: &[&str] = &[
     "branches",
     "pipelines",
     "build",
+    "report",
+    "find_report",
+    "set_current_report",
     "get_locale",
     "set_locale",
 ];

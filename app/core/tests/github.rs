@@ -538,3 +538,98 @@ async fn workflow_только_активные_имя_файла_без_пут�
         }]
     );
 }
+
+#[tokio::test]
+async fn агрегат_failed_без_параметра_status_и_timed_out_считается() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/workflows/ci.yml/runs"))
+        .and(query_param_is_missing("status"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(json!({ "workflow_runs": [
+            listed_run(1, "timed_out", 5), listed_run(2, "success", 6), listed_run(3, "failure", 7),
+        ] })),
+        )
+        .mount(&server)
+        .await;
+    let listed = client(&server)
+        .list_pipelines("o/r", &filter(Some(&["FAILED"]), 50))
+        .await
+        .unwrap();
+    assert_eq!(listed.ids, vec!["1", "3"]);
+    assert_eq!(listed.counts, BTreeMap::from([("FAILED".to_string(), 2)]));
+}
+
+/// Две страницы агрегата; `Link` на вторую строится от адреса сервера.
+async fn mount_two_pages(server: &MockServer, second_expected: u64) {
+    let next = format!(
+        "<{}/repos/o/r/actions/workflows/ci.yml/runs?page=2>; rel=\"next\"",
+        server.uri()
+    );
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/workflows/ci.yml/runs"))
+        .and(query_param_is_missing("page"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("link", next.as_str())
+                .set_body_json(json!({ "workflow_runs": [
+                    listed_run(1, "success", 5), listed_run(2, "success", 6),
+                ] })),
+        )
+        .mount(server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/workflows/ci.yml/runs"))
+        .and(query_param("page", "2"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(json!({ "workflow_runs": [
+            listed_run(3, "success", 7), listed_run(4, "success", 8),
+        ] })),
+        )
+        .expect(second_expected)
+        .mount(server)
+        .await;
+}
+
+#[tokio::test]
+async fn агрегат_идёт_по_страницам_до_last() {
+    let server = MockServer::start().await;
+    mount_two_pages(&server, 1).await;
+    let listed = client(&server)
+        .list_pipelines("o/r", &filter(None, 3))
+        .await
+        .unwrap();
+    assert_eq!(listed.ids, vec!["1", "2", "3"]);
+}
+
+#[tokio::test]
+async fn агрегат_не_просит_лишнюю_страницу() {
+    let server = MockServer::start().await;
+    mount_two_pages(&server, 0).await;
+    let listed = client(&server)
+        .list_pipelines("o/r", &filter(None, 2))
+        .await
+        .unwrap();
+    assert_eq!(listed.ids, vec!["1", "2"]);
+}
+
+#[tokio::test]
+async fn ветка_и_имя_файла_workflow_кодируются() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/workflows/my%20ci.yml/runs"))
+        .and(query_param("branch", "feature/a+b"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(json!({ "workflow_runs": [
+            listed_run(1, "success", 5),
+        ] })),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+    let mut f = filter(None, 5);
+    f.r#ref = Some("feature/a+b".into());
+    f.workflow = Some("my ci.yml".into());
+    let listed = client(&server).list_pipelines("o/r", &f).await.unwrap();
+    assert_eq!(listed.ids, vec!["1"]);
+}

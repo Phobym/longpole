@@ -210,10 +210,9 @@ GitHub-реализация операций:
 | `ref` | `branch` |
 | `source` | `event` |
 | `SUCCESS` | `status=success` |
-| `FAILED` | `status=failure` |
 | `CANCELED` | `status=cancelled` |
-| `RUNNING` | `status=in_progress` |
-| `MANUAL` | `status=waiting` |
+
+Остальные статусы фильтруются на клиенте по таблице 2.3: у GitHub `failure` не включает `timed_out`, а `waiting` — `pending`.
 
 Несколько статусов — запрос без `status`, фильтр на клиенте по таблице 2.3, как у GitLab. Счётчики статусов — по таблице 2.3.
 

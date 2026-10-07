@@ -92,19 +92,16 @@ fn query(params: &[(&str, Option<String>)]) -> String {
 
 fn runs_path(project: &str, workflow: Option<&str>) -> String {
     match workflow {
-        Some(file) => format!("/repos/{project}/actions/workflows/{file}/runs"),
+        Some(file) => format!("/repos/{project}/actions/workflows/{}/runs", encode(file)),
         None => format!("/repos/{project}/actions/runs"),
     }
 }
 
-/// Статус формы в параметр `status` списка запусков (спека, § 7).
+/// Статус формы в параметр `status` — только когда он совпадает со статусом таблицы 2.3 точно (спека, § 7).
 fn status_param(status: &str) -> Option<&'static str> {
     match status {
         "SUCCESS" => Some("success"),
-        "FAILED" => Some("failure"),
         "CANCELED" => Some("cancelled"),
-        "RUNNING" => Some("in_progress"),
-        "MANUAL" => Some("waiting"),
         _ => None,
     }
 }

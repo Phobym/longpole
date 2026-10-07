@@ -11,6 +11,9 @@ use crate::error::Error;
 use crate::gitlab::{self, Gql, Listed, PipelineFilter};
 use crate::model::RawPipeline;
 
+/// Хост GitHub, тип которого известен без пробы и кэша.
+pub const GITHUB_COM: &str = "github.com";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 #[ts(export)]

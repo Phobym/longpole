@@ -23,6 +23,8 @@
     "projectInputInvalid": "Не похоже на ссылку на проект GitLab или путь к папке",
     "projectDirNoRemote": "В папке нет git-репозитория с remote origin",
     "reportExpired": "Отчёт больше не в памяти, построй заново",
+    "rateLimited": "{{host}}: лимит запросов исчерпан, повтори после {{reset}}",
+    "workflowRequired": "Выбери workflow: агрегат GitHub строится по одному workflow",
     "ipc": "Не удалось выполнить команду: {{detail}}"
   },
   "form": {

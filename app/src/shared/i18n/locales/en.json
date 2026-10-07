@@ -23,6 +23,8 @@
     "projectInputInvalid": "Doesn't look like a GitLab project link or a folder path",
     "projectDirNoRemote": "The folder has no git repository with an origin remote",
     "reportExpired": "The report is no longer in memory, build it again",
+    "rateLimited": "{{host}}: rate limit exceeded, retry after {{reset}}",
+    "workflowRequired": "Choose a workflow: a GitHub aggregate covers one workflow",
     "ipc": "Could not run the command: {{detail}}"
   },
   "form": {

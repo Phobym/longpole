@@ -189,7 +189,7 @@ GitHub-реализация операций:
 | `list_projects` | `GET /user/repos?sort=pushed&per_page=100`; `search` фильтрует страницу по подстроке `full_name` без учёта регистра; курсор — номер страницы |
 | `list_branches` | `GET /repos/{o}/{r}/branches?per_page=100`, первая страница, фильтр по подстроке, не больше 20; ветка по умолчанию — первой |
 | `recent_pipelines` | `GET /repos/{o}/{r}/actions/workflows/{workflow}/runs?branch=&per_page=20`; без `workflow` — `/actions/runs` |
-| `list_workflows` | `GET /repos/{o}/{r}/actions/workflows`, только `state == active` |
+| `list_workflows` | `GET /repos/{o}/{r}/actions/workflows`, только `state == active` и файлы `.github/workflows/*.yml|yaml` (динамические workflow без файла — Dependabot, Copilot — отбрасываются) |
 | `list_pipelines` | `GET …/workflows/{workflow}/runs?branch=&event=&status=&per_page=100`, не больше 10 страниц |
 | `head_pipeline` | `GET /repos/{o}/{r}/pulls/{n}` → `head.sha`; `GET /actions/runs?head_sha=` → run с максимальной длительностью (идущий — до `now`); нет запусков — `mrHasNoPipeline` |
 

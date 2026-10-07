@@ -223,9 +223,13 @@ impl Client {
             .workflows
             .into_iter()
             .filter(|w| w.state == "active")
-            .map(|w| Workflow {
-                file: w.path.rsplit('/').next().unwrap_or(&w.path).to_string(),
-                name: w.name,
+            .filter_map(|w| {
+                // динамические workflow (Dependabot, Copilot) файла не имеют
+                let file = w.path.strip_prefix(".github/workflows/")?;
+                (file.ends_with(".yml") || file.ends_with(".yaml")).then(|| Workflow {
+                    file: file.to_string(),
+                    name: w.name,
+                })
             })
             .collect())
     }

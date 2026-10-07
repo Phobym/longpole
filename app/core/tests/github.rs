@@ -529,6 +529,8 @@ async fn workflow_только_активные_имя_файла_без_пут�
             ResponseTemplate::new(200).set_body_json(json!({ "workflows": [
             { "name": "CI", "path": ".github/workflows/ci.yml", "state": "active" },
             { "name": "Old", "path": ".github/workflows/old.yml", "state": "disabled_manually" },
+            { "name": "build", "path": "", "state": "active" },
+            { "name": "Copilot", "path": "dynamic/copilot-swe-agent/copilot", "state": "active" },
         ] })),
         )
         .mount(&server)

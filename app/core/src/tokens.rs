@@ -3,11 +3,15 @@
 use std::collections::BTreeMap;
 use std::env;
 use std::ffi::OsStr;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::Arc;
+use std::sync::{Arc, mpsc};
+use std::thread;
+use std::time::Duration;
 
 use keyring_core::{CredentialStore, Entry, Error as KeyringError};
+use serde::de::IgnoredAny;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -251,9 +255,19 @@ impl Glab {
     }
 
     pub fn value(&self, args: &[&str]) -> Option<String> {
-        tool_value(&self.0, args)
+        tool_value(&self.0, args, &[], None)
     }
 }
+
+/// `gh auth status` ходит в сеть проверять токены: офлайн ждать его незачем.
+const GH_TIMEOUT: Duration = Duration::from_secs(5);
+
+const GH_ENV_TOKENS: [&str; 4] = [
+    "GH_TOKEN",
+    "GITHUB_TOKEN",
+    "GH_ENTERPRISE_TOKEN",
+    "GITHUB_ENTERPRISE_TOKEN",
+];
 
 /// Найденный исполняемый файл `gh`.
 pub struct Gh(PathBuf);
@@ -261,11 +275,17 @@ pub struct Gh(PathBuf);
 impl Gh {
     pub fn find() -> Option<Gh> {
         let dirs = Glab::search_dirs(env::var_os("PATH").as_deref(), env::home_dir().as_deref());
-        find_tool("gh", &dirs).map(Gh)
+        Self::find_in(&dirs)
     }
 
+    pub fn find_in(dirs: &[PathBuf]) -> Option<Gh> {
+        find_tool("gh", dirs).map(Gh)
+    }
+
+    /// Токены окружения `gh` не отдаём: `gh auth token --hostname H` вернул бы `GH_ENTERPRISE_TOKEN`
+    /// любому enterprise-хосту, а их привязку к `GH_HOST` разбирает `find_github_token`.
     pub fn value(&self, args: &[&str]) -> Option<String> {
-        tool_value(&self.0, args)
+        tool_value(&self.0, args, &GH_ENV_TOKENS, Some(GH_TIMEOUT))
     }
 }
 
@@ -276,18 +296,44 @@ fn find_tool(name: &str, dirs: &[PathBuf]) -> Option<PathBuf> {
         .find(|path| path.is_file())
 }
 
-/// Вывод команды; любой сбой и пустой вывод — `None`: CLI может быть не настроен, это не ошибка.
-// ponytail: без таймаута, `config get` и `auth token` локальные и мгновенные
-fn tool_value(path: &Path, args: &[&str]) -> Option<String> {
-    let output = Command::new(path)
+/// Вывод команды; любой сбой, таймаут и пустой вывод — `None`: CLI может быть не настроен, это не ошибка.
+// ponytail: у `glab` без таймаута — `config get` локальный и мгновенный; `gh auth status` ходит в сеть,
+// его ограничивают 5 с, после чего процесс убивается
+fn tool_value(
+    path: &Path,
+    args: &[&str],
+    env_remove: &[&str],
+    timeout: Option<Duration>,
+) -> Option<String> {
+    let mut command = Command::new(path);
+    command
         .args(args)
         .stdin(Stdio::null())
-        .output()
-        .ok()?;
-    if !output.status.success() {
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null());
+    for name in env_remove {
+        command.env_remove(name);
+    }
+    let mut child = command.spawn().ok()?;
+    let mut stdout = child.stdout.take()?;
+    let (tx, rx) = mpsc::channel();
+    thread::spawn(move || {
+        let mut buf = Vec::new();
+        let _ = stdout.read_to_end(&mut buf);
+        let _ = tx.send(buf);
+    });
+    let output = match timeout {
+        Some(limit) => rx.recv_timeout(limit).ok(),
+        None => rx.recv().ok(),
+    };
+    if output.is_none() {
+        let _ = child.kill();
+    }
+    let status = child.wait().ok()?;
+    if !status.success() {
         return None;
     }
-    Some(String::from_utf8_lossy(&output.stdout).trim().to_string()).filter(|s| !s.is_empty())
+    Some(String::from_utf8_lossy(&output?).trim().to_string()).filter(|s| !s.is_empty())
 }
 
 /// Токен GitHub (спека, § 4): хранилище → `gh auth token` → `GH_TOKEN`/`GITHUB_TOKEN` для github.com,
@@ -317,15 +363,10 @@ pub fn find_github_token(
 
 #[derive(Deserialize)]
 struct GhStatus {
-    hosts: BTreeMap<String, Vec<GhAccount>>,
+    hosts: BTreeMap<String, Vec<IgnoredAny>>,
 }
 
-#[derive(Deserialize)]
-struct GhAccount {
-    state: String,
-}
-
-/// Хосты GitHub с токеном у `gh` (по алфавиту) и github.com из окружения.
+/// Хосты GitHub с учётной записью в `gh` (по алфавиту) и github.com из окружения.
 pub fn github_hosts(
     env: &dyn Fn(&str) -> Option<String>,
     gh: &dyn Fn(&[&str]) -> Option<String>,
@@ -341,7 +382,9 @@ pub fn github_hosts(
         Some(status) => status
             .hosts
             .into_iter()
-            .filter(|(_, accounts)| accounts.iter().any(|a| a.state == "success"))
+            // токены `gh` проверяет по сети: офлайн ни у одного `state` не success, а негодный токен
+            // честнее показать ошибкой `unauthorized` при использовании, чем скрыть хост
+            .filter(|(_, accounts)| !accounts.is_empty())
             .map(|(host, _)| info(host, TokenSource::Gh))
             .collect(),
         // старый `gh` без `--json`

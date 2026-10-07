@@ -117,7 +117,7 @@ REST: `GET /repos/{owner}/{repo}/actions/runs/{id}/jobs?filter=all&per_page=100`
 1. `github.com` — всегда `Github`, без запросов.
 2. Иначе — карта `hostKinds` (хост → `gitlab` | `github`) в `settings.json`.
 3. Хоста нет в карте — проба `GET https://<host>/api/v3/meta` без токена, таймаут соединения 15 с: заголовок `X-GitHub-Enterprise-Version` в ответе с любым статусом (GHES ставит его на каждый ответ API, в том числе на 401 приватного режима) или 200 с полем `installed_version` — `Github`, любой другой ответ — `Gitlab`. Результат пишется в карту.
-4. Сетевая ошибка пробы — ошибка `network`, в карту ничего не пишется.
+4. Сетевая ошибка пробы — ошибка `network`; ответ 5xx, 429 или 407 без заголовка `X-GitHub-Enterprise-Version` — ошибка `httpStatus` (сбой сервера, лимит или прокси, а не ответ хоста). При ошибке в карту ничего не пишется, следующий запрос проберёт хост заново. 2xx без `installed_version`, 3xx, 401, 403 и 404 — `Gitlab`.
 
 Ссылка, разобранная как GitHub (раздел 5), пишет `github` в карту без пробы; ссылка вида `/-/pipelines/` — `gitlab`.
 
@@ -132,13 +132,13 @@ API: github.com — `https://api.github.com`, GHES — `https://<host>/api/v3`. 
 `find_token` для `Github`:
 
 1. Связка ключей.
-2. `gh auth token --hostname <host>`. `Gh` ищется так же, как `Glab` (PATH, типовые каталоги, `~/.local/bin`).
+2. `gh auth token --hostname <host>`; `gh` запускается без `GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN`, `GITHUB_ENTERPRISE_TOKEN`: их разбирает п. 3 с привязкой к `GH_HOST`. `Gh` ищется так же, как `Glab` (PATH, типовые каталоги, `~/.local/bin`).
 3. github.com: `GH_TOKEN`, затем `GITHUB_TOKEN`. GHES: `GH_ENTERPRISE_TOKEN`, затем `GITHUB_ENTERPRISE_TOKEN`, если `GH_HOST` совпадает с хостом.
 4. Иначе — `noToken`.
 
 Для `Gitlab` — как сейчас.
 
-`TokenSource` получает вариант `Gh`. `list_hosts` добавляет хосты из `gh auth status --json hosts` (если версия `gh` не умеет `--json` — только github.com при успешном `gh auth token`) с источником `gh` и github.com из `GH_TOKEN`/`GITHUB_TOKEN` с источником `env`.
+`TokenSource` получает вариант `Gh`. `list_hosts` добавляет хосты из `gh auth status --json hosts` (все хосты с учётной записью, независимо от `state`: `gh` проверяет токены по сети и офлайн ни один не `success`; негодный токен проявится как `unauthorized` при использовании; вызов `gh` ограничен 5 с, по таймауту действует запасной путь ниже) (если версия `gh` не умеет `--json` — только github.com при успешном `gh auth token`) с источником `gh` и github.com из `GH_TOKEN`/`GITHUB_TOKEN` с источником `env`.
 
 Подсказка о токене для GitHub: ссылка `https://<host>/settings/personal-access-tokens/new`, права — Actions: read, Contents: read (Metadata: read добавляется сам). Для classic PAT — scope `repo`.
 

@@ -24,7 +24,7 @@ pub enum Provider {
     Github,
 }
 
-/// Тип хоста (спека, § 3): кэш, иначе проба `/api/v3/meta` с записью в кэш. Сбой сети пробы — ошибка, кэш не пишется.
+/// Тип хоста (спека, § 3): кэш, иначе проба `/api/v3/meta` с записью в кэш. Сбой сети или 5xx/429/407 — ошибка, кэш не пишется.
 pub async fn resolve_provider(host: &str, settings: &Settings) -> Result<Provider, Error> {
     resolve_provider_at(host, settings, &format!("https://{host}")).await
 }

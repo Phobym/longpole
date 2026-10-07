@@ -73,3 +73,38 @@ async fn github_com_без_пробы() {
         Provider::Github
     );
 }
+
+#[tokio::test]
+async fn сбой_пробы_не_кэшируется() {
+    let dir = TempDir::new().unwrap();
+    let settings = Settings::new(dir.path().join("settings.json"));
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/api/v3/meta"))
+        .respond_with(ResponseTemplate::new(503))
+        .up_to_n_times(1)
+        .expect(1)
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/api/v3/meta"))
+        .respond_with(
+            ResponseTemplate::new(200).insert_header("x-github-enterprise-version", "3.14.0"),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+    assert!(
+        resolve_provider_at("ghe.example", &settings, &server.uri())
+            .await
+            .is_err()
+    );
+    for _ in 0..2 {
+        assert_eq!(
+            resolve_provider_at("ghe.example", &settings, &server.uri())
+                .await
+                .unwrap(),
+            Provider::Github
+        );
+    }
+}

@@ -83,3 +83,33 @@ async fn редирект_не_выполняется_и_это_http_status() {
         &[("host", "github.com"), ("status", "301")],
     );
 }
+
+#[tokio::test]
+async fn проба_5xx_429_407_без_заголовка_это_ошибка_а_не_gitlab() {
+    for status in [503, 429, 407] {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/api/v3/meta"))
+            .respond_with(ResponseTemplate::new(status))
+            .mount(&server)
+            .await;
+        let err = probe_at("ghe.example", &server.uri()).await.unwrap_err();
+        assert_eq!(err.code, ErrorCode::HttpStatus, "{status}");
+    }
+}
+
+#[tokio::test]
+async fn проба_ghes_с_заголовком_при_503_всё_равно_github() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/api/v3/meta"))
+        .respond_with(
+            ResponseTemplate::new(503).insert_header("x-github-enterprise-version", "3.14.0"),
+        )
+        .mount(&server)
+        .await;
+    assert_eq!(
+        probe_at("ghe.example", &server.uri()).await.unwrap(),
+        Provider::Github
+    );
+}

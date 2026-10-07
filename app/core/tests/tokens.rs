@@ -11,8 +11,8 @@ use pipeline_trace_core::error::{Error, ErrorCode};
 use pipeline_trace_core::hosts::normalize_host;
 use pipeline_trace_core::source::Provider;
 use pipeline_trace_core::tokens::{
-    Glab, HostInfo, SERVICE, TokenSource, TokenStore, find_github_token, find_token, github_hosts,
-    list_hosts,
+    Gh, Glab, HostInfo, SERVICE, TokenSource, TokenStore, find_github_token, find_token,
+    github_hosts, list_hosts,
 };
 use tempfile::TempDir;
 
@@ -522,6 +522,7 @@ fn хосты_github_из_gh_и_окружения() {
     assert_eq!(
         github_hosts(&no_env, &gh),
         vec![
+            info("dead.example", TokenSource::Gh),
             info("ghe.example", TokenSource::Gh),
             info("github.com", TokenSource::Gh)
         ]
@@ -531,4 +532,41 @@ fn хосты_github_из_gh_и_окружения() {
         github_hosts(&env, &no_cli),
         vec![info("github.com", TokenSource::Env)]
     );
+}
+
+#[cfg(unix)]
+fn fake_gh(script: &str) -> (TempDir, Gh) {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = TempDir::new().unwrap();
+    let path = dir.path().join("gh");
+    std::fs::write(&path, format!("#!/bin/sh\n{script}\n")).unwrap();
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let gh = Gh::find_in(&[dir.path().into()]).expect("gh");
+    (dir, gh)
+}
+
+// токены окружения `gh` не получает: их разбирает наш fallback со своей привязкой к хосту
+// (слабая проверка: в окружении тестов этих переменных может не быть)
+#[cfg(unix)]
+#[test]
+fn gh_запускается_без_токенов_окружения() {
+    let (_dir, gh) = fake_gh("exec env");
+    let out = gh.value(&[]).expect("env");
+    for name in [
+        "GH_TOKEN",
+        "GITHUB_TOKEN",
+        "GH_ENTERPRISE_TOKEN",
+        "GITHUB_ENTERPRISE_TOKEN",
+    ] {
+        assert!(!out.contains(name), "{name}");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn зависший_gh_обрывается_по_таймауту() {
+    let (_dir, gh) = fake_gh("exec sleep 30");
+    let started = std::time::Instant::now();
+    assert_eq!(gh.value(&["auth", "status"]), None);
+    assert!(started.elapsed() < std::time::Duration::from_secs(15));
 }

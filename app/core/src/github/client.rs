@@ -222,6 +222,8 @@ fn own_url(api: &str, url: &str) -> bool {
 
 /// Тип хоста по `GET /api/v3/meta` без токена: GHES ставит `X-GitHub-Enterprise-Version` на каждый
 /// ответ API, в том числе 401 приватного режима; иначе GHES — 200 с `installed_version`, GitLab — нет.
+/// 5xx, 429 и 407 без заголовка — не ответ хоста, а сбой (сервер, лимит, прокси): ошибка `httpStatus`,
+/// чтобы вызывающий не закэшировал временный сбой как GitLab.
 pub async fn probe_at(host: &str, base_url: &str) -> Result<Provider, Error> {
     let response = http(host)?
         .get(format!("{}/api/v3/meta", base_url.trim_end_matches('/')))
@@ -234,7 +236,13 @@ pub async fn probe_at(host: &str, base_url: &str) -> Result<Provider, Error> {
     {
         return Ok(Provider::Github);
     }
-    if !response.status().is_success() {
+    let status = response.status();
+    if status.is_server_error() || matches!(status.as_u16(), 429 | 407) {
+        return Err(Error::new(ErrorCode::HttpStatus)
+            .with("host", host)
+            .with("status", status.as_u16()));
+    }
+    if !status.is_success() {
         return Ok(Provider::Gitlab);
     }
     let body: serde_json::Value = response.json().await.unwrap_or_default();

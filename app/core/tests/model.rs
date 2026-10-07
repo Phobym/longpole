@@ -437,6 +437,16 @@ fn в_стейдже_джоба_стоит_после_соседа_которо�
                     ..Default::default()
                 },
             ),
+            // сосед не даёт группе e2e занять весь стейдж и раскрыться
+            job(
+                "unit",
+                "test",
+                JobOpts {
+                    start: Some(405),
+                    end: Some(406),
+                    ..Default::default()
+                },
+            ),
             job(
                 "e2e: [1]",
                 "test",
@@ -641,6 +651,36 @@ fn шарды_с_явным_ключом_группируются_по_нему_
     assert_eq!(
         names(&stage.children[0]),
         ["Stats (webpack)", "Stats (turbopack)"]
+    );
+}
+
+#[test]
+fn группа_на_весь_стейдж_раскрывается_в_шарды_стейджа() {
+    let tree = build(&raw_pipeline(
+        vec![
+            шард("Stats (webpack)", Some("test"), 0, 50),
+            шард("Stats (turbopack)", Some("test"), 5, 80),
+        ],
+        PipelineOpts::default(),
+    ));
+    let stage = find(&tree, "test");
+    let kinds: Vec<_> = stage
+        .children
+        .iter()
+        .map(|s| (s.kind, s.name.as_str()))
+        .collect();
+    assert_eq!(
+        kinds,
+        [
+            (Kind::Job, "Stats (webpack)"),
+            (Kind::Job, "Stats (turbopack)")
+        ]
+    );
+    assert_eq!((stage.start, stage.end), (Some(0), Some(80_000)));
+    // id шарда не зависит от обёртки
+    assert_eq!(
+        stage.children[0].id,
+        "gid://gitlab/Ci::Build/Stats (webpack)"
     );
 }
 

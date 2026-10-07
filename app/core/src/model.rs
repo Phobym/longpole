@@ -361,7 +361,7 @@ impl Ctx<'_> {
                 let members = jobs
                     .extract_if(.., |s| s.stage.as_deref() == Some(stage))
                     .collect();
-                let children = group_shards(members, &id);
+                let children = unwrap_sole_group(group_shards(members, &id));
                 let (start, end) = bounds(&children);
                 Span {
                     position: Some(position),
@@ -461,6 +461,15 @@ fn stage_names<'a>(declared: &'a [String], ordered: &[&'a RawJob]) -> Vec<&'a st
         }
     }
     names
+}
+
+/// Группа на весь стейдж — дубль его заголовка: дети стейджа — её шарды.
+/// Id шардов — id джоб, от обёртки не зависят.
+fn unwrap_sole_group(mut children: Vec<Span>) -> Vec<Span> {
+    match children.as_slice() {
+        [only] if only.kind == Kind::Group => children.remove(0).children,
+        _ => children,
+    }
 }
 
 /// Шарды одного ключа (явный `shard_group` или имя без суффикса: `e2e: [1]`, `e2e: [2]`)

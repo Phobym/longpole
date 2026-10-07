@@ -715,6 +715,20 @@ async fn report_of_run(yaml: &str) -> Value {
 }
 
 #[tokio::test]
+async fn шарды_matrix_на_весь_стейдж_лежат_в_стейдже_без_группы() {
+    let report = report_of_run(YAML).await;
+    let mut shards = kids(&report, node(&report, "stage", "test"));
+    shards.sort();
+    assert_eq!(
+        shards,
+        [
+            ("job".to_string(), "test (linux)".to_string()),
+            ("job".into(), "test (mac)".into())
+        ]
+    );
+}
+
+#[tokio::test]
 async fn шарды_matrix_рядом_с_другой_джобой_стейджа_образуют_группу_по_ключу() {
     // lint теперь в одном уровне с test
     let yaml = YAML.replace("  lint:\n", "  lint:\n    needs: build\n");

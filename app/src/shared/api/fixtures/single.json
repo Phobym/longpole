@@ -273,6 +273,28 @@
         "url": "https://h/g/p/-/jobs/trigger",
         "attempts": []
       },
+      "gid://gitlab/Ci::Build/unit": {
+        "id": "gid://gitlab/Ci::Build/unit",
+        "kind": "job",
+        "name": "unit",
+        "parent": "gid://gitlab/Ci::Pipeline/1:test",
+        "children": [],
+        "deps": [],
+        "after": null,
+        "bar": {
+          "start": 335000,
+          "end": 400000
+        },
+        "dependents": [],
+        "critShare": 0.0,
+        "start": 335000,
+        "end": 400000,
+        "queued": 1000,
+        "status": "success",
+        "allowFailure": false,
+        "url": "https://h/g/p/-/jobs/unit",
+        "attempts": []
+      },
       "gid://gitlab/Ci::Pipeline/1": {
         "id": "gid://gitlab/Ci::Pipeline/1",
         "kind": "pipeline",
@@ -431,7 +453,8 @@
         "name": "test",
         "parent": "gid://gitlab/Ci::Pipeline/1",
         "children": [
-          "gid://gitlab/Ci::Pipeline/1:test:e2e"
+          "gid://gitlab/Ci::Pipeline/1:test:e2e",
+          "gid://gitlab/Ci::Build/unit"
         ],
         "deps": [],
         "after": null,

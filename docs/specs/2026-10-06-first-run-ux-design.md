@@ -74,7 +74,7 @@
 **Блок токена** (`features/manage-token`, переиспользуется в шапке и в настройках):
 
 - заголовок «Нужен токен для {host}»;
-- ссылка «Создать на {host}» → `https://{host}/-/user_settings/personal_access_tokens?name=pipeline-trace&scopes=read_api`, через `opener`;
+- ссылка «Создать на {host}» → `https://{host}/-/user_settings/personal_access_tokens?name=longpole&scopes=read_api`, через `opener`;
 - поле токена (`type=password`), подпись «Хранится в системной связке ключей»;
 - «Сохранить» → `set_token`, затем повтор исходного действия (добавление проекта или сборка по ссылке).
 
@@ -125,7 +125,7 @@
 
 ## 7. Тесты
 
-`cargo test -p pipeline-trace-core`:
+`cargo test -p longpole-core`:
 
 - `request`: `parse_project_input` — https с `.git` и без, завершающий `/`, ссылка на пайплайн и MR, `git@`, `ssh://` с портом, папка с `.git/config` (tempdir), worktree с файлом `.git`, папка без remote, мусор.
 - `projects`: добавление, дедупликация, удаление, round-trip JSON.

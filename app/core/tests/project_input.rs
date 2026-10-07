@@ -1,7 +1,7 @@
 //! Разбор ввода диалога «Добавить проект»: ссылки, ssh-URL, папка с клоном.
 
-use pipeline_trace_core::error::{Error, ErrorCode};
-use pipeline_trace_core::request::{ProjectRef, parse_project_input};
+use longpole_core::error::{Error, ErrorCode};
+use longpole_core::request::{ProjectRef, parse_project_input};
 use tempfile::TempDir;
 
 fn r(host: &str, path: &str) -> Result<ProjectRef, Error> {

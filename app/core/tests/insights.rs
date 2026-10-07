@@ -4,12 +4,12 @@ use fixtures::{
     JobOpts, PipelineOpts, T0, at, clean_pipeline, failed, find, job, pipeline_opts, raw_pipeline,
     run, sample_pipeline,
 };
-use pipeline_trace_core::aggregate::aggregate;
-use pipeline_trace_core::insights::{
+use longpole_core::aggregate::aggregate;
+use longpole_core::insights::{
     Excess, Hotspot, HotspotKind, Stability, agg_insights, insights, retry_loss, stability_by_name,
     stability_key, stage_excess,
 };
-use pipeline_trace_core::model::{RawPipeline, Span, build_tree};
+use longpole_core::model::{RawPipeline, Span, build_tree};
 
 fn build(raw: &RawPipeline) -> Span {
     build_tree(raw, "https://h", T0)

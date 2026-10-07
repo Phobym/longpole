@@ -2,11 +2,9 @@
 
 use std::collections::BTreeMap;
 
-use pipeline_trace_core::error::{Error, ErrorCode, Field};
-use pipeline_trace_core::request::{
-    Form, FormMode, Parsed, Request, Status, link_provider, parse_form,
-};
-use pipeline_trace_core::source::Provider;
+use longpole_core::error::{Error, ErrorCode, Field};
+use longpole_core::request::{Form, FormMode, Parsed, Request, Status, link_provider, parse_form};
+use longpole_core::source::Provider;
 
 fn link(url: &str) -> Form {
     Form {

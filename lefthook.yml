@@ -31,4 +31,4 @@ pre-push:
     cargo-test:
       root: app/
       glob: 'app/**/*.{rs,toml}'
-      run: cargo test -p pipeline-trace-core
+      run: cargo test -p longpole-core

@@ -1,8 +1,8 @@
 mod fixtures;
 
 use fixtures::{JobOpts, PipelineOpts, T0, job, names, pipeline_opts, raw_pipeline, run};
-use pipeline_trace_core::aggregate::{aggregate, percentile};
-use pipeline_trace_core::model::{Kind, P, RawPipeline, Span, build_tree, order_by_deps};
+use longpole_core::aggregate::{aggregate, percentile};
+use longpole_core::model::{Kind, P, RawPipeline, Span, build_tree, order_by_deps};
 
 fn build(raw: &RawPipeline) -> Span {
     build_tree(raw, "https://h", T0)

@@ -6,7 +6,7 @@
 
 **Architecture:** Ядро (`app/core`) получает разбор ввода проекта, файл `projects.json`, расширенные настройки и список хостов с источником токена. Оболочка Tauri перестаёт открывать окна отчётов: `build` кладёт отчёт в LRU-кеш и возвращает id, фронтенд рендерит `pages/report` на маршруте `/report/$id`. Фронтенд получает сайдбар «Мои проекты», диалог добавления, экран настроек и тему по классу.
 
-**Tech Stack:** Rust 2024 (`pipeline-trace-core`, Tauri 2, `ts-rs` 12, `serde`, `regex`, `time`), React 19, TanStack Router + Query, Zustand, i18next, Tailwind v4, Radix (`radix-ui`), `@tauri-apps/plugin-dialog`.
+**Tech Stack:** Rust 2024 (`longpole-core`, Tauri 2, `ts-rs` 12, `serde`, `regex`, `time`), React 19, TanStack Router + Query, Zustand, i18next, Tailwind v4, Radix (`radix-ui`), `@tauri-apps/plugin-dialog`.
 
 Спека — `docs/specs/2026-10-06-first-run-ux-design.md` (далее «спека, § N»). Правила репозитория: `docs/agents/code-smells.md` (проход по диффу перед коммитом), комментарии и тексты — по-русски, имена тестов ядра — по-русски через `_`, как в соседних файлах.
 
@@ -16,7 +16,7 @@
 - Токен не возвращает ни одна команда (спека Tauri, § 5).
 - Все команды — `async`, первой строкой `ensure_form(&webview)?`.
 - Ошибки — коды `ErrorCode` + `params`; текст только во фронтенде. Новый код в `ErrorCode` требует перевода в `ru.json` и `en.json`, иначе `tsc` падает (`app/src/shared/i18n/index.ts:42`).
-- Сгенерированные ts-rs типы в `app/src/shared/api/schema/` коммитятся: после изменения типов с `#[ts(export)]` запускать `cargo test -p pipeline-trace-core` из `app/` и коммитить `schema/`.
+- Сгенерированные ts-rs типы в `app/src/shared/api/schema/` коммитятся: после изменения типов с `#[ts(export)]` запускать `cargo test -p longpole-core` из `app/` и коммитить `schema/`.
 - Хост хранится без схемы и завершающего `/` (`core::hosts::normalize_host`).
 - Фронтенд — FSD, Steiger: `pages` не импортируют `pages`, `features` не импортируют `features` и `widgets`, `entities` не импортируют `features`. Слайс с одним потребителем — в исключения `app/steiger.config.ts`.
 - Фронтенд без автотестов; критерий готовности задачи — `npm run typecheck && npm run lint:fsd && npm run check:locales` зелёные и ручная проверка в `npm run tauri dev`.
@@ -77,8 +77,8 @@
 ```rust
 //! Разбор ввода диалога «Добавить проект»: ссылки, ssh-URL, папка с клоном.
 
-use pipeline_trace_core::error::{Error, ErrorCode};
-use pipeline_trace_core::request::{ProjectRef, parse_project_input};
+use longpole_core::error::{Error, ErrorCode};
+use longpole_core::request::{ProjectRef, parse_project_input};
 use tempfile::TempDir;
 
 fn r(host: &str, path: &str) -> Result<ProjectRef, Error> {
@@ -168,7 +168,7 @@ fn папка_без_git_или_без_origin_это_project_dir_no_remote() {
 
 - [ ] **Step 3: Убедиться, что тесты падают**
 
-Run: `cd app && cargo test -p pipeline-trace-core --test project_input`
+Run: `cd app && cargo test -p longpole-core --test project_input`
 Expected: ошибка компиляции `cannot find function parse_project_input`.
 
 - [ ] **Step 4: Реализовать разбор**
@@ -267,10 +267,10 @@ fn remote_origin(dir: &std::path::Path) -> Result<String, Error> {
 
 - [ ] **Step 5: Запустить тесты**
 
-Run: `cd app && cargo test -p pipeline-trace-core --test project_input`
+Run: `cd app && cargo test -p longpole-core --test project_input`
 Expected: `test result: ok. 7 passed`.
 
-Run: `cd app && cargo test -p pipeline-trace-core`
+Run: `cd app && cargo test -p longpole-core`
 Expected: все зелёные; в `app/src/shared/api/schema/` появился `ProjectRef.ts`, обновился `ErrorCode.ts`.
 
 - [ ] **Step 6: Поправить спеку § 6**
@@ -316,9 +316,9 @@ LEFTHOOK=0 git commit -m "feat(core): разбор ввода проекта —
 ```rust
 //! «Мои проекты»: `projects.json` на tempdir.
 
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::projects::{Projects, SavedProject};
-use pipeline_trace_core::request::ProjectRef;
+use longpole_core::error::ErrorCode;
+use longpole_core::projects::{Projects, SavedProject};
+use longpole_core::request::ProjectRef;
 use tempfile::TempDir;
 use time::macros::datetime;
 
@@ -393,8 +393,8 @@ fn битый_файл_это_ошибка_storage() {
 
 - [ ] **Step 2: Убедиться, что тесты падают**
 
-Run: `cd app && cargo test -p pipeline-trace-core --test projects`
-Expected: `could not find projects in pipeline_trace_core`.
+Run: `cd app && cargo test -p longpole-core --test projects`
+Expected: `could not find projects in longpole_core`.
 
 - [ ] **Step 3: Реализовать модуль**
 
@@ -487,7 +487,7 @@ impl Projects {
 
 - [ ] **Step 4: Запустить тесты**
 
-Run: `cd app && cargo test -p pipeline-trace-core --test projects`
+Run: `cd app && cargo test -p longpole-core --test projects`
 Expected: `4 passed`. В `schema/` появился `SavedProject.ts`.
 
 - [ ] **Step 5: Commit**
@@ -517,10 +517,10 @@ LEFTHOOK=0 git commit -m "feat(core): projects.json — список «Мои п
 В `app/core/tests/settings.rs` заменить импорты и добавить тесты:
 
 ```rust
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::request::ProjectRef;
-use pipeline_trace_core::schema::Locale;
-use pipeline_trace_core::settings::{AppSettings, Settings, SettingsPatch, Theme};
+use longpole_core::error::ErrorCode;
+use longpole_core::request::ProjectRef;
+use longpole_core::schema::Locale;
+use longpole_core::settings::{AppSettings, Settings, SettingsPatch, Theme};
 use tempfile::TempDir;
 ```
 
@@ -583,7 +583,7 @@ fn старый_файл_только_с_locale_читается() {
 
 - [ ] **Step 2: Убедиться, что тесты падают**
 
-Run: `cd app && cargo test -p pipeline-trace-core --test settings`
+Run: `cd app && cargo test -p longpole-core --test settings`
 Expected: ошибки компиляции `Theme`, `SettingsPatch`.
 
 - [ ] **Step 3: Переписать `settings.rs`**
@@ -704,12 +704,12 @@ impl Settings {
 
 - [ ] **Step 4: Запустить тесты настроек**
 
-Run: `cd app && cargo test -p pipeline-trace-core --test settings`
+Run: `cd app && cargo test -p longpole-core --test settings`
 Expected: все зелёные (7 тестов).
 
 - [ ] **Step 5: Тест `fetch_project`**
 
-В `app/core/tests/browse.rs` дописать импорт `fetch_project` в `use pipeline_trace_core::browse::{…}` и тест:
+В `app/core/tests/browse.rs` дописать импорт `fetch_project` в `use longpole_core::browse::{…}` и тест:
 
 ```rust
 #[tokio::test]
@@ -772,7 +772,7 @@ pub async fn fetch_project(gql: &impl Gql, path: &str) -> Result<Project, Error>
 
 - [ ] **Step 7: Запустить все тесты ядра и закоммитить**
 
-Run: `cd app && cargo test -p pipeline-trace-core`
+Run: `cd app && cargo test -p longpole-core`
 Expected: зелёные; в `schema/` появились `Theme.ts`, `AppSettings.ts`, `SettingsPatch.ts`.
 
 ```bash
@@ -794,7 +794,7 @@ LEFTHOOK=0 git commit -m "feat(core): тема и последний проек�
 
 - [ ] **Step 1: Падающий тест**
 
-В `app/core/tests/tokens.rs` добавить импорт `HostInfo, TokenSource, list_hosts` в `use pipeline_trace_core::tokens::{…}` и тест:
+В `app/core/tests/tokens.rs` добавить импорт `HostInfo, TokenSource, list_hosts` в `use longpole_core::tokens::{…}` и тест:
 
 ```rust
 #[test]
@@ -840,7 +840,7 @@ fn list_hosts_связка_потом_glab_потом_env_без_дублей() 
 
 - [ ] **Step 2: Убедиться, что тест падает**
 
-Run: `cd app && cargo test -p pipeline-trace-core --test tokens list_hosts`
+Run: `cd app && cargo test -p longpole-core --test tokens list_hosts`
 Expected: `cannot find … list_hosts`.
 
 - [ ] **Step 3: Реализовать**
@@ -902,7 +902,7 @@ pub fn list_hosts(
 
 - [ ] **Step 4: Запустить тесты и закоммитить**
 
-Run: `cd app && cargo test -p pipeline-trace-core --test tokens`
+Run: `cd app && cargo test -p longpole-core --test tokens`
 Expected: зелёные; в `schema/` появились `TokenSource.ts`, `HostInfo.ts`.
 
 ```bash
@@ -940,12 +940,12 @@ use std::path::Path;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
-use pipeline_trace_core::history::History;
-use pipeline_trace_core::projects::Projects;
-use pipeline_trace_core::request::Request;
-use pipeline_trace_core::schema::Locale;
-use pipeline_trace_core::settings::Settings;
-use pipeline_trace_core::tokens::{TokenStore, platform_store};
+use longpole_core::history::History;
+use longpole_core::projects::Projects;
+use longpole_core::request::Request;
+use longpole_core::schema::Locale;
+use longpole_core::settings::Settings;
+use longpole_core::tokens::{TokenStore, platform_store};
 
 const ZOOM_MIN: f64 = 0.25;
 const ZOOM_MAX: f64 = 5.0;
@@ -1073,7 +1073,7 @@ mod tests {
 
     #[test]
     fn одиннадцатый_отчёт_вытесняет_первый_а_поиск_находит_свежайший() {
-        let state = AppState::new(&std::env::temp_dir().join("pipeline-trace-state-test"));
+        let state = AppState::new(&std::env::temp_dir().join("longpole-state-test"));
         let ids: Vec<u32> = (1..=11).map(|n| state.push_report(entry(n))).collect();
         assert_eq!(ids[0], 1);
         assert_eq!(state.report_json(1), None);
@@ -1164,7 +1164,7 @@ pub fn form(app: &AppHandle) -> Option<WebviewWindow> {
 
 - [ ] **Step 6: Обновить `commands.rs`**
 
-Импорты: убрать `Locale` из `schema`, `strings`, `ReportEntry` остаётся из `state`, `open_report` убрать; добавить `use pipeline_trace_core::request::Request;`. Удалить `report_title`. Переписать `build` с момента `let (Report::Single…)`:
+Импорты: убрать `Locale` из `schema`, `strings`, `ReportEntry` остаётся из `state`, `open_report` убрать; добавить `use longpole_core::request::Request;`. Удалить `report_title`. Переписать `build` с момента `let (Report::Single…)`:
 
 ```rust
     let (Report::Single { meta, .. } | Report::Aggregate { meta, .. }) = &built.report;
@@ -1230,7 +1230,7 @@ pub async fn set_current_report(
 
 - [ ] **Step 7: Собрать и проверить**
 
-Run: `cd app && npm run build && cargo clippy --workspace --all-targets -- -D warnings && cargo test -p pipeline-trace`
+Run: `cd app && npm run build && cargo clippy --workspace --all-targets -- -D warnings && cargo test -p longpole`
 Expected: без предупреждений; тесты `списки_команд_совпадают`, `одиннадцатый_отчёт…`, `own_origin_on_every_platform`, `foreign_origin_is_refused` зелёные.
 
 Run: `cd app && npm run tauri dev` → клик по пайплайну в форме больше не открывает окно (отчёт пока некуда рендерить, это ожидаемо до задачи 10); ошибок в консоли Rust нет.
@@ -1354,7 +1354,7 @@ pub async fn set_settings(
 
 - [ ] **Step 3: Собрать, прогнать тесты, сгенерировать типы**
 
-Run: `cd app && cargo clippy --workspace --all-targets -- -D warnings && cargo test -p pipeline-trace --bin pipeline-trace && cargo test -p pipeline-trace-core`
+Run: `cd app && cargo clippy --workspace --all-targets -- -D warnings && cargo test -p longpole --bin longpole && cargo test -p longpole-core`
 Expected: зелёные. `git status app/src/shared/api/schema` показывает новые `ProjectRef.ts`, `SavedProject.ts`, `Theme.ts`, `AppSettings.ts`, `SettingsPatch.ts`, `TokenSource.ts`, `HostInfo.ts` и изменённый `ErrorCode.ts`.
 
 - [ ] **Step 4: Commit**
@@ -1993,7 +1993,7 @@ declare module '@tanstack/react-router' {
 Run: `cd app && npm run typecheck && npm run lint:fsd && npm run check:locales`
 Expected: зелёные.
 
-Run: `cd app && npm run tauri dev` → с чистым каталогом данных приложения (на macOS это `~/Library/Application Support/dev.pipeline-trace.desktop`, переименовать его перед запуском) видно пустое состояние, сайдбар с «Мои проекты» и «Недавние», шапка с полем ссылки и шестерёнкой; ⌘, ведёт на пустой экран настроек, Esc возвращает.
+Run: `cd app && npm run tauri dev` → с чистым каталогом данных приложения (на macOS это `~/Library/Application Support/dev.longpole.desktop`, переименовать его перед запуском) видно пустое состояние, сайдбар с «Мои проекты» и «Недавние», шапка с полем ссылки и шестерёнкой; ⌘, ведёт на пустой экран настроек, Esc возвращает.
 
 ```bash
 git add app/src app/steiger.config.ts
@@ -2074,7 +2074,7 @@ export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => voi
   const { save, error } = useSaveToken()
   const failure = messageError(error)
   // страница токенов GitLab с готовым именем и scope; `https` уходит в системный браузер через on_navigation
-  const createUrl = `https://${host}/-/user_settings/personal_access_tokens?name=pipeline-trace&scopes=read_api`
+  const createUrl = `https://${host}/-/user_settings/personal_access_tokens?name=longpole&scopes=read_api`
   return (
     <form
       className="flex flex-col gap-2 rounded-md border border-warn bg-secondary/40 p-3"
@@ -2385,7 +2385,7 @@ export function ReportRoute() {
 Run: `cd app && npm run typecheck && npm run lint:fsd`
 Expected: зелёные (Steiger: `app/` может импортировать всё).
 
-Run: `cd app && npm run tauri dev`: клик по пайплайну → отчёт в этом же окне без сайдбара, сверху «← Назад» и заголовок; водопад, панель деталей, клавиши работают; переключателя языка в шапке отчёта нет; ⌘S → диалог сохранения с именем `pipeline-trace-<проект>-<id>.html`, файл открывается в браузере; «← Назад» и Esc возвращают на экран проекта; клик по той же записи в «Недавних» открывает отчёт мгновенно, без «Загружаю…»; после 11 сборок первая запись в «Недавних» снова строит с нуля. Тёмная тема в настройках системы → отчёт внутри тёмный.
+Run: `cd app && npm run tauri dev`: клик по пайплайну → отчёт в этом же окне без сайдбара, сверху «← Назад» и заголовок; водопад, панель деталей, клавиши работают; переключателя языка в шапке отчёта нет; ⌘S → диалог сохранения с именем `longpole-<проект>-<id>.html`, файл открывается в браузере; «← Назад» и Esc возвращают на экран проекта; клик по той же записи в «Недавних» открывает отчёт мгновенно, без «Загружаю…»; после 11 сборок первая запись в «Недавних» снова строит с нуля. Тёмная тема в настройках системы → отчёт внутри тёмный.
 
 ```bash
 git add app/src
@@ -2598,7 +2598,7 @@ git commit -m "feat(web): экран настроек — хосты, тема, 
 
 - [ ] Чистый каталог данных → в центре «Добавь первый проект» с кнопкой, в сайдбаре «Мои проекты» пусто, «Недавние» — «Пока пусто», в шапке поле ссылки и шестерёнка. (смоук)
 - [ ] «+ Добавить проект» → диалог с одним полем, «Выбрать папку…», «Найти в списке проектов хоста».
-- [ ] Вставить `https://<хост>/<группа>/<проект>` при отсутствии токена → под полем «Нужен токен для <хост>», ссылка «Создать на <хост> ↗» открывает системный браузер на странице токенов с именем `pipeline-trace` и scope `read_api`.
+- [ ] Вставить `https://<хост>/<группа>/<проект>` при отсутствии токена → под полем «Нужен токен для <хост>», ссылка «Создать на <хост> ↗» открывает системный браузер на странице токенов с именем `longpole` и scope `read_api`.
 - [ ] Ввести неверный токен → «GitLab <хост> ответил 401…», введённая ссылка на месте.
 - [ ] Ввести верный токен → проект в «Мои проекты», открыт экран проекта, диалог закрыт. (смоук)
 - [ ] Ссылка на несуществующий проект → «Проект … не найден или нет доступа».
@@ -2615,7 +2615,7 @@ git commit -m "feat(web): экран настроек — хосты, тема, 
 - [ ] Клик по пайплайну → отчёт в том же окне без сайдбара, сверху «← Назад» и `<проект> · #<iid>`; переключателя RU/EN в шапке отчёта нет. (смоук)
 - [ ] Водопад, панель деталей, клавиши `[`, `]`, `0`, ↑/↓, Enter, ←/→, Esc (снятие выделения) — как в разделе 2.
 - [ ] «← Назад» и Esc (без выделенной строки) → экран проекта, список пайплайнов на месте.
-- [ ] ⌘S на отчёте → диалог сохранения с именем `pipeline-trace-<проект>-<суффикс>.html`; файл открывается в браузере, в нём есть RU/EN. (смоук)
+- [ ] ⌘S на отчёте → диалог сохранения с именем `longpole-<проект>-<суффикс>.html`; файл открывается в браузере, в нём есть RU/EN. (смоук)
 - [ ] ⌘S на экране проекта или настроек → ничего не происходит.
 - [ ] Клик по записи в «Недавних» сразу после сборки → отчёт мгновенно, без «Загружаю…»; после 11 новых сборок самая старая запись строит заново с прогрессом.
 - [ ] Язык RU→EN в настройках → открытый затем отчёт на английском; тема «Тёмная» → отчёт тёмный; сохранённый файл следует теме системы.
@@ -2651,7 +2651,7 @@ Run: `cd app && npm run typecheck && npm run check:locales` → зелёные.
 
 `steiger.config.ts`: убедиться, что список исключений содержит только существующие слайсы (`history-sidebar`, `projects-panel` удалены). Пройти по диффу ветки по `docs/agents/code-smells.md`; найденное и оставленное — в описание PR.
 
-Run: `cd app && npm run lint:fsd && npm run build && cargo clippy --workspace --all-targets -- -D warnings && cargo test -p pipeline-trace-core`
+Run: `cd app && npm run lint:fsd && npm run build && cargo clippy --workspace --all-targets -- -D warnings && cargo test -p longpole-core`
 Expected: зелёные.
 
 - [ ] **Step 6: Commit и PR**

@@ -2,9 +2,9 @@
 //! `tests/github.rs` через `mount_run`.
 mod fixtures;
 
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::github::{Client, probe_at};
-use pipeline_trace_core::source::Provider;
+use longpole_core::error::ErrorCode;
+use longpole_core::github::{Client, probe_at};
+use longpole_core::source::Provider;
 use serde_json::json;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};

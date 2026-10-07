@@ -4,11 +4,11 @@
 
 **Goal:** Отчёт сразу показывает, что оптимизировать: потери на ретраях, превышение стейджа узким местом, стабильность джоб и список «Куда направить силы»; интерфейс переходит на стиль C.
 
-**Architecture:** Новый модуль `src/insights.mjs` (чистые функции) считает метрики по дереву одного пайплайна и по агрегату. `src/aggregate.mjs` добавляет в `stats` поля `retried` и `retryLoss`. `bin/pipeline-trace.mjs` кладёт результат в `report.insights`. `src/template.html` переписывается в стиле C и читает `REPORT.insights`.
+**Architecture:** Новый модуль `src/insights.mjs` (чистые функции) считает метрики по дереву одного пайплайна и по агрегату. `src/aggregate.mjs` добавляет в `stats` поля `retried` и `retryLoss`. `bin/longpole.mjs` кладёт результат в `report.insights`. `src/template.html` переписывается в стиле C и читает `REPORT.insights`.
 
 **Tech Stack:** Node 22, ES-модули, `node:test`, vanilla JS/CSS в шаблоне. Зависимостей нет.
 
-Спецификация: `docs/specs/2026-09-24-pipeline-trace-design.md`, раздел «Стабильность и превышение: куда направить силы».
+Спецификация: `docs/specs/2026-09-24-longpole-design.md`, раздел «Стабильность и превышение: куда направить силы».
 
 ## Global Constraints
 
@@ -201,7 +201,7 @@ git commit -m "feat: потери на ретраях, превышение ст
 **Files:**
 - Modify: `src/insights.mjs`
 - Modify: `src/aggregate.mjs`
-- Modify: `bin/pipeline-trace.mjs`
+- Modify: `bin/longpole.mjs`
 - Modify: `test/insights.test.mjs`
 
 **Interfaces:**
@@ -335,7 +335,7 @@ export function stabilityByName(agg) {
 
 - [ ] **Step 5: Подключить в бинарь**
 
-В `bin/pipeline-trace.mjs`:
+В `bin/longpole.mjs`:
 
 1. Добавить импорт: `import { aggInsights, insights, stabilityByName } from '../src/insights.mjs'`.
 2. Строку `await writeFile(out, await render({ meta, trees, agg: isAggregate ? aggregate(trees) : null }))` заменить на:
@@ -351,12 +351,12 @@ export function stabilityByName(agg) {
 
 - [ ] **Step 6: Тесты**
 
-Run: `node --test test/insights.test.mjs` — `# pass 6`; `npm test` — `# fail 0`; `./bin/pipeline-trace.mjs --help` — печатает `Использование:`.
+Run: `node --test test/insights.test.mjs` — `# pass 6`; `npm test` — `# fail 0`; `./bin/longpole.mjs --help` — печатает `Использование:`.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/insights.mjs src/aggregate.mjs bin/pipeline-trace.mjs test/insights.test.mjs
+git add src/insights.mjs src/aggregate.mjs bin/longpole.mjs test/insights.test.mjs
 git commit -m "feat: стабильность и превышение в агрегате, insights в отчёте"
 ```
 

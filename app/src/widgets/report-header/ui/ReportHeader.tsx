@@ -57,7 +57,7 @@ export function ReportHeader() {
 
   useEffect(() => {
     if (embedded) return
-    document.title = `pipeline-trace · ${meta.project} · ${subject}`
+    document.title = `Longpole · ${meta.project} · ${subject}`
   }, [embedded, meta.project, subject])
 
   return (

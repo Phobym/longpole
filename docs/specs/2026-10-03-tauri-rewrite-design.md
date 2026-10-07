@@ -1,28 +1,28 @@
-# pipeline-trace на Tauri 2 + React — спека
+# longpole на Tauri 2 + React — спека
 
-Дата: 2026-10-03. Итог карты [«Переписать pipeline-trace на Rust + Tauri + React/TypeScript»](https://github.com/Phobym/pipeline-trace/issues/1). Каждое положение ссылается на тикет-решение; поправки из комментариев к закрытым тикетам уже учтены. План реализации — `docs/plans/2026-10-03-tauri-rewrite.md`, чек-лист приёмки — `docs/specs/2026-10-03-tauri-rewrite-acceptance.md`.
+Дата: 2026-10-03. Итог карты [«Переписать longpole на Rust + Tauri + React/TypeScript»](https://github.com/Phobym/longpole/issues/1). Каждое положение ссылается на тикет-решение; поправки из комментариев к закрытым тикетам уже учтены. План реализации — `docs/plans/2026-10-03-tauri-rewrite.md`, чек-лист приёмки — `docs/specs/2026-10-03-tauri-rewrite-acceptance.md`.
 
 ## 1. Цель и рамки
 
 Переписать десктопное приложение с Electron на Tauri 2: Rust-ядро, React/TypeScript-интерфейс.
 
 - **Мотив**: размер и память (Electron → Tauri), поддерживаемость (типы, компоненты), производительность агрегата.
-- **Паритет поведения**: те же экраны, поведение, клавиши, тексты. Внешний вид может меняться ([«UI-фреймворк для формы и отчёта»](https://github.com/Phobym/pipeline-trace/issues/13)). Осознанные отступления перечислены в § 12.
-- **Языки интерфейса**: русский и английский. Русский — эталон паритета (тексты дословно из старого кода), английский — перевод ([«Локализация интерфейса»](https://github.com/Phobym/pipeline-trace/issues/18)).
-- **Удаляется**: CLI `pipeline-trace`, каталоги `src/`, `bin/`, `desktop/`, workflow `desktop.yml` — одним коммитом после приёмки.
+- **Паритет поведения**: те же экраны, поведение, клавиши, тексты. Внешний вид может меняться ([«UI-фреймворк для формы и отчёта»](https://github.com/Phobym/longpole/issues/13)). Осознанные отступления перечислены в § 12.
+- **Языки интерфейса**: русский и английский. Русский — эталон паритета (тексты дословно из старого кода), английский — перевод ([«Локализация интерфейса»](https://github.com/Phobym/longpole/issues/18)).
+- **Удаляется**: CLI `longpole`, каталоги `src/`, `bin/`, `desktop/`, workflow `desktop.yml` — одним коммитом после приёмки.
 - **Не делается**: миграция токенов и истории из Electron; подпись, нотаризация, автообновление; E2E-тесты UI; новые экраны и функции.
-- **Выпуск**: `v0.2.0`, `productName: pipeline-trace`, identifier `dev.pipeline-trace.desktop`, ставится поверх.
+- **Выпуск**: `v0.2.0`, `productName: longpole`, identifier `dev.longpole.desktop`, ставится поверх.
 - **Паритет доказывается** переносом всех `node:test` в `cargo test` и ручным чек-листом приёмки.
 
 ## 2. Раскладка `app/`
 
-[«Границы Rust-ядра и раскладка проекта `app/`»](https://github.com/Phobym/pipeline-trace/issues/6), FSD — [«Архитектура React-отчёта»](https://github.com/Phobym/pipeline-trace/issues/9).
+[«Границы Rust-ядра и раскладка проекта `app/`»](https://github.com/Phobym/longpole/issues/6), FSD — [«Архитектура React-отчёта»](https://github.com/Phobym/longpole/issues/9).
 
 ```
 app/
   Cargo.toml              # [workspace] members = ["core", "src-tauri"]
   rust-toolchain.toml
-  core/                   # crate pipeline-trace-core — без зависимостей от Tauri
+  core/                   # crate longpole-core — без зависимостей от Tauri
   src-tauri/              # тонкий слой: команды, окна, меню; tauri.conf.json, capabilities/, icons/
   src/                    # фронтенд, Feature-Sliced Design, одно дерево
     app/form/  app/report/          # две точки входа
@@ -39,7 +39,7 @@ app/
   vite.report.config.ts   # отчёт → dist-report/report.html (single-file)
 ```
 
-`cargo test -p pipeline-trace-core` не требует webview. Границы FSD проверяет Steiger в CI.
+`cargo test -p longpole-core` не требует webview. Границы FSD проверяет Steiger в CI.
 
 ## 3. Rust-ядро (`app/core`)
 
@@ -47,7 +47,7 @@ app/
 `gitlab`, `model`, `aggregate`, `critical_path`, `insights`, `browse`, `report`, `render`, `request`, `history`, `tokens`/`hosts`, `settings`.
 
 ### Сеть
-[«Rust-стек для GitLab GraphQL-клиента»](https://github.com/Phobym/pipeline-trace/issues/3), расхождения с Node — #6.
+[«Rust-стек для GitLab GraphQL-клиента»](https://github.com/Phobym/longpole/issues/3), расхождения с Node — #6.
 
 - `reqwest` 0.13 (`default-features = false`, `rustls`, `json`), `serde`/`serde_json`, `tokio::sync::Semaphore(4)`, `futures` (`try_join_all`, `BoxFuture` для рекурсии downstream), `thiserror` 2.
 - Запросы — строки + serde, без кодогенерации (`graphql_client`/`cynic` не берём).
@@ -62,20 +62,20 @@ pub async fn build_report(gql: &impl Gql, host: &str, request: &Request, now: Of
     on_progress: impl Fn(Progress) + Send + Sync) -> Result<Built, Error> // Built { report, file_name }
 ```
 - `Request` — `Pipeline | Mr | Aggregate`; прогресс `{ loaded, total }` — callback, Tauri оборачивает в `ipc::Channel`.
-- `default_file_name` внутри: `pipeline-trace-<project>-<suffix>.html`.
+- `default_file_name` внутри: `longpole-<project>-<suffix>.html`.
 - `render(report, template: &str) -> String` — подставляет JSON в собранный шаблон отчёта; экранируется только `<` (→ `<`). Шаблон передаёт Tauri-crate через `include_str!`.
 
 ### Разбор формы (`core::request`)
 Команда `build` принимает сырую форму. Регулярки хоста и проекта, лимит `last` 1–500, набор статусов (`SUCCESS`, `MANUAL`, `FAILED`, `CANCELED`, `RUNNING`, `ANY`) и разбор ссылки `…/-/pipelines/<id>` / `…/-/merge_requests/<iid>` переезжают из `desktop/app/request.mjs` и `src/cli-args.mjs`. Ошибки — по полям (`fields`), см. § 5.
 
 ### Токены и хосты
-Notes карты, уточнение — [«Сборка итоговой спеки и плана»](https://github.com/Phobym/pipeline-trace/issues/17).
+Notes карты, уточнение — [«Сборка итоговой спеки и плана»](https://github.com/Phobym/longpole/issues/17).
 
 - Порядок поиска токена: хранилище → `glab config get token --host` → `GITLAB_TOKEN` + `GITLAB_HOST`, как сейчас.
 - Хранилище — `keyring-core` + `apple-native-keyring-store`, `windows-native-keyring-store`, `dbus-secret-service-keyring-store`; `set_default_store` при старте. Если стор не создался (Linux без Secret Service → `PlatformFailure`), хранение токенов выключено с прежним сообщением, env и `glab` работают. `NoStorageAccess` при записи — то же сообщение.
-- Запись в связке ключей: service `dev.pipeline-trace.desktop`, account — хост.
+- Запись в связке ключей: service `dev.longpole.desktop`, account — хост.
 - Список хостов — отдельный JSON без секретов в `app_data_dir`.
-- `glab` ищется в `PATH` процесса, затем `/opt/homebrew/bin`, `/usr/local/bin`, `/home/linuxbrew/.linuxbrew/bin`, `~/.local/bin` ([«Окна, меню и жизненный цикл приложения»](https://github.com/Phobym/pipeline-trace/issues/10)). `fix-path-env` не берём.
+- `glab` ищется в `PATH` процесса, затем `/opt/homebrew/bin`, `/usr/local/bin`, `/home/linuxbrew/.linuxbrew/bin`, `~/.local/bin` ([«Окна, меню и жизненный цикл приложения»](https://github.com/Phobym/longpole/issues/10)). `fix-path-env` не берём.
 
 ### История и настройки
 - `history.json` в `app_data_dir`: только поля запроса (`mode`, `host`, `url`, `project`, `ref`, `source`, `last`, `statuses`), лимит 20, дедупликация по `[host, request]` — как `desktop/app/history.mjs`. Подпись записи хранится структурой (проект + метка, как `meta.label`) и рендерится в форме на текущем языке.
@@ -83,7 +83,7 @@ Notes карты, уточнение — [«Сборка итоговой спе
 
 ## 4. Схема отчёта
 
-[«Новая схема JSON отчёта»](https://github.com/Phobym/pipeline-trace/issues/5), поправка — `meta.locale` (#18).
+[«Новая схема JSON отчёта»](https://github.com/Phobym/longpole/issues/5), поправка — `meta.locale` (#18).
 
 Всё, что старый шаблон досчитывал сам (`criticalPath`, `stabilityKey`, `critShare`, `barStart`/`barEnd`/`aggEnd`, инверсия `deps`, «держит стейдж»), считает Rust. В отчёте остаются только `visibleId` (свёртка групп — состояние UI) и форматирование.
 
@@ -155,7 +155,7 @@ type Hotspot = { id: Id; name: string; saving: Ms } & (
 ## 5. Оболочка Tauri (`app/src-tauri`)
 
 ### Команды и IPC
-[«Модель безопасности и IPC-команды в Tauri»](https://github.com/Phobym/pipeline-trace/issues/7), поправки — #8, #18.
+[«Модель безопасности и IPC-команды в Tauri»](https://github.com/Phobym/longpole/issues/7), поправки — #8, #18.
 
 | Команда | Вход | Выход |
 |---|---|---|
@@ -190,14 +190,14 @@ type Hotspot = { id: Id; name: string; saving: Ms } & (
 - **Окно отчёта без IPC**: получает тот же самодостаточный HTML, что сохраняется.
 
 ### Окна, меню, жизненный цикл
-[«Окна, меню и жизненный цикл приложения»](https://github.com/Phobym/pipeline-trace/issues/10), поправка — #18.
+[«Окна, меню и жизненный цикл приложения»](https://github.com/Phobym/longpole/issues/10), поправка — #18.
 
-- Окна: `form` 1280×860, min 900×640, заголовок `pipeline-trace`; `report-<n>` 1440×900, заголовок фиксирован при создании (словарь Rust, язык на момент построения).
+- Окна: `form` 1280×860, min 900×640, заголовок `longpole`; `report-<n>` 1440×900, заголовок фиксирован при создании (словарь Rust, язык на момент построения).
 - Меню (строки — словарь в Rust на ru/en, пересборка при смене языка):
 
   | Меню | macOS | Windows | Linux |
   |---|---|---|---|
-  | **pipeline-trace** | меню приложения из готовых пунктов (О программе, Скрыть, Завершить ⌘Q), как `Menu::default` | — | — |
+  | **longpole** | меню приложения из готовых пунктов (О программе, Скрыть, Завершить ⌘Q), как `Menu::default` | — | — |
   | **Файл** | Новый отчёт ⌘N, Сохранить отчёт… ⌘S, Закрыть окно (готовый) | Новый отчёт, Сохранить отчёт…, «Выход» (готовый) вместо «Закрыть окно» | то же, «Выход» — свой пункт, `app.exit(0)` |
   | **Правка** | все готовые, включая Отменить/Повторить | Вырезать/Копировать/Вставить/Выделить всё; Отменить/Повторить в меню нет | как Windows |
   | **Вид** | масштаб (сброс/+/−) — свои пункты, `set_zoom`; полный экран — готовый | масштаб — свои; полный экран — свой, `set_fullscreen` | как Windows |
@@ -217,7 +217,7 @@ type Hotspot = { id: Id; name: string; saving: Ms } & (
 
 ## 7. Форма
 
-[«Архитектура React-формы приложения»](https://github.com/Phobym/pipeline-trace/issues/8), [«Роутер и библиотека состояния для React-формы»](https://github.com/Phobym/pipeline-trace/issues/12), FSD-раскладка — поправки в #8 и #12.
+[«Архитектура React-формы приложения»](https://github.com/Phobym/longpole/issues/8), [«Роутер и библиотека состояния для React-формы»](https://github.com/Phobym/longpole/issues/12), FSD-раскладка — поправки в #8 и #12.
 
 | Слой | Slice |
 |---|---|
@@ -241,7 +241,7 @@ type Hotspot = { id: Id; name: string; saving: Ms } & (
 
 ## 8. Отчёт
 
-[«Архитектура React-отчёта»](https://github.com/Phobym/pipeline-trace/issues/9), сборка — [«Сборка React-отчёта в один автономный HTML»](https://github.com/Phobym/pipeline-trace/issues/4), проверка стека — [«Прототип отчёта: проверка стека»](https://github.com/Phobym/pipeline-trace/issues/14).
+[«Архитектура React-отчёта»](https://github.com/Phobym/longpole/issues/9), сборка — [«Сборка React-отчёта в один автономный HTML»](https://github.com/Phobym/longpole/issues/4), проверка стека — [«Прототип отчёта: проверка стека»](https://github.com/Phobym/longpole/issues/14).
 
 | Слой | Slice | Что внутри |
 |---|---|---|
@@ -295,7 +295,7 @@ type Hotspot = { id: Id; name: string; saving: Ms } & (
 
 ## 10. Локализация
 
-[«Локализация интерфейса: русский и английский»](https://github.com/Phobym/pipeline-trace/issues/18).
+[«Локализация интерфейса: русский и английский»](https://github.com/Phobym/longpole/issues/18).
 
 - Выбор языка: системная локаль (`sys-locale`: `ru*` → русский, иначе английский) + переключатель RU/EN в форме, хранится в `settings.json`. Смена применяется сразу: форма перерисовывается, меню пересобирается; открытые отчёты не меняются.
 - i18next + react-i18next; словари `shared/i18n/locales/{ru,en}.json`, типизированные ключи, склонения через `Intl.PluralRules`.
@@ -306,9 +306,9 @@ type Hotspot = { id: Id; name: string; saving: Ms } & (
 
 ## 11. CI и релиз
 
-[«Сборка и релиз Tauri-приложения в CI»](https://github.com/Phobym/pipeline-trace/issues/11), поправка — #15.
+[«Сборка и релиз Tauri-приложения в CI»](https://github.com/Phobym/longpole/issues/11), поправка — #15.
 
-- **`ci.yml`** (PR и push в `main`, ubuntu): `cargo fmt --check`, `cargo clippy`, `cargo test -p pipeline-trace-core`, `git diff` сгенерированных `shared/api/schema/` и `shared/api/fixtures/`, `tsc --noEmit`, Steiger, проверка ключей словарей, сборка обоих Vite-конфигов.
+- **`ci.yml`** (PR и push в `main`, ubuntu): `cargo fmt --check`, `cargo clippy`, `cargo test -p longpole-core`, `git diff` сгенерированных `shared/api/schema/` и `shared/api/fixtures/`, `tsc --noEmit`, Steiger, проверка ключей словарей, сборка обоих Vite-конфигов.
 - **`release.yml`** — тег `v*` и `workflow_dispatch` (артефакты без релиза, для приёмки); `tauri-action`, `releaseDraft: true`:
 
   | Runner | Цель | Артефакты |

@@ -47,7 +47,7 @@
 
 | # | Поведение в `main.mjs` | Механизм Tauri 2 | Оговорки |
 |---|---|---|---|
-| 1a | Окно формы 1280×860, min 900×640, `title: 'pipeline-trace'` | `WebviewWindowBuilder::new(app, "form", WebviewUrl::App("index.html"))` + `.inner_size()`, `.min_inner_size()`, `.title()` [S1], [S2] | Label `form` — граница безопасности: capabilities привязываются к label, а не к заголовку [S20] |
+| 1a | Окно формы 1280×860, min 900×640, `title: 'longpole'` | `WebviewWindowBuilder::new(app, "form", WebviewUrl::App("index.html"))` + `.inner_size()`, `.min_inner_size()`, `.title()` [S1], [S2] | Label `form` — граница безопасности: capabilities привязываются к label, а не к заголовку [S20] |
 | 1b | Окно на каждый отчёт, `loadFile(file)` из `mkdtemp` | Своя схема `register_asynchronous_uri_scheme_protocol("report", …)` [S3]. Обработчик берёт `ctx.webview_label()` [S4] и отдаёт байты файла (или буфера в памяти) из `HashMap<label, …>`. Окно: `WebviewUrl::CustomProtocol("report://localhost/")` [S2] | Origin зависит от ОС: macOS/Linux `report://localhost/…`, Windows `http://report.localhost/…` [S3]. Из памяти можно отдавать без временного файла, но «Сохранить» тогда пишет буфер, а не `copyFile` |
 | 1c | Альтернатива: asset protocol | `app.security.assetProtocol.enable` + `scope` (glob) [S5] | Предназначен для подгрузки файлов из страницы, требует scope на временный каталог. Своя схема проще и не открывает файловую систему. Рекомендация: своя схема |
 | 1d | Альтернатива: `data:` | Не поддерживается: `WebviewUrl::External` допускает только `http`/`https` [S2] | Была бы ещё и non-local origin [S21]. Отказаться |

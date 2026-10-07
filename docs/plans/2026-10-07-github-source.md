@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Отчёт pipeline-trace строится и по GitHub Actions (github.com и GHES): ссылка на run или PR, проекты GitHub в «Моих проектах», агрегат по N запускам одного workflow.
+**Goal:** Отчёт longpole строится и по GitHub Actions (github.com и GHES): ссылка на run или PR, проекты GitHub в «Моих проектах», агрегат по N запускам одного workflow.
 
 **Architecture:** В ядре появляется трейт `Source` (`core/src/source.rs`). GitLab реализует его для любого `Gql` через blanket-impl — существующий код и тесты GitLab не меняются. GitHub — новый модуль `core/src/github*` с REST-клиентом; run, его джобы и файл workflow превращаются в существующий `RawPipeline`, поэтому `model`, `critical_path`, `aggregate`, `insights`, `render` и фронтенд отчёта не трогаются. Тип хоста (`Provider`) выводится из хоста: `github.com`, кэш `hostKinds` в `settings.json` или проба `/api/v3/meta`.
 
@@ -12,12 +12,12 @@
 
 ## Global Constraints
 
-- Все команды — из `app/`. Ядро: `cargo test -p pipeline-trace-core`. Приложение: `npm run build && cargo test -p pipeline-trace` (`build.rs` требует `dist-report/report.html`). Перед коммитом: `cargo fmt --all --check`; перед пушем: `npm run build && cargo clippy --workspace --all-targets -- -D warnings`.
+- Все команды — из `app/`. Ядро: `cargo test -p longpole-core`. Приложение: `npm run build && cargo test -p longpole` (`build.rs` требует `dist-report/report.html`). Перед коммитом: `cargo fmt --all --check`; перед пушем: `npm run build && cargo clippy --workspace --all-targets -- -D warnings`.
 - Фронтенд: `npm run typecheck`, `npm run lint:fsd`, `npm run check:locales`. Автотестов фронтенда нет: проверка — `npm run dev` на моке (`src/app/dev/mock.ts`), `http://localhost:5173/`.
-- Типы для фронтенда генерирует ts-rs при `cargo test -p pipeline-trace-core` в `src/shared/api/schema/`; сгенерированные файлы коммитятся вместе с изменением Rust-типа.
+- Типы для фронтенда генерирует ts-rs при `cargo test -p longpole-core` в `src/shared/api/schema/`; сгенерированные файлы коммитятся вместе с изменением Rust-типа.
 - Существующие тесты GitLab проходят без правок их данных; правятся только литералы структур, получивших новое поле (перечислено в задачах).
 - Тип хоста не хранится в `projects.json`, истории и форме (спека, § 3).
-- Заголовки GitHub API: `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`, `User-Agent: pipeline-trace`; редиректы выключены; не больше 4 параллельных запросов; таймауты соединения 15 с, чтения 60 с.
+- Заголовки GitHub API: `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`, `User-Agent: longpole`; редиректы выключены; не больше 4 параллельных запросов; таймауты соединения 15 с, чтения 60 с.
 - Пределы: джобы run — не больше 50 страниц по 100; список запусков агрегата — не больше 10 страниц по 100.
 - Коммиты — на ветке `Phobym/github`, сообщения по образцу истории: `feat(core): …`, `feat(tauri): …`, `feat(web): …`, `docs: …`.
 - `lefthook` может отсутствовать в PATH: тогда проверки из `lefthook.yml` запускаются вручную перед коммитом.
@@ -36,9 +36,9 @@
 
 **Interfaces:**
 - Produces:
-  - `pipeline_trace_core::source::Provider { Gitlab, Github }` — serde/ts `"gitlab" | "github"`, derive `Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS`.
-  - `pipeline_trace_core::source::Source` — трейт ниже; `impl<G: Gql> Source for G`.
-  - `pipeline_trace_core::browse::Workflow { file: String, name: String }`.
+  - `longpole_core::source::Provider { Gitlab, Github }` — serde/ts `"gitlab" | "github"`, derive `Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS`.
+  - `longpole_core::source::Source` — трейт ниже; `impl<G: Gql> Source for G`.
+  - `longpole_core::browse::Workflow { file: String, name: String }`.
   - `browse::Pipeline` получает поле `url: String` — адрес пайплайна в вебе, по нему фронтенд строит отчёт.
   - `gitlab::PipelineFilter` получает поле `workflow: Option<String>` (GitLab его игнорирует).
   - `model::RawPipeline` получает поле `needs_missing: bool` (GitLab — всегда `false`).
@@ -54,7 +54,7 @@ mod fixtures;
 use std::sync::Mutex;
 
 use fixtures::fake_gql;
-use pipeline_trace_core::source::{Provider, Source};
+use longpole_core::source::{Provider, Source};
 use serde_json::json;
 
 #[tokio::test]
@@ -84,8 +84,8 @@ async fn gitlab_провайдер_и_пустой_список_workflow() {
 
 - [ ] **Step 2: Убедиться, что тесты падают**
 
-Run: `cargo test -p pipeline-trace-core --test source --test browse`
-Expected: ошибка компиляции — `unresolved import pipeline_trace_core::source`, у `Pipeline` нет поля `url`.
+Run: `cargo test -p longpole-core --test source --test browse`
+Expected: ошибка компиляции — `unresolved import longpole_core::source`, у `Pipeline` нет поля `url`.
 
 - [ ] **Step 3: `source.rs`**
 
@@ -354,7 +354,7 @@ async fn resolve(source: &impl Source, request: &Request) -> Result<Target, Erro
 
 - [ ] **Step 8: Тесты зелёные, типы сгенерированы**
 
-Run: `cd app && cargo test -p pipeline-trace-core`
+Run: `cd app && cargo test -p longpole-core`
 Expected: PASS, все тесты; в `src/shared/api/schema/` появились `Provider.ts`, `Workflow.ts`, в `Pipeline.ts` — поле `url`.
 
 Run: `cd app && npm run typecheck`
@@ -383,7 +383,7 @@ git commit -m "feat(core): шов Source и Provider, url пайплайна в 
 
 - [ ] **Step 1: Зависимость и пустые модули**
 
-Run: `cd app && cargo add serde_yaml_ng -p pipeline-trace-core`
+Run: `cd app && cargo add serde_yaml_ng -p longpole-core`
 
 `app/core/src/github.rs`:
 
@@ -499,7 +499,7 @@ jobs:
 }
 ```
 
-Run: `cd app && cargo test -p pipeline-trace-core --lib github::workflow`
+Run: `cd app && cargo test -p longpole-core --lib github::workflow`
 Expected: ошибка компиляции — нет `parse`, `Workflow`.
 
 - [ ] **Step 3: Реализация**
@@ -740,7 +740,7 @@ impl Workflow {
 
 - [ ] **Step 4: Тесты зелёные**
 
-Run: `cd app && cargo test -p pipeline-trace-core --lib github::workflow`
+Run: `cd app && cargo test -p longpole-core --lib github::workflow`
 Expected: PASS, 6 тестов.
 
 - [ ] **Step 5: Спека — правило шаблона из одних выражений**
@@ -783,9 +783,9 @@ git commit -m "feat(core): разбор workflow GitHub — уровни needs �
 mod fixtures;
 
 use fixtures::assert_error;
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::github::probe_at;
-use pipeline_trace_core::source::Provider;
+use longpole_core::error::ErrorCode;
+use longpole_core::github::probe_at;
+use longpole_core::source::Provider;
 use serde_json::json;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -889,7 +889,7 @@ mod tests {
 
 `1791367200` — unix-время `2026-10-07T10:00:00Z`; проверить: `date -u -r 1791367200` (macOS) или `date -u -d @1791367200`.
 
-Run: `cd app && cargo test -p pipeline-trace-core --test github_client`
+Run: `cd app && cargo test -p longpole-core --test github_client`
 Expected: ошибка компиляции — нет `github::probe_at`.
 
 - [ ] **Step 2: `network_error` в `error.rs`, `RateLimited`**
@@ -946,7 +946,7 @@ use crate::source::Provider;
 const MAX_PARALLEL: usize = 4;
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
 const READ_TIMEOUT: Duration = Duration::from_secs(60);
-const USER_AGENT: &str = "pipeline-trace";
+const USER_AGENT: &str = "longpole";
 const JSON: &str = "application/vnd.github+json";
 const RAW: &str = "application/vnd.github.raw";
 const API_VERSION: &str = "2022-11-28";
@@ -1175,7 +1175,7 @@ pub use client::{Client, probe, probe_at};
 
 - [ ] **Step 4: Тесты зелёные, локали совпадают**
 
-Run: `cd app && cargo test -p pipeline-trace-core`
+Run: `cd app && cargo test -p longpole-core`
 Expected: PASS (новые: 3 в `github_client`, 5 в `github::client::tests`).
 
 Run: `cd app && npm run check:locales && npm run typecheck`
@@ -1214,9 +1214,9 @@ git commit -m "feat(core): HTTP-клиент GitHub — Link, лимиты, пр
 mod fixtures;
 
 use fixtures::assert_error;
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::github::Client;
-use pipeline_trace_core::model::RawPipeline;
+use longpole_core::error::ErrorCode;
+use longpole_core::github::Client;
+use longpole_core::model::RawPipeline;
 use serde_json::{Value, json};
 use time::macros::datetime;
 use wiremock::matchers::{header, method, path, query_param, query_param_is_missing};
@@ -1436,7 +1436,7 @@ mod tests {
 }
 ```
 
-Run: `cd app && cargo test -p pipeline-trace-core --test github`
+Run: `cd app && cargo test -p longpole-core --test github`
 Expected: ошибка компиляции — нет метода `fetch_run`.
 
 - [ ] **Step 2: Реализация**
@@ -1719,7 +1719,7 @@ impl Client {
 
 - [ ] **Step 3: Тесты зелёные**
 
-Run: `cd app && cargo test -p pipeline-trace-core --test github --lib github::tests`
+Run: `cd app && cargo test -p longpole-core --test github --lib github::tests`
 Expected: PASS (4 + 2).
 
 - [ ] **Step 4: Спека — непускавшиеся ранние попытки**
@@ -1748,7 +1748,7 @@ git commit -m "feat(core): run GitHub в RawPipeline — попытки, коп�
 
 - [ ] **Step 1: Тесты — падают**
 
-Дописать в `app/core/tests/github.rs` (в `use` добавить `pipeline_trace_core::browse::{Commit, Page, Pipeline, Project, Workflow}`, `pipeline_trace_core::gitlab::PipelineFilter`, `pipeline_trace_core::source::{Provider, Source}`, `std::collections::BTreeMap`):
+Дописать в `app/core/tests/github.rs` (в `use` добавить `longpole_core::browse::{Commit, Page, Pipeline, Project, Workflow}`, `longpole_core::gitlab::PipelineFilter`, `longpole_core::source::{Provider, Source}`, `std::collections::BTreeMap`):
 
 ```rust
 /// Run в списке: `minutes` — длительность последней попытки.
@@ -2002,7 +2002,7 @@ async fn workflow_только_активные_имя_файла_без_пут�
 }
 ```
 
-Run: `cd app && cargo test -p pipeline-trace-core --test github`
+Run: `cd app && cargo test -p longpole-core --test github`
 Expected: ошибка компиляции — `Client` не реализует `Source`.
 
 - [ ] **Step 2: `lists.rs`**
@@ -2371,10 +2371,10 @@ impl Source for Client {
 
 - [ ] **Step 4: Тесты зелёные**
 
-Run: `cd app && cargo test -p pipeline-trace-core`
+Run: `cd app && cargo test -p longpole-core`
 Expected: PASS, все; в `tests/github.rs` — 4 из Task 4 и 10 новых.
 
-Run: `cd app && cargo clippy -p pipeline-trace-core --all-targets -- -D warnings`
+Run: `cd app && cargo clippy -p longpole-core --all-targets -- -D warnings`
 Expected: без предупреждений (`dead_code` из Task 3–4 ушли).
 
 - [ ] **Step 5: Commit**
@@ -2404,7 +2404,7 @@ git commit -m "feat(core): списки GitHub и Source для клиента G
 
 - [ ] **Step 1: Тесты — падают**
 
-Дописать в `app/core/tests/request.rs` (в `use` добавить `link_provider` из `request` и `pipeline_trace_core::source::Provider`):
+Дописать в `app/core/tests/request.rs` (в `use` добавить `link_provider` из `request` и `longpole_core::source::Provider`):
 
 ```rust
 #[test]
@@ -2482,7 +2482,7 @@ fn страницы_github_дают_репозиторий() {
 }
 ```
 
-Run: `cd app && cargo test -p pipeline-trace-core --test request --test project_input`
+Run: `cd app && cargo test -p longpole-core --test request --test project_input`
 Expected: ошибка компиляции — нет `link_provider`, у `Form` нет `workflow`.
 
 - [ ] **Step 2: `Field::Workflow`**
@@ -2659,7 +2659,7 @@ type Aggregate = { host: string; project: string; ref: string; workflow: string;
 
 - [ ] **Step 6: Тесты и типы зелёные**
 
-Run: `cd app && cargo test -p pipeline-trace-core`
+Run: `cd app && cargo test -p longpole-core`
 Expected: PASS.
 
 Run: `cd app && npm run typecheck`
@@ -2692,7 +2692,7 @@ git commit -m "feat(core): ссылки и проекты GitHub, workflow в ф
 
 - [ ] **Step 1: Тесты — падают**
 
-Дописать в `app/core/tests/settings.rs` (в `use` — `pipeline_trace_core::source::Provider`):
+Дописать в `app/core/tests/settings.rs` (в `use` — `longpole_core::source::Provider`):
 
 ```rust
 #[test]
@@ -2710,7 +2710,7 @@ fn тип_хоста_github_com_без_кэша_остальные_из_кэша
 }
 ```
 
-Дописать в `app/core/tests/source.rs` (в `use` — `pipeline_trace_core::settings::Settings`, `pipeline_trace_core::source::resolve_provider_at`, `tempfile::TempDir`, `wiremock::matchers::{method, path}`, `wiremock::{Mock, MockServer, ResponseTemplate}`):
+Дописать в `app/core/tests/source.rs` (в `use` — `longpole_core::settings::Settings`, `longpole_core::source::resolve_provider_at`, `tempfile::TempDir`, `wiremock::matchers::{method, path}`, `wiremock::{Mock, MockServer, ResponseTemplate}`):
 
 ```rust
 #[tokio::test]
@@ -2744,7 +2744,7 @@ async fn github_com_без_пробы() {
 }
 ```
 
-Дописать в `app/core/tests/tokens.rs` (в `use` из `tokens` — `find_github_token`, `github_hosts`; плюс `pipeline_trace_core::source::Provider`):
+Дописать в `app/core/tests/tokens.rs` (в `use` из `tokens` — `find_github_token`, `github_hosts`; плюс `longpole_core::source::Provider`):
 
 ```rust
 fn no_cli(_: &[&str]) -> Option<String> {
@@ -2809,7 +2809,7 @@ fn хосты_github_из_gh_и_окружения() {
     };
 ```
 
-Run: `cd app && cargo test -p pipeline-trace-core --test settings --test source --test tokens`
+Run: `cd app && cargo test -p longpole-core --test settings --test source --test tokens`
 Expected: ошибка компиляции — нет `host_kind`, `resolve_provider_at`, `find_github_token`.
 
 - [ ] **Step 2: `settings.rs` — кэш типа хоста**
@@ -3046,7 +3046,7 @@ const hosts: HostInfo[] = [
 
 - [ ] **Step 6: Тесты и типы зелёные**
 
-Run: `cd app && cargo test -p pipeline-trace-core`
+Run: `cd app && cargo test -p longpole-core`
 Expected: PASS.
 
 Run: `cd app && npm run typecheck && npm run check:locales`
@@ -3073,7 +3073,7 @@ git commit -m "feat(core): тип хоста с пробой и кэшем, то
 
 - [ ] **Step 1: Тесты — падают**
 
-Дописать в `app/core/tests/github.rs` (в `use` — `pipeline_trace_core::report::{BuildEnv, build_report}`, `pipeline_trace_core::request::Request`, `pipeline_trace_core::schema::Locale`):
+Дописать в `app/core/tests/github.rs` (в `use` — `longpole_core::report::{BuildEnv, build_report}`, `longpole_core::request::Request`, `longpole_core::schema::Locale`):
 
 ```rust
 const ENV: BuildEnv = BuildEnv {
@@ -3103,7 +3103,7 @@ async fn отчёт_по_run_зависимости_из_needs_и_провайд
     )
     .await
     .unwrap();
-    assert_eq!(built.file_name, "pipeline-trace-o-r-7.html");
+    assert_eq!(built.file_name, "longpole-o-r-7.html");
     let report = serde_json::to_value(&built.report).unwrap();
     assert_eq!(report["meta"]["provider"], "github");
     assert_eq!(report["meta"]["needsMissing"], false);
@@ -3138,7 +3138,7 @@ async fn агрегат_по_workflow_подпись_и_имя_файла() {
     )
     .await
     .unwrap();
-    assert_eq!(built.file_name, "pipeline-trace-o-r-ci-main.html");
+    assert_eq!(built.file_name, "longpole-o-r-ci-main.html");
     let report = serde_json::to_value(&built.report).unwrap();
     assert_eq!(report["meta"]["label"], "ci.yml · main");
     assert_eq!(report["meta"]["statusCounts"], json!({ "SUCCESS": 1 }));
@@ -3171,7 +3171,7 @@ async fn без_файла_workflow_отчёт_помечен() {
 
 (имя переменной результата сборки — как в этом тесте; если тест не связывает результат с именем, связать: `let built = build_report(…).await.unwrap();`).
 
-Run: `cd app && cargo test -p pipeline-trace-core --test github --test build_report`
+Run: `cd app && cargo test -p longpole-core --test github --test build_report`
 Expected: FAIL — в `meta` нет `provider` (`Null != "github"`).
 
 - [ ] **Step 2: `Meta`**
@@ -3184,7 +3184,7 @@ Expected: FAIL — в `meta` нет `provider` (`Null != "github"`).
     pub needs_missing: bool,
 ```
 
-Импорт `use crate::source::Provider;`. Литералы `Meta { … }` в `app/core/tests/render.rs` и `app/core/tests/report.rs` дополнить `provider: Provider::Gitlab, needs_missing: false,` (импорт `pipeline_trace_core::source::Provider`).
+Импорт `use crate::source::Provider;`. Литералы `Meta { … }` в `app/core/tests/render.rs` и `app/core/tests/report.rs` дополнить `provider: Provider::Gitlab, needs_missing: false,` (импорт `longpole_core::source::Provider`).
 
 - [ ] **Step 3: `report.rs`**
 
@@ -3217,7 +3217,7 @@ async fn load_trees(
 
 - [ ] **Step 5: Тесты и типы зелёные**
 
-Run: `cd app && cargo test -p pipeline-trace-core`
+Run: `cd app && cargo test -p longpole-core`
 Expected: PASS.
 
 Run: `cd app && npm run typecheck`
@@ -3249,7 +3249,7 @@ git commit -m "feat(core): провайдер и признак needsMissing в 
 
 - [ ] **Step 1: Тест диспетчера — падает**
 
-Дописать в `app/core/tests/source.rs` (в `use` — `pipeline_trace_core::source::AnySource`, `pipeline_trace_core::github`, `pipeline_trace_core::gitlab`):
+Дописать в `app/core/tests/source.rs` (в `use` — `longpole_core::source::AnySource`, `longpole_core::github`, `longpole_core::gitlab`):
 
 ```rust
 #[tokio::test]
@@ -3261,7 +3261,7 @@ async fn диспетчер_отдаёт_провайдера_и_хост_вар
 }
 ```
 
-Run: `cd app && cargo test -p pipeline-trace-core --test source`
+Run: `cd app && cargo test -p longpole-core --test source`
 Expected: ошибка компиляции — нет `AnySource`.
 
 - [ ] **Step 2: `AnySource`**
@@ -3354,7 +3354,7 @@ impl Source for AnySource {
 }
 ```
 
-Run: `cd app && cargo test -p pipeline-trace-core --test source`
+Run: `cd app && cargo test -p longpole-core --test source`
 Expected: PASS.
 
 - [ ] **Step 3: `commands.rs`**
@@ -3364,23 +3364,23 @@ Expected: PASS.
 ```rust
 use std::collections::BTreeMap;
 
-use pipeline_trace_core::browse::{Page, Pipeline, Project, Workflow};
-use pipeline_trace_core::error::{CmdError, Error, ErrorCode, Field};
-use pipeline_trace_core::history::{HistoryEntry, HistoryLabel, NewEntry};
-use pipeline_trace_core::hosts::normalize_host;
-use pipeline_trace_core::projects::SavedProject;
-use pipeline_trace_core::render::render;
-use pipeline_trace_core::report::{BuildEnv, Progress, build_report};
-use pipeline_trace_core::request::{
+use longpole_core::browse::{Page, Pipeline, Project, Workflow};
+use longpole_core::error::{CmdError, Error, ErrorCode, Field};
+use longpole_core::history::{HistoryEntry, HistoryLabel, NewEntry};
+use longpole_core::hosts::normalize_host;
+use longpole_core::projects::SavedProject;
+use longpole_core::render::render;
+use longpole_core::report::{BuildEnv, Progress, build_report};
+use longpole_core::request::{
     Form, FormMode, ProjectRef, Request, link_provider, parse_form, parse_project_input,
 };
-use pipeline_trace_core::schema::{Meta, Report};
-use pipeline_trace_core::settings::{AppSettings, SettingsPatch};
-use pipeline_trace_core::source::{AnySource, Provider, Source, resolve_provider};
-use pipeline_trace_core::tokens::{
+use longpole_core::schema::{Meta, Report};
+use longpole_core::settings::{AppSettings, SettingsPatch};
+use longpole_core::source::{AnySource, Provider, Source, resolve_provider};
+use longpole_core::tokens::{
     Gh, Glab, HostInfo, find_github_token, find_token, github_hosts, list_hosts,
 };
-use pipeline_trace_core::{github, gitlab};
+use longpole_core::{github, gitlab};
 ```
 
 `client_for` заменить на `source_for`:
@@ -3572,7 +3572,7 @@ export const hostProvider = (host: string) => call<Provider>('host_provider', { 
 
 - [ ] **Step 6: Сборка и проверки**
 
-Run: `cd app && npm run build && cargo test -p pipeline-trace-core && cargo test -p pipeline-trace`
+Run: `cd app && npm run build && cargo test -p longpole-core && cargo test -p longpole`
 Expected: PASS, включая `списки_команд_совпадают`.
 
 Run: `cd app && npm run typecheck && npm run lint:fsd`
@@ -3856,7 +3856,7 @@ export function useHostProvider(host: string): Provider | undefined {
   const createUrl =
     provider === 'github'
       ? `https://${host}/settings/personal-access-tokens/new`
-      : `https://${host}/-/user_settings/personal_access_tokens?name=pipeline-trace&scopes=read_api`
+      : `https://${host}/-/user_settings/personal_access_tokens?name=longpole&scopes=read_api`
 ```
 
 ```tsx
@@ -4035,7 +4035,7 @@ git commit -m "feat(web): отчёт — ссылки в GitLab или GitHub, �
 
 - [ ] **Step 2: Полная проверка**
 
-Run: `cd app && npm run build && cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test -p pipeline-trace-core && cargo test -p pipeline-trace && npm run typecheck && npm run lint:fsd && npm run check:locales`
+Run: `cd app && npm run build && cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test -p longpole-core && cargo test -p longpole && npm run typecheck && npm run lint:fsd && npm run check:locales`
 Expected: всё без ошибок.
 
 - [ ] **Step 3: Живой GitHub**

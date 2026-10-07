@@ -1,10 +1,10 @@
-# pipeline-trace
+# Longpole
 
 ## Agent skills
 
 ### Issue tracker
 
-Задачи — GitHub Issues репозитория Phobym/pipeline-trace через `gh`. See `docs/agents/issue-tracker.md`.
+Задачи — GitHub Issues репозитория Phobym/longpole через `gh`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

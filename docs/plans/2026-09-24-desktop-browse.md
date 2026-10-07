@@ -187,7 +187,7 @@ export async function recentPipelines(gql, project, { ref = null, after = null }
 7. README (раздел «Десктопное приложение»): описать выбор проекта вместо ручного ввода.
 
 - [ ] **Step 1:** Реализовать требования 1–7.
-- [ ] **Step 2:** `npm test` и `cd desktop && npm test` → `# fail 0`; `cd desktop && npm run sync-core && PIPELINE_TRACE_SMOKE=1 npx electron .` → `smoke: ok`.
+- [ ] **Step 2:** `npm test` и `cd desktop && npm test` → `# fail 0`; `cd desktop && npm run sync-core && LONGPOLE_SMOKE=1 npx electron .` → `smoke: ok`.
 - [ ] **Step 3:** Проверка UI в Playwright на копии `desktop/app/ui` в scratchpad с заглушкой `window.app` (проекты с `next`, ветки, пайплайны, ошибка): поиск, «Показать ещё», переход на экран проекта и обратно, смена ветки, клик по пайплайну вызывает `build` с правильной ссылкой, кнопка агрегата — с правильными полями; светлая и тёмная тема.
-- [ ] **Step 4:** Пересобрать macOS: `cd desktop && CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist`; `codesign --verify --deep --strict dist/mac-arm64/pipeline-trace.app`; smoke из `dist/mac-arm64`.
+- [ ] **Step 4:** Пересобрать macOS: `cd desktop && CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist`; `codesign --verify --deep --strict dist/mac-arm64/longpole.app`; smoke из `dist/mac-arm64`.
 - [ ] **Step 5: Commit** — `git add desktop/app README.md && git commit -m "feat(desktop): выбор проекта, экран проекта с ветками и пайплайнами"`

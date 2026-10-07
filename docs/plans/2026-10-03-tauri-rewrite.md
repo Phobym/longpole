@@ -1,11 +1,11 @@
-# pipeline-trace на Tauri 2 + React — план реализации
+# longpole на Tauri 2 + React — план реализации
 
-Дата: 2026-10-03. Спека — `docs/specs/2026-10-03-tauri-rewrite-design.md` (далее «спека, § N»), чек-лист — `docs/specs/2026-10-03-tauri-rewrite-acceptance.md`. Нарезка — [«Порядок реализации и нарезка плана»](https://github.com/Phobym/pipeline-trace/issues/16) с поправкой из [«Локализация интерфейса»](https://github.com/Phobym/pipeline-trace/issues/18).
+Дата: 2026-10-03. Спека — `docs/specs/2026-10-03-tauri-rewrite-design.md` (далее «спека, § N»), чек-лист — `docs/specs/2026-10-03-tauri-rewrite-acceptance.md`. Нарезка — [«Порядок реализации и нарезка плана»](https://github.com/Phobym/longpole/issues/16) с поправкой из [«Локализация интерфейса»](https://github.com/Phobym/longpole/issues/18).
 
 ## Правила для каждого шага
 
 - Один шаг — один PR, одна сессия агента. Новое приложение пишется в `app/`; старые `src/`, `bin/`, `desktop/` не трогаются до S10.
-- **Общий критерий готовности** — зелёный `ci.yml` (после S0 он есть всегда): `cargo fmt --check`, `cargo clippy`, `cargo test -p pipeline-trace-core`, `git diff` сгенерированных `shared/api/schema/` и `shared/api/fixtures/`, `tsc --noEmit`, Steiger, проверка ключей словарей, сборка обоих Vite-конфигов.
+- **Общий критерий готовности** — зелёный `ci.yml` (после S0 он есть всегда): `cargo fmt --check`, `cargo clippy`, `cargo test -p longpole-core`, `git diff` сгенерированных `shared/api/schema/` и `shared/api/fixtures/`, `tsc --noEmit`, Steiger, проверка ключей словарей, сборка обоих Vite-конфигов.
 - **Ядро (S1–S4)** — TDD (навык `tdd`): тест из `node:test` переносится первым и падает, затем реализация. Таблица переноса — спека, § 9. Выброшенный тест — только с записью в описании PR, почему.
 - **Фронтенд** — без автотестов; готовность — пройденный свой раздел чек-листа на macOS в dev-сборке.
 - Эталон поведения — старый код (`src/*.mjs`, `src/template.html`, `desktop/app/*`); русские тексты переносятся дословно в `ru.json`, английские пишет агент.
@@ -44,7 +44,7 @@ S0 ─┬─ S1 ── S2 ─┬──────── S4 ── S5 ─┬─ 
 
 **Файлы**:
 - `app/Cargo.toml` (workspace `core`, `src-tauri`), `app/rust-toolchain.toml`;
-- `app/core/` — пустой crate `pipeline-trace-core` с `ts-rs` 12 (`TS_RS_LARGE_INT=number`), экспорт в `app/src/shared/api/schema/`;
+- `app/core/` — пустой crate `longpole-core` с `ts-rs` 12 (`TS_RS_LARGE_INT=number`), экспорт в `app/src/shared/api/schema/`;
 - `app/src-tauri/` — `tauri.conf.json` (`productName`, identifier, `"version": "../package.json"`), окно `form`, пустой `build.rs` с `AppManifest`;
 - `app/package.json`, `tsconfig`, `vite.config.ts`, `vite.report.config.ts` (заглушка отчёта со `vite-plugin-singlefile` и плагином CSP-хешей, см. ниже);
 - скелет FSD (`app/src/{app/form,app/report,pages,widgets,features,entities,shared}`), Steiger;
@@ -119,7 +119,7 @@ export function cspHashes(): Plugin {
 **Файлы**:
 - `core::request` — разбор формы и ссылки, ошибки по полям (`fields` с кодами);
 - `core::history` — `history.json`, лимит 20, дедупликация, подпись записи структурой (проект + метка);
-- `core::tokens`/`hosts` — `keyring-core` + платформенные сторы (service `dev.pipeline-trace.desktop`, account — хост), `set_default_store`, `PlatformFailure` → хранение выключено; список хостов; поиск токена «хранилище → `glab` → env»; поиск `glab` по `PATH` и фиксированному списку;
+- `core::tokens`/`hosts` — `keyring-core` + платформенные сторы (service `dev.longpole.desktop`, account — хост), `set_default_store`, `PlatformFailure` → хранение выключено; список хостов; поиск токена «хранилище → `glab` → env»; поиск `glab` по `PATH` и фиксированному списку;
 - `core::settings` — `settings.json` с `locale`;
 - `core::report::build_report` (callback прогресса, инъекция `now`, `file_name`), `core::render` (шаблон аргументом);
 - enum кода ошибки `ErrorCode` + `CmdError` с экспортом ts-rs.

@@ -1,6 +1,6 @@
 //! Меню приложения по таблице спеки (§ 5): строки из словаря Rust, пересборка при смене языка.
 
-use pipeline_trace_core::schema::Locale;
+use longpole_core::schema::Locale;
 use tauri::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu, SubmenuBuilder};
 use tauri::{AppHandle, Manager, Wry};
 
@@ -45,7 +45,7 @@ pub fn build(app: &AppHandle, locale: Locale) -> tauri::Result<Menu<Wry>> {
 
 /// Только macOS: меню приложения из готовых пунктов, как `Menu::default`.
 fn app_menu(app: &AppHandle, s: &Strings) -> tauri::Result<Submenu<Wry>> {
-    SubmenuBuilder::new(app, "pipeline-trace")
+    SubmenuBuilder::new(app, "Longpole")
         .item(&PredefinedMenuItem::about(app, Some(s.about), None)?)
         .separator()
         .item(&ready(app, PredefinedMenuItem::services, s.services)?)

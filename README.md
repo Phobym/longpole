@@ -1,4 +1,4 @@
-# pipeline-trace
+# Longpole
 
 Показывает, на что уходит время пайплайна GitLab или GitHub Actions: водопад стейджей и джоб в стиле трейсов Sentry, критический путь и p50/p90 по многим пайплайнам. Результат — один HTML-файл без внешних запросов.
 
@@ -39,18 +39,18 @@ GitHub: пайплайн — один workflow run. Стейджи и крити
 
 | Система | Файл |
 |---|---|
-| macOS, Apple Silicon | `pipeline-trace_<версия>_aarch64.dmg` |
-| macOS, Intel | `pipeline-trace_<версия>_x64.dmg` |
-| Windows | `pipeline-trace_<версия>_x64-setup.exe` |
-| Linux | `pipeline-trace_<версия>_amd64.AppImage`, `pipeline-trace_<версия>_amd64.deb` |
+| macOS, Apple Silicon | `Longpole_<версия>_aarch64.dmg` |
+| macOS, Intel | `Longpole_<версия>_x64.dmg` |
+| Windows | `Longpole_<версия>_x64-setup.exe` |
+| Linux | `Longpole_<версия>_amd64.AppImage`, `Longpole_<версия>_amd64.deb` |
 
 Zip-архивов больше нет.
 
 Установка без подписи:
 
-- **macOS**: открыть `.dmg`, перетащить `.app` в «Программы». Первый запуск — «Открыть» из контекстного меню правой кнопкой мыши. Если Gatekeeper всё равно блокирует и это macOS 15 или новее — «Системные настройки» → «Конфиденциальность и безопасность» → «Всё равно открыть». Не помогло — снять карантин: `xattr -dr com.apple.quarantine "/Applications/pipeline-trace.app"`.
+- **macOS**: открыть `.dmg`, перетащить `.app` в «Программы». Первый запуск — «Открыть» из контекстного меню правой кнопкой мыши. Если Gatekeeper всё равно блокирует и это macOS 15 или новее — «Системные настройки» → «Конфиденциальность и безопасность» → «Всё равно открыть». Не помогло — снять карантин: `xattr -dr com.apple.quarantine "/Applications/Longpole.app"`.
 - **Windows**: SmartScreen покажет предупреждение — «Подробнее» → «Выполнить в любом случае». Если в системе нет WebView2, установщик скачает его сам.
-- **Linux**: для AppImage — `chmod +x pipeline-trace_*.AppImage`; для deb — `sudo apt install ./pipeline-trace_*.deb`.
+- **Linux**: для AppImage — `chmod +x Longpole_*.AppImage`; для deb — `sudo apt install ./Longpole_*.deb`.
 
 Сеть: приложение доверяет сертификатам из системного хранилища и учитывает `HTTP_PROXY`/`HTTPS_PROXY`. Переменная `NODE_EXTRA_CA_CERTS` не поддерживается — корпоративный корневой сертификат надо добавить в системное хранилище.
 
@@ -69,4 +69,4 @@ npm run tauri dev
 
 Сборка установщика: `npm run tauri build`. Выпуск — тегом `v*` или вручную через `workflow_dispatch` в Actions: тогда артефакты лежат в прогоне, релиз не создаётся.
 
-Проверки ядра: `cargo test -p pipeline-trace-core` в `app/`.
+Проверки ядра: `cargo test -p longpole-core` в `app/`.

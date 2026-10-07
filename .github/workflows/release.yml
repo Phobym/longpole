@@ -93,13 +93,13 @@ jobs:
           args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
           # На dispatch tagName пуст — tauri-action только собирает, релиз не создаёт.
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
-          releaseName: pipeline-trace ${{ github.ref_name }}
+          releaseName: Longpole ${{ github.ref_name }}
           releaseDraft: true
 
       - uses: actions/upload-artifact@v4
         if: github.ref_type != 'tag'
         with:
-          name: pipeline-trace-${{ matrix.target }}
+          name: longpole-${{ matrix.target }}
           path: |
             app/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
             app/target/${{ matrix.target }}/release/bundle/nsis/*.exe

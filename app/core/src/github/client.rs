@@ -18,7 +18,7 @@ use crate::source::Provider;
 const MAX_PARALLEL: usize = 4;
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
 const READ_TIMEOUT: Duration = Duration::from_secs(60);
-const USER_AGENT: &str = "pipeline-trace";
+const USER_AGENT: &str = "longpole";
 const JSON: &str = "application/vnd.github+json";
 const RAW: &str = "application/vnd.github.raw";
 const API_VERSION: &str = "2022-11-28";

@@ -1,10 +1,10 @@
 //! `settings.json` с языком интерфейса и выбор языка по системной локали.
 
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::request::ProjectRef;
-use pipeline_trace_core::schema::Locale;
-use pipeline_trace_core::settings::{AppSettings, Settings, SettingsPatch, Theme};
-use pipeline_trace_core::source::Provider;
+use longpole_core::error::ErrorCode;
+use longpole_core::request::ProjectRef;
+use longpole_core::schema::Locale;
+use longpole_core::settings::{AppSettings, Settings, SettingsPatch, Theme};
+use longpole_core::source::Provider;
 use tempfile::TempDir;
 
 fn settings() -> (TempDir, Settings) {

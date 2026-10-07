@@ -1,10 +1,10 @@
-# pipeline-trace: водопад длительности GitLab-пайплайнов
+# longpole: водопад длительности GitLab-пайплайнов
 
 Дата: 2026-09-24. Статус: дизайн утверждён, реализации нет.
 
 ## Что это
 
-`pipeline-trace` — CLI-утилита на Node 22 без runtime-зависимостей. Она читает GitLab-пайплайн через GraphQL API и собирает один самодостаточный HTML-файл с водопадом в стиле трейсов Sentry: пайплайн → стейджи → джобы → downstream-пайплайны.
+`longpole` — CLI-утилита на Node 22 без runtime-зависимостей. Она читает GitLab-пайплайн через GraphQL API и собирает один самодостаточный HTML-файл с водопадом в стиле трейсов Sentry: пайплайн → стейджи → джобы → downstream-пайплайны.
 
 Отчёт отвечает на три вопроса:
 
@@ -34,8 +34,8 @@
 ## Запуск
 
 ```
-pipeline-trace <url-пайплайна|url-MR>
-pipeline-trace --project group/name [--ref master] [--source merge_request_event] --last 50
+longpole <url-пайплайна|url-MR>
+longpole --project group/name [--ref master] [--source merge_request_event] --last 50
   [--status success,manual|any]
   [--host gitlab.example.com] [--out trace.html] [--no-open]
 ```
@@ -47,13 +47,13 @@ pipeline-trace --project group/name [--ref master] [--source merge_request_event
 - Токен берётся по порядку: `glab config get token --host <host>`, затем `GITLAB_TOKEN`. `GITLAB_TOKEN` отправляется только на известный хост: совпадающий с `GITLAB_HOST` или с хостом `glab` по умолчанию. Иначе ссылка от постороннего человека увела бы токен на чужой сервер. Если токена нет, ошибка объясняет оба способа его задать.
 - Хост должен соответствовать `^[a-z0-9.-]+(:\d+)?$`.
 - `--status` — список статусов через запятую, по умолчанию `success,manual`. Пайплайн, который остановился на ручной джобе (например, `deploy_prod`), GitLab помечает `manual`. В `litres/monorepo` так заканчиваются все полные пайплайны master и MR, а `success` на master получают короткие Publish-пайплайны из одной джобы. Для агрегата по master без Publish-пайплайнов используй `--status manual`. С `any` фильтра нет. Сводка показывает, сколько пайплайнов в каждом статусе.
-- `--out` по умолчанию `pipeline-trace-<project>-<id|ref>.html` в текущем каталоге. Без `--no-open` утилита открывает файл в браузере.
+- `--out` по умолчанию `longpole-<project>-<id|ref>.html` в текущем каталоге. Без `--no-open` утилита открывает файл в браузере.
 
 ## Пакет
 
 ```
-package.json             "type": "module", "bin": { "pipeline-trace": "./bin/pipeline-trace.mjs" }, engines.node >= 22
-bin/pipeline-trace.mjs   аргументы (node:util parseArgs), оркестрация
+package.json             "type": "module", "bin": { "longpole": "./bin/longpole.mjs" }, engines.node >= 22
+bin/longpole.mjs   аргументы (node:util parseArgs), оркестрация
 src/gitlab.mjs           GraphQL-клиент, пагинация, рекурсия в downstream
 src/model.mjs            сырой ответ → дерево спанов (чистые функции)
 src/critical-path.mjs    критический путь (чистая функция, без импортов)

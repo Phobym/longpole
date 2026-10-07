@@ -358,4 +358,14 @@ mod tests {
         assert_eq!(api_url("github.com"), "https://api.github.com");
         assert_eq!(api_url("ghe.example"), "https://ghe.example/api/v3");
     }
+
+    #[tokio::test]
+    async fn чужой_абсолютный_адрес_отказ_до_запроса() {
+        let client = Client::with_api_url("h", "https://api.github.com", "t").unwrap();
+        let err = client
+            .json::<serde_json::Value>("https://api.github.com.evil/x")
+            .await
+            .unwrap_err();
+        assert_eq!(err.code, ErrorCode::Network);
+    }
 }

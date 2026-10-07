@@ -68,6 +68,9 @@ pub(crate) struct Matched<'a> {
 
 pub(crate) fn parse(text: &str) -> Option<Workflow> {
     let file: File = serde_yaml_ng::from_str(text).ok()?;
+    if file.jobs.is_empty() {
+        return None;
+    }
     let mut jobs: Vec<Job> = file
         .jobs
         .into_iter()
@@ -345,5 +348,6 @@ jobs:
     fn не_yaml_и_файл_без_jobs_дают_none() {
         assert!(parse("jobs: [не закрыто").is_none());
         assert!(parse("on: push\n").is_none());
+        assert!(parse("jobs: {}\n").is_none());
     }
 }

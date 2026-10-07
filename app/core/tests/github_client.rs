@@ -1,9 +1,9 @@
-//! Проба типа хоста на wiremock. Запросы клиента с токеном проверяются в `tests/github.rs`
-//! (Task 4–5) через `Source`: у клиента нет публичных методов запроса.
+//! Проба типа хоста и поведение клиента (редиректы) на wiremock; токен и заголовки проверяет
+//! `tests/github.rs` через `mount_run`.
 mod fixtures;
 
 use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::github::probe_at;
+use pipeline_trace_core::github::{Client, probe_at};
 use pipeline_trace_core::source::Provider;
 use serde_json::json;
 use wiremock::matchers::{method, path};
@@ -63,5 +63,23 @@ async fn проба_ghes_приватного_режима_по_заголовк
     assert_eq!(
         probe_at("ghe.example", &server.uri()).await.unwrap(),
         Provider::Github
+    );
+}
+
+#[tokio::test]
+async fn редирект_не_выполняется_и_это_http_status() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/runs/7"))
+        .respond_with(
+            ResponseTemplate::new(301).insert_header("location", "https://elsewhere.example/x"),
+        )
+        .mount(&server)
+        .await;
+    let client = Client::with_api_url("github.com", &server.uri(), "t").unwrap();
+    fixtures::assert_error(
+        client.fetch_run("o/r", "7").await,
+        ErrorCode::HttpStatus,
+        &[("host", "github.com"), ("status", "301")],
     );
 }

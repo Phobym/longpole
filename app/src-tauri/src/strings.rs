@@ -1,6 +1,6 @@
 //! Словарь Rust: только меню и ошибка сохранения; остальное переводит фронтенд.
 
-use pipeline_trace_core::schema::Locale;
+use longpole_core::schema::Locale;
 
 pub struct Strings {
     pub about: &'static str,
@@ -33,12 +33,12 @@ pub struct Strings {
 }
 
 const RU: Strings = Strings {
-    about: "О программе pipeline-trace",
-    hide: "Скрыть pipeline-trace",
+    about: "О программе Longpole",
+    hide: "Скрыть Longpole",
     hide_others: "Скрыть остальные",
     show_all: "Показать все",
     services: "Службы",
-    quit: "Завершить pipeline-trace",
+    quit: "Завершить Longpole",
     file: "Файл",
     new_report: "Новый отчёт",
     save_report: "Сохранить отчёт…",
@@ -63,12 +63,12 @@ const RU: Strings = Strings {
 };
 
 const EN: Strings = Strings {
-    about: "About pipeline-trace",
-    hide: "Hide pipeline-trace",
+    about: "About Longpole",
+    hide: "Hide Longpole",
     hide_others: "Hide Others",
     show_all: "Show All",
     services: "Services",
-    quit: "Quit pipeline-trace",
+    quit: "Quit Longpole",
     file: "File",
     new_report: "New Report",
     save_report: "Save Report…",
@@ -93,12 +93,12 @@ const EN: Strings = Strings {
 };
 
 const FR: Strings = Strings {
-    about: "À propos de pipeline-trace",
-    hide: "Masquer pipeline-trace",
+    about: "À propos de Longpole",
+    hide: "Masquer Longpole",
     hide_others: "Masquer les autres",
     show_all: "Tout afficher",
     services: "Services",
-    quit: "Quitter pipeline-trace",
+    quit: "Quitter Longpole",
     file: "Fichier",
     new_report: "Nouveau rapport",
     save_report: "Enregistrer le rapport…",
@@ -123,12 +123,12 @@ const FR: Strings = Strings {
 };
 
 const ES: Strings = Strings {
-    about: "Acerca de pipeline-trace",
-    hide: "Ocultar pipeline-trace",
+    about: "Acerca de Longpole",
+    hide: "Ocultar Longpole",
     hide_others: "Ocultar otros",
     show_all: "Mostrar todo",
     services: "Servicios",
-    quit: "Salir de pipeline-trace",
+    quit: "Salir de Longpole",
     file: "Archivo",
     new_report: "Nuevo informe",
     save_report: "Guardar informe…",
@@ -153,12 +153,12 @@ const ES: Strings = Strings {
 };
 
 const DE: Strings = Strings {
-    about: "Über pipeline-trace",
-    hide: "pipeline-trace ausblenden",
+    about: "Über Longpole",
+    hide: "Longpole ausblenden",
     hide_others: "Andere ausblenden",
     show_all: "Alle einblenden",
     services: "Dienste",
-    quit: "pipeline-trace beenden",
+    quit: "Longpole beenden",
     file: "Ablage",
     new_report: "Neuer Bericht",
     save_report: "Bericht sichern …",
@@ -183,12 +183,12 @@ const DE: Strings = Strings {
 };
 
 const IT: Strings = Strings {
-    about: "Informazioni su pipeline-trace",
-    hide: "Nascondi pipeline-trace",
+    about: "Informazioni su Longpole",
+    hide: "Nascondi Longpole",
     hide_others: "Nascondi altre",
     show_all: "Mostra tutte",
     services: "Servizi",
-    quit: "Esci da pipeline-trace",
+    quit: "Esci da Longpole",
     file: "File",
     new_report: "Nuovo report",
     save_report: "Salva report…",
@@ -213,12 +213,12 @@ const IT: Strings = Strings {
 };
 
 const ZH: Strings = Strings {
-    about: "关于 pipeline-trace",
-    hide: "隐藏 pipeline-trace",
+    about: "关于 Longpole",
+    hide: "隐藏 Longpole",
     hide_others: "隐藏其他",
     show_all: "全部显示",
     services: "服务",
-    quit: "退出 pipeline-trace",
+    quit: "退出 Longpole",
     file: "文件",
     new_report: "新建报告",
     save_report: "保存报告…",
@@ -243,12 +243,12 @@ const ZH: Strings = Strings {
 };
 
 const JA: Strings = Strings {
-    about: "pipeline-trace について",
-    hide: "pipeline-trace を非表示",
+    about: "Longpole について",
+    hide: "Longpole を非表示",
     hide_others: "ほかを非表示",
     show_all: "すべてを表示",
     services: "サービス",
-    quit: "pipeline-trace を終了",
+    quit: "Longpole を終了",
     file: "ファイル",
     new_report: "新規レポート",
     save_report: "レポートを保存…",

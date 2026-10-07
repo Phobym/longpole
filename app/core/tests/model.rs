@@ -3,7 +3,7 @@ mod fixtures;
 use std::collections::HashMap;
 
 use fixtures::{JobOpts, PipelineOpts, T0, at, find, job, names, raw_pipeline};
-use pipeline_trace_core::model::{
+use longpole_core::model::{
     Attempt, Kind, RawJob, RawPipeline, Span, build_tree, shard_group_name,
 };
 use time::{Duration, OffsetDateTime};

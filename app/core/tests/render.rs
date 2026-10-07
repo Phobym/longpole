@@ -2,10 +2,10 @@
 mod fixtures;
 
 use fixtures::{T0, clean_pipeline};
-use pipeline_trace_core::model::build_tree;
-use pipeline_trace_core::render::{DATA_PLACEHOLDER, render};
-use pipeline_trace_core::schema::{Locale, Meta, Report};
-use pipeline_trace_core::source::Provider;
+use longpole_core::model::build_tree;
+use longpole_core::render::{DATA_PLACEHOLDER, render};
+use longpole_core::schema::{Locale, Meta, Report};
+use longpole_core::source::Provider;
 
 const TEMPLATE_HEAD: &str = "<!doctype html><title>t</title><body>";
 const TEMPLATE_TAIL: &str = "<script>console.log(1)</script></body>";

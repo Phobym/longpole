@@ -2,15 +2,15 @@
 mod fixtures;
 
 use fixtures::assert_error;
-use pipeline_trace_core::browse::{Commit, Page, Pipeline, Project, Workflow};
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::github::Client;
-use pipeline_trace_core::gitlab::PipelineFilter;
-use pipeline_trace_core::model::RawPipeline;
-use pipeline_trace_core::report::{BuildEnv, build_report};
-use pipeline_trace_core::request::Request;
-use pipeline_trace_core::schema::Locale;
-use pipeline_trace_core::source::{Provider, Source};
+use longpole_core::browse::{Commit, Page, Pipeline, Project, Workflow};
+use longpole_core::error::ErrorCode;
+use longpole_core::github::Client;
+use longpole_core::gitlab::PipelineFilter;
+use longpole_core::model::RawPipeline;
+use longpole_core::report::{BuildEnv, build_report};
+use longpole_core::request::Request;
+use longpole_core::schema::Locale;
+use longpole_core::source::{Provider, Source};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use time::macros::datetime;
@@ -671,7 +671,7 @@ async fn отчёт_по_run_зависимости_из_needs_и_провайд
     )
     .await
     .unwrap();
-    assert_eq!(built.file_name, "pipeline-trace-o-r-7.html");
+    assert_eq!(built.file_name, "longpole-o-r-7.html");
     let report = serde_json::to_value(&built.report).unwrap();
     assert_eq!(report["meta"]["provider"], "github");
     assert_eq!(report["meta"]["needsMissing"], false);
@@ -773,7 +773,7 @@ async fn агрегат_по_workflow_подпись_и_имя_файла() {
     )
     .await
     .unwrap();
-    assert_eq!(built.file_name, "pipeline-trace-o-r-ci-main.html");
+    assert_eq!(built.file_name, "longpole-o-r-ci-main.html");
     let report = serde_json::to_value(&built.report).unwrap();
     assert_eq!(report["meta"]["label"], "ci.yml · main");
     assert_eq!(report["meta"]["statusCounts"], json!({ "SUCCESS": 1 }));

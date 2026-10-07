@@ -4,9 +4,9 @@ mod fixtures;
 use std::sync::Mutex;
 
 use fixtures::fake_gql;
-use pipeline_trace_core::settings::Settings;
-use pipeline_trace_core::source::{AnySource, Provider, Source, resolve_provider_at};
-use pipeline_trace_core::{github, gitlab};
+use longpole_core::settings::Settings;
+use longpole_core::source::{AnySource, Provider, Source, resolve_provider_at};
+use longpole_core::{github, gitlab};
 use serde_json::json;
 use tempfile::TempDir;
 use wiremock::matchers::{method, path};

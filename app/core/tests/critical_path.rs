@@ -1,5 +1,5 @@
-use pipeline_trace_core::critical_path::{Critical, Gap, critical_path};
-use pipeline_trace_core::model::{Kind, Span};
+use longpole_core::critical_path::{Critical, Gap, critical_path};
+use longpole_core::model::{Kind, Span};
 
 fn j(id: &str, start: Option<i64>, end: Option<i64>, deps: &[&str]) -> Span {
     Span {

@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "pipeline-trace",
+  "productName": "Longpole",
   "version": "../package.json",
-  "identifier": "dev.pipeline-trace.desktop",
+  "identifier": "dev.longpole.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:5173",

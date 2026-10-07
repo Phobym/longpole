@@ -7,10 +7,10 @@ use std::sync::Arc;
 use keyring_core::api::CredentialStoreApi;
 use keyring_core::mock::{Cred, Store};
 use keyring_core::{CredentialStore, Entry, Error as KeyringError};
-use pipeline_trace_core::error::{Error, ErrorCode};
-use pipeline_trace_core::hosts::normalize_host;
-use pipeline_trace_core::source::Provider;
-use pipeline_trace_core::tokens::{
+use longpole_core::error::{Error, ErrorCode};
+use longpole_core::hosts::normalize_host;
+use longpole_core::source::Provider;
+use longpole_core::tokens::{
     Gh, Glab, HostInfo, SERVICE, TokenSource, TokenStore, find_github_token, find_token,
     github_hosts, list_hosts,
 };
@@ -77,7 +77,7 @@ fn set_get_hosts_remove_а_в_файле_хостов_нет_токена() {
 fn запись_лежит_в_связке_ключей_под_service_и_хостом() {
     let f = fixture();
     f.tokens.set("h.example", "secret-1").unwrap();
-    assert_eq!(SERVICE, "dev.pipeline-trace.desktop");
+    assert_eq!(SERVICE, "dev.longpole.desktop");
     assert_eq!(f.entry("h.example").get_password().unwrap(), "secret-1");
 }
 

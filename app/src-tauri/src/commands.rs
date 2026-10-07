@@ -3,23 +3,23 @@
 
 use std::collections::BTreeMap;
 
-use pipeline_trace_core::browse::{Page, Pipeline, Project, Workflow};
-use pipeline_trace_core::error::{CmdError, Error, ErrorCode, Field};
-use pipeline_trace_core::history::{HistoryEntry, HistoryLabel, NewEntry};
-use pipeline_trace_core::hosts::normalize_host;
-use pipeline_trace_core::projects::SavedProject;
-use pipeline_trace_core::render::render;
-use pipeline_trace_core::report::{BuildEnv, Progress, build_report};
-use pipeline_trace_core::request::{
+use longpole_core::browse::{Page, Pipeline, Project, Workflow};
+use longpole_core::error::{CmdError, Error, ErrorCode, Field};
+use longpole_core::history::{HistoryEntry, HistoryLabel, NewEntry};
+use longpole_core::hosts::normalize_host;
+use longpole_core::projects::SavedProject;
+use longpole_core::render::render;
+use longpole_core::report::{BuildEnv, Progress, build_report};
+use longpole_core::request::{
     Form, FormMode, ProjectRef, Request, link_provider, parse_form, parse_project_input,
 };
-use pipeline_trace_core::schema::{Meta, Report};
-use pipeline_trace_core::settings::{AppSettings, SettingsPatch};
-use pipeline_trace_core::source::{AnySource, Provider, Source, resolve_provider};
-use pipeline_trace_core::tokens::{
+use longpole_core::schema::{Meta, Report};
+use longpole_core::settings::{AppSettings, SettingsPatch};
+use longpole_core::source::{AnySource, Provider, Source, resolve_provider};
+use longpole_core::tokens::{
     Gh, Glab, HostInfo, find_github_token, find_token, github_hosts, list_hosts,
 };
-use pipeline_trace_core::{github, gitlab};
+use longpole_core::{github, gitlab};
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, State, Webview};
 use time::OffsetDateTime;

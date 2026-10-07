@@ -4,10 +4,10 @@ mod fixtures;
 use std::sync::Mutex;
 
 use fixtures::{assert_error, fake_gql};
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::report::{BuildEnv, Built, Progress, build_report, default_file_name};
-use pipeline_trace_core::request::{Request, Status};
-use pipeline_trace_core::schema::{Locale, Report};
+use longpole_core::error::ErrorCode;
+use longpole_core::report::{BuildEnv, Built, Progress, build_report, default_file_name};
+use longpole_core::request::{Request, Status};
+use longpole_core::schema::{Locale, Report};
 use serde_json::{Value, json};
 use time::macros::datetime;
 
@@ -98,7 +98,7 @@ async fn pipeline_одно_дерево_метка_по_имени_прогре�
     let json = serde_json::to_value(&built.report).unwrap();
     assert_eq!(json["meta"]["provider"], "gitlab");
     assert_eq!(json["meta"]["needsMissing"], false);
-    assert_eq!(built.file_name, "pipeline-trace-g-p-5.html");
+    assert_eq!(built.file_name, "longpole-g-p-5.html");
     assert_eq!(
         *progress.lock().unwrap(),
         [
@@ -123,7 +123,7 @@ async fn mr_пайплайн_берётся_из_head_pipeline_суффикс_mr
     let handler = gitlab(vec![], Some("gid://gitlab/Ci::Pipeline/9"));
     let built = build(&request, handler).await;
     assert_eq!(built.report.meta().label.as_deref(), Some("#9"));
-    assert_eq!(built.file_name, "pipeline-trace-g-p-mr7.html");
+    assert_eq!(built.file_name, "longpole-g-p-mr7.html");
 }
 
 #[tokio::test]
@@ -141,7 +141,7 @@ async fn aggregate_агрегат_метка_и_счётчики_статусо�
         meta.status_counts,
         Some([("SUCCESS".to_string(), 2)].into())
     );
-    assert_eq!(built.file_name, "pipeline-trace-g-p-master.html");
+    assert_eq!(built.file_name, "longpole-g-p-master.html");
 }
 
 #[tokio::test]
@@ -152,11 +152,11 @@ async fn aggregate_метка_из_ref_и_source_или_none_для_всех_п�
 
     let source = build(&aggregate(None, Some("push"), 1), handler()).await;
     assert_eq!(source.report.meta().label.as_deref(), Some("push"));
-    assert_eq!(source.file_name, "pipeline-trace-g-p-push.html");
+    assert_eq!(source.file_name, "longpole-g-p-push.html");
 
     let all = build(&aggregate(None, None, 1), handler()).await;
     assert_eq!(all.report.meta().label, None);
-    assert_eq!(all.file_name, "pipeline-trace-g-p-all.html");
+    assert_eq!(all.file_name, "longpole-g-p-all.html");
 }
 
 #[tokio::test]
@@ -218,14 +218,14 @@ async fn ошибки_gitlab_идут_наружу_кодом() {
 fn default_file_name_слаг_из_проекта_и_суффикса() {
     assert_eq!(
         default_file_name("group/proj", "master"),
-        "pipeline-trace-group-proj-master.html"
+        "longpole-group-proj-master.html"
     );
     assert_eq!(
         default_file_name("g/p", "feature/x y"),
-        "pipeline-trace-g-p-feature-x-y.html"
+        "longpole-g-p-feature-x-y.html"
     );
     assert_eq!(
         default_file_name("g.x/p_1", "a.b-c"),
-        "pipeline-trace-g.x-p_1-a.b-c.html"
+        "longpole-g.x-p_1-a.b-c.html"
     );
 }

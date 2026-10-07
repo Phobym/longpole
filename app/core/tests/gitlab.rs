@@ -7,11 +7,11 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use fixtures::{assert_error, at, fake_gql};
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::gitlab::{
+use longpole_core::error::ErrorCode;
+use longpole_core::gitlab::{
     Client, Gql, PipelineFilter, fetch_pipeline, list_pipelines, mr_head_pipeline,
 };
-use pipeline_trace_core::model::{RawJob, RawPipelineInfo};
+use longpole_core::model::{RawJob, RawPipelineInfo};
 use serde_json::{Value, json};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
@@ -330,9 +330,7 @@ fn client(server: &MockServer) -> Client {
     Client::with_base_url("h.example", &server.uri(), "tok").unwrap()
 }
 
-async fn query_answering(
-    response: ResponseTemplate,
-) -> Result<Value, pipeline_trace_core::error::Error> {
+async fn query_answering(response: ResponseTemplate) -> Result<Value, longpole_core::error::Error> {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .respond_with(response)

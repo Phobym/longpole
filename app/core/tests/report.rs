@@ -7,12 +7,12 @@ use fixtures::{
     JobOpts, PipelineOpts, T0, at, clean_pipeline, job, pipeline_opts, raw_pipeline,
     sample_pipeline,
 };
-use pipeline_trace_core::insights::Stability;
-use pipeline_trace_core::model::{RawPipeline, Span, build_tree};
-use pipeline_trace_core::schema::{
+use longpole_core::insights::Stability;
+use longpole_core::model::{RawPipeline, Span, build_tree};
+use longpole_core::schema::{
     AggNode, Bar, BaseNode, Holds, Locale, Meta, Report, SingleNode, Tree,
 };
-use pipeline_trace_core::source::Provider;
+use longpole_core::source::Provider;
 
 fn build(raw: &RawPipeline) -> Span {
     build_tree(raw, "https://h", T0)

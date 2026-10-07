@@ -3,9 +3,9 @@
 
 use std::collections::HashMap;
 
-use pipeline_trace_core::error::Error;
-use pipeline_trace_core::gitlab::Gql;
-use pipeline_trace_core::model::{RawJob, RawPipeline, RawPipelineInfo, Span};
+use longpole_core::error::Error;
+use longpole_core::gitlab::Gql;
+use longpole_core::model::{RawJob, RawPipeline, RawPipelineInfo, Span};
 use serde_json::Value;
 use time::{Duration, OffsetDateTime, macros::datetime};
 
@@ -264,7 +264,7 @@ impl<F: Fn(&Value) -> Value + Sync> Gql for FakeGql<F> {
 /// Ожидаемая ошибка: код и параметры, не текст.
 pub fn assert_error<T: std::fmt::Debug>(
     result: Result<T, Error>,
-    code: pipeline_trace_core::error::ErrorCode,
+    code: longpole_core::error::ErrorCode,
     params: &[(&'static str, &str)],
 ) {
     let err = result.expect_err("ждали ошибку");

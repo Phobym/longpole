@@ -47,9 +47,9 @@ fn slug(text: &str) -> Cow<'_, str> {
     UNSAFE_IN_NAME.replace_all(text, "-")
 }
 
-/// `pipeline-trace-<проект>-<суффикс>.html`
+/// `longpole-<проект>-<суффикс>.html`
 pub fn default_file_name(project: &str, suffix: &str) -> String {
-    format!("pipeline-trace-{}-{}.html", slug(project), slug(suffix))
+    format!("longpole-{}-{}.html", slug(project), slug(suffix))
 }
 
 /// Что загружать: gid пайплайнов, суффикс имени файла и счётчики статусов агрегата.

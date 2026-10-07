@@ -79,7 +79,7 @@ pub fn create_form(app: &AppHandle) -> tauri::Result<()> {
         Spec {
             label: FORM,
             url: WebviewUrl::App("index.html".into()),
-            title: "pipeline-trace",
+            title: "Longpole",
             size: LogicalSize::new(1280.0, 860.0),
         },
         move |url| {

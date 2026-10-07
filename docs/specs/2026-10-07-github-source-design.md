@@ -1,6 +1,6 @@
 # GitHub Actions как второй источник — спека
 
-Дата: 2026-10-07. Добавляет GitHub Actions (github.com и GitHub Enterprise Server) как второй источник пайплайнов рядом с GitLab. Базовые спеки: `docs/specs/2026-10-03-tauri-rewrite-design.md`, `docs/specs/2026-10-06-first-run-ux-design.md`. Здесь только отличия. Базовая спека `2026-09-24-pipeline-trace-design.md` откладывала GitHub до появления потребности — она появилась.
+Дата: 2026-10-07. Добавляет GitHub Actions (github.com и GitHub Enterprise Server) как второй источник пайплайнов рядом с GitLab. Базовые спеки: `docs/specs/2026-10-03-tauri-rewrite-design.md`, `docs/specs/2026-10-06-first-run-ux-design.md`. Здесь только отличия. Базовая спека `2026-09-24-longpole-design.md` откладывала GitHub до появления потребности — она появилась.
 
 ## 1. Цель и рамки
 
@@ -123,11 +123,11 @@ REST: `GET /repos/{owner}/{repo}/actions/runs/{id}/jobs?filter=all&per_page=100`
 
 Существующие пользователи: карта пуста, первый запрос к хосту делает пробу и записывает `gitlab`. Миграции нет.
 
-API: github.com — `https://api.github.com`, GHES — `https://<host>/api/v3`. Редиректы выключены. Заголовки: `Authorization: Bearer`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`, `User-Agent: pipeline-trace`. Не больше 4 параллельных запросов, таймауты как у GitLab-клиента.
+API: github.com — `https://api.github.com`, GHES — `https://<host>/api/v3`. Редиректы выключены. Заголовки: `Authorization: Bearer`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`, `User-Agent: longpole`. Не больше 4 параллельных запросов, таймауты как у GitLab-клиента.
 
 ## 4. Токены
 
-Связка ключей не меняется: service `dev.pipeline-trace.desktop`, account — хост.
+Связка ключей не меняется: service `dev.longpole.desktop`, account — хост.
 
 `find_token` для `Github`:
 

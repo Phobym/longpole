@@ -4,10 +4,10 @@ mod fixtures;
 use std::sync::Mutex;
 
 use fixtures::{assert_error, fake_gql};
-use pipeline_trace_core::browse::{
+use longpole_core::browse::{
     Commit, Page, Pipeline, Project, fetch_project, list_branches, list_projects, recent_pipelines,
 };
-use pipeline_trace_core::error::ErrorCode;
+use longpole_core::error::ErrorCode;
 use serde_json::json;
 
 #[tokio::test]

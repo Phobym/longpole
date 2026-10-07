@@ -1,4 +1,4 @@
-//! Ядро pipeline-trace: без зависимостей от Tauri.
+//! Ядро Longpole: без зависимостей от Tauri.
 
 pub mod aggregate;
 pub mod browse;

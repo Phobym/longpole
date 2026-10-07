@@ -1,4 +1,4 @@
-# pipeline-trace Desktop: приложение для macOS, Linux и Windows
+# longpole Desktop: приложение для macOS, Linux и Windows
 
 Дата: 2026-09-24. Статус: дизайн утверждён, реализации нет.
 
@@ -27,7 +27,7 @@
 
 ```
 src/report.mjs            buildReport — общая оркестрация CLI и приложения (новый)
-bin/pipeline-trace.mjs    CLI: разбор аргументов → buildReport → файл
+bin/longpole.mjs    CLI: разбор аргументов → buildReport → файл
 desktop/
   package.json            devDependencies: electron, electron-builder; "type": "module"
   scripts/sync-core.mjs   копирует ../src в app/core перед запуском и сборкой
@@ -53,7 +53,7 @@ buildReport(request, { gql, host, now?, onProgress? }) → Promise<{ report, suf
 // onProgress({ loaded, total })
 ```
 
-Функция повторяет нынешнюю оркестрацию `bin/pipeline-trace.mjs`: получает id пайплайнов, загружает их, строит деревья, агрегат и `insights`, собирает `report` для `render()`. `suffix` — часть имени файла по умолчанию. CLI вызывает её и пишет файл; поведение CLI не меняется.
+Функция повторяет нынешнюю оркестрацию `bin/longpole.mjs`: получает id пайплайнов, загружает их, строит деревья, агрегат и `insights`, собирает `report` для `render()`. `suffix` — часть имени файла по умолчанию. CLI вызывает её и пишет файл; поведение CLI не меняется.
 
 ## Главный процесс
 
@@ -105,9 +105,9 @@ buildReport(request, { gql, host, now?, onProgress? }) → Promise<{ report, suf
 
 ## Установка без подписи (README)
 
-- macOS: перетащить в «Программы», первый запуск — «Открыть» из контекстного меню или `xattr -dr com.apple.quarantine "/Applications/pipeline-trace.app"`.
+- macOS: перетащить в «Программы», первый запуск — «Открыть» из контекстного меню или `xattr -dr com.apple.quarantine "/Applications/longpole.app"`.
 - Windows: SmartScreen → «Подробнее» → «Выполнить в любом случае».
-- Linux: `chmod +x pipeline-trace-*.AppImage` или `sudo apt install ./pipeline-trace_*.deb`.
+- Linux: `chmod +x longpole-*.AppImage` или `sudo apt install ./longpole_*.deb`.
 
 ## Тесты
 

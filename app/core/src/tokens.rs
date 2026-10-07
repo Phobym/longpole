@@ -20,7 +20,7 @@ use crate::hosts::{HostList, bare, normalize_host};
 use crate::source::{GITHUB_COM, Provider};
 
 /// Service записи в связке ключей; account — хост.
-pub const SERVICE: &str = "dev.pipeline-trace.desktop";
+pub const SERVICE: &str = "dev.longpole.desktop";
 
 /// Платформенное хранилище; `None` — системного нет (Linux без Secret Service), хранение токенов выключено.
 pub fn platform_store() -> Option<Arc<CredentialStore>> {

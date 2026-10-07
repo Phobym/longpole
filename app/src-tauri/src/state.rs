@@ -5,12 +5,12 @@ use std::path::Path;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
-use pipeline_trace_core::history::History;
-use pipeline_trace_core::projects::Projects;
-use pipeline_trace_core::request::Request;
-use pipeline_trace_core::schema::Locale;
-use pipeline_trace_core::settings::Settings;
-use pipeline_trace_core::tokens::{TokenStore, platform_store};
+use longpole_core::history::History;
+use longpole_core::projects::Projects;
+use longpole_core::request::Request;
+use longpole_core::schema::Locale;
+use longpole_core::settings::Settings;
+use longpole_core::tokens::{TokenStore, platform_store};
 
 const ZOOM_MIN: f64 = 0.25;
 const ZOOM_MAX: f64 = 5.0;
@@ -138,7 +138,7 @@ mod tests {
 
     #[test]
     fn одиннадцатый_отчёт_вытесняет_первый_а_поиск_находит_свежайший() {
-        let state = AppState::new(&std::env::temp_dir().join("pipeline-trace-state-test"));
+        let state = AppState::new(&std::env::temp_dir().join("longpole-state-test"));
         let ids: Vec<u32> = (1..=11).map(|n| state.push_report(entry(n))).collect();
         assert_eq!(ids[0], 1);
         assert_eq!(state.report_json(1), None);

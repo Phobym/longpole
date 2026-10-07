@@ -20,7 +20,7 @@ export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => voi
   const createUrl =
     provider === 'github'
       ? `https://${host}/settings/personal-access-tokens/new`
-      : `https://${host}/-/user_settings/personal_access_tokens?name=pipeline-trace&scopes=read_api`
+      : `https://${host}/-/user_settings/personal_access_tokens?name=longpole&scopes=read_api`
   return (
     <form
       className="flex flex-col gap-2 rounded-md border border-warn bg-secondary/40 p-3"

@@ -1,8 +1,8 @@
 //! История запросов: `desktop/history.test` на tempdir.
 
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::history::{History, HistoryEntry, HistoryLabel, NewEntry};
-use pipeline_trace_core::request::{Form, FormMode, Request};
+use longpole_core::error::ErrorCode;
+use longpole_core::history::{History, HistoryEntry, HistoryLabel, NewEntry};
+use longpole_core::request::{Form, FormMode, Request};
 use serde_json::json;
 use tempfile::TempDir;
 use time::{Duration, OffsetDateTime, macros::datetime};

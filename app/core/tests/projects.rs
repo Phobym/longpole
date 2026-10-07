@@ -1,8 +1,8 @@
 //! «Мои проекты»: `projects.json` на tempdir.
 
-use pipeline_trace_core::error::ErrorCode;
-use pipeline_trace_core::projects::{Projects, SavedProject};
-use pipeline_trace_core::request::ProjectRef;
+use longpole_core::error::ErrorCode;
+use longpole_core::projects::{Projects, SavedProject};
+use longpole_core::request::ProjectRef;
 use tempfile::TempDir;
 use time::macros::datetime;
 

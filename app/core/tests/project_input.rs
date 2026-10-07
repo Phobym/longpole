@@ -170,3 +170,25 @@ fn страницы_github_дают_репозиторий() {
         );
     }
 }
+
+#[test]
+fn проект_gitlab_с_словом_страницы_в_пути_не_обрезается() {
+    for (input, path) in [
+        ("https://gitlab.example.com/g/sub/tree", "g/sub/tree"),
+        ("git@gitlab.example.com:g/sub/tree.git", "g/sub/tree"),
+        (
+            "ssh://git@gitlab.example.com/g/sub/actions.git",
+            "g/sub/actions",
+        ),
+    ] {
+        assert_eq!(
+            parse_project_input(input),
+            r("gitlab.example.com", path),
+            "{input}"
+        );
+    }
+    assert_eq!(
+        parse_project_input("https://ghe.example/o/r/tree/main"),
+        r("ghe.example", "o/r")
+    );
+}

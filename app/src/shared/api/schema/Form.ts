@@ -11,6 +11,6 @@ export type Form = { mode: FormMode, host: string, url: string, project: string,
  */
 statuses: Array<string>, 
 /**
- * файл workflow GitHub (`ci.yml`); GitLab поле не читает
+ * файл workflow GitHub (`ci.yml`); у GitLab форма шлёт пустую строку
  */
 workflow: string, };

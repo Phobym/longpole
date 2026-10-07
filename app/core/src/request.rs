@@ -65,7 +65,7 @@ pub struct Form {
     pub last: String,
     /// `ANY` — без фильтра
     pub statuses: Vec<String>,
-    /// файл workflow GitHub (`ci.yml`); GitLab поле не читает
+    /// файл workflow GitHub (`ci.yml`); у GitLab форма шлёт пустую строку
     pub workflow: String,
 }
 
@@ -166,10 +166,12 @@ pub fn parse_project_input(input: &str) -> Result<ProjectRef, Error> {
 
 fn parse_remote(input: &str) -> Result<ProjectRef, Error> {
     let invalid = || Error::new(ErrorCode::ProjectInputInvalid);
-    let caps = LINK
-        .captures(input)
-        .or_else(|| GITHUB_LINK.captures(input))
-        .or_else(|| REPO_HTTP.captures(input))
+    let clean = LINK.captures(input).or_else(|| GITHUB_LINK.captures(input));
+    // хвост страницы режем только у веб-адресов: ssh/scp дают чистый путь проекта
+    let web = clean.is_none().then(|| REPO_HTTP.captures(input)).flatten();
+    let is_web = web.is_some();
+    let caps = clean
+        .or(web)
         .or_else(|| REPO_SSH.captures(input))
         .or_else(|| REPO_SCP.captures(input))
         .ok_or_else(invalid)?;
@@ -182,13 +184,21 @@ fn parse_remote(input: &str) -> Result<ProjectRef, Error> {
         return Err(invalid());
     }
     let tail_cut = caps[2].split("/-/").next().unwrap_or_default();
-    let path = project(cut_github_page(tail_cut)).map_err(|_| invalid())?;
+    let tail_cut = if is_web {
+        cut_github_page(&host, tail_cut)
+    } else {
+        tail_cut
+    };
+    let path = project(tail_cut).map_err(|_| invalid())?;
     Ok(ProjectRef { host, path })
 }
 
-/// `o/r/tree/main/src` → `o/r`.
-// ponytail: проект GitLab `group/sub/tree` тоже обрежется до `group/sub`; если встретится — резать только для хостов GitHub из `hostKinds`
-fn cut_github_page(path: &str) -> &str {
+/// `o/r/tree/main/src` → `o/r`; у чужого хоста — только если сегментов больше трёх (`g/sub/tree` остаётся проектом).
+// ponytail: путь GitLab из 4+ сегментов с третьим словом-страницей (`g/sub/tree/x` не на github.com) тоже обрежется; если встретится — резать только для хостов GitHub из `hostKinds`
+fn cut_github_page<'a>(host: &str, path: &'a str) -> &'a str {
+    if host != GITHUB_COM && path.split('/').count() <= 3 {
+        return path;
+    }
     let mut parts = path.splitn(4, '/');
     match (parts.next(), parts.next(), parts.next()) {
         (Some(owner), Some(repo), Some(page)) if GITHUB_PAGES.contains(&page) => {

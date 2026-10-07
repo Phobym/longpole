@@ -545,23 +545,6 @@ fn fake_gh(script: &str) -> (TempDir, Gh) {
     (dir, gh)
 }
 
-// токены окружения `gh` не получает: их разбирает наш fallback со своей привязкой к хосту
-// (слабая проверка: в окружении тестов этих переменных может не быть)
-#[cfg(unix)]
-#[test]
-fn gh_запускается_без_токенов_окружения() {
-    let (_dir, gh) = fake_gh("exec env");
-    let out = gh.value(&[]).expect("env");
-    for name in [
-        "GH_TOKEN",
-        "GITHUB_TOKEN",
-        "GH_ENTERPRISE_TOKEN",
-        "GITHUB_ENTERPRISE_TOKEN",
-    ] {
-        assert!(!out.contains(name), "{name}");
-    }
-}
-
 #[cfg(unix)]
 #[test]
 fn зависший_gh_обрывается_по_таймауту() {

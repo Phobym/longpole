@@ -1,4 +1,4 @@
-//! Токены GitLab: системная связка ключей через `keyring-core`, `glab` и поиск токена для хоста.
+//! Токены GitLab и GitHub: системная связка ключей через `keyring-core`, `glab` и поиск токена для хоста.
 
 use std::collections::BTreeMap;
 use std::env;
@@ -255,7 +255,7 @@ impl Glab {
     }
 
     pub fn value(&self, args: &[&str]) -> Option<String> {
-        tool_value(&self.0, args, &[], None)
+        tool_value(Command::new(&self.0).args(args), None)
     }
 }
 
@@ -285,7 +285,10 @@ impl Gh {
     /// Токены окружения `gh` не отдаём: `gh auth token --hostname H` вернул бы `GH_ENTERPRISE_TOKEN`
     /// любому enterprise-хосту, а их привязку к `GH_HOST` разбирает `find_github_token`.
     pub fn value(&self, args: &[&str]) -> Option<String> {
-        tool_value(&self.0, args, &GH_ENV_TOKENS, Some(GH_TIMEOUT))
+        tool_value(
+            without_env_tokens(Command::new(&self.0).args(args)),
+            Some(GH_TIMEOUT),
+        )
     }
 }
 
@@ -296,24 +299,22 @@ fn find_tool(name: &str, dirs: &[PathBuf]) -> Option<PathBuf> {
         .find(|path| path.is_file())
 }
 
+/// Команда без токенов окружения GitHub (см. `Gh::value`).
+fn without_env_tokens(command: &mut Command) -> &mut Command {
+    for name in GH_ENV_TOKENS {
+        command.env_remove(name);
+    }
+    command
+}
+
 /// Вывод команды; любой сбой, таймаут и пустой вывод — `None`: CLI может быть не настроен, это не ошибка.
 // ponytail: у `glab` без таймаута — `config get` локальный и мгновенный; `gh auth status` ходит в сеть,
 // его ограничивают 5 с, после чего процесс убивается
-fn tool_value(
-    path: &Path,
-    args: &[&str],
-    env_remove: &[&str],
-    timeout: Option<Duration>,
-) -> Option<String> {
-    let mut command = Command::new(path);
+fn tool_value(command: &mut Command, timeout: Option<Duration>) -> Option<String> {
     command
-        .args(args)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
-    for name in env_remove {
-        command.env_remove(name);
-    }
     let mut child = command.spawn().ok()?;
     let mut stdout = child.stdout.take()?;
     let (tx, rx) = mpsc::channel();
@@ -400,4 +401,26 @@ pub fn github_hosts(
         hosts.push(info(GITHUB_COM.into(), TokenSource::Env));
     }
     hosts
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn токены_окружения_у_gh_удаляются() {
+        let mut command = Command::new("sh");
+        command
+            .args([
+                "-c",
+                "echo ${GH_ENTERPRISE_TOKEN:-unset}:${GH_TOKEN:-unset}",
+            ])
+            .env("GH_ENTERPRISE_TOKEN", "метка-ent")
+            .env("GH_TOKEN", "метка-gh");
+        let output = without_env_tokens(&mut command).output().unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout).trim(),
+            "unset:unset"
+        );
+    }
 }

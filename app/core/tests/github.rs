@@ -2,10 +2,14 @@
 mod fixtures;
 
 use fixtures::assert_error;
+use pipeline_trace_core::browse::{Commit, Page, Pipeline, Project, Workflow};
 use pipeline_trace_core::error::ErrorCode;
 use pipeline_trace_core::github::Client;
+use pipeline_trace_core::gitlab::PipelineFilter;
 use pipeline_trace_core::model::RawPipeline;
+use pipeline_trace_core::source::{Provider, Source};
 use serde_json::{Value, json};
+use std::collections::BTreeMap;
 use time::macros::datetime;
 use wiremock::matchers::{header, method, path, query_param, query_param_is_missing};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -122,7 +126,9 @@ async fn mount_run(server: &MockServer, workflow: Option<&str>) {
 }
 
 /// (id, имя, стейдж, ретрай, needs, allow_failure) в порядке API.
-fn jobs_view(raw: &RawPipeline) -> Vec<(&str, &str, &str, bool, Vec<&str>, bool)> {
+type JobView<'a> = (&'a str, &'a str, &'a str, bool, Vec<&'a str>, bool);
+
+fn jobs_view(raw: &RawPipeline) -> Vec<JobView<'_>> {
     raw.jobs
         .iter()
         .map(|j| {
@@ -238,4 +244,297 @@ async fn временная_ошибка_файла_workflow_не_кэшируе
     let client = client(&server);
     assert!(client.fetch_run("o/r", "7").await.unwrap().needs_missing);
     assert!(!client.fetch_run("o/r", "7").await.unwrap().needs_missing);
+}
+
+/// Run в списке: `minutes` — длительность последней попытки.
+fn listed_run(id: u64, conclusion: &str, minutes: u32) -> Value {
+    let mut run = run_json();
+    run["id"] = json!(id);
+    run["conclusion"] = json!(conclusion);
+    run["run_started_at"] = json!("2026-10-07T10:00:00Z");
+    run["updated_at"] = json!(format!("2026-10-07T10:{minutes:02}:00Z"));
+    run
+}
+
+fn filter(statuses: Option<&[&str]>, last: usize) -> PipelineFilter {
+    PipelineFilter {
+        r#ref: Some("main".into()),
+        source: Some("push".into()),
+        statuses: statuses.map(|s| s.iter().map(|&x| x.into()).collect()),
+        last,
+        workflow: Some("ci.yml".into()),
+    }
+}
+
+#[tokio::test]
+async fn провайдер_github() {
+    let server = MockServer::start().await;
+    assert_eq!(client(&server).provider(), Provider::Github);
+}
+
+#[tokio::test]
+async fn агрегат_один_статус_уходит_параметром_и_обрезается_по_last() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/workflows/ci.yml/runs"))
+        .and(query_param("branch", "main"))
+        .and(query_param("event", "push"))
+        .and(query_param("status", "success"))
+        .and(query_param("per_page", "100"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(json!({ "workflow_runs": [
+            listed_run(1, "success", 5), listed_run(2, "success", 6), listed_run(3, "success", 7),
+        ] })),
+        )
+        .mount(&server)
+        .await;
+    let listed = client(&server)
+        .list_pipelines("o/r", &filter(Some(&["SUCCESS"]), 2))
+        .await
+        .unwrap();
+    assert_eq!(listed.ids, vec!["1", "2"]);
+    assert_eq!(listed.counts, BTreeMap::from([("SUCCESS".to_string(), 2)]));
+}
+
+#[tokio::test]
+async fn агрегат_несколько_статусов_фильтруются_на_клиенте() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/workflows/ci.yml/runs"))
+        .and(query_param_is_missing("status"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(json!({ "workflow_runs": [
+            listed_run(1, "success", 5), listed_run(2, "cancelled", 6), listed_run(3, "failure", 7),
+        ] })),
+        )
+        .mount(&server)
+        .await;
+    let listed = client(&server)
+        .list_pipelines("o/r", &filter(Some(&["SUCCESS", "FAILED"]), 50))
+        .await
+        .unwrap();
+    assert_eq!(listed.ids, vec!["1", "3"]);
+    assert_eq!(
+        listed.counts,
+        BTreeMap::from([("FAILED".to_string(), 1), ("SUCCESS".to_string(), 1)])
+    );
+}
+
+#[tokio::test]
+async fn pr_строит_самый_долгий_run_head_коммита() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/pulls/42"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "head": { "sha": "abc" } })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/runs"))
+        .and(query_param("head_sha", "abc"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(json!({ "workflow_runs": [
+            listed_run(1, "success", 5), listed_run(2, "success", 20), listed_run(3, "success", 1),
+        ] })),
+        )
+        .mount(&server)
+        .await;
+    assert_eq!(
+        client(&server).head_pipeline("o/r", "42").await.unwrap(),
+        "2"
+    );
+}
+
+#[tokio::test]
+async fn pr_без_pr_или_без_запусков_это_mr_has_no_pipeline() {
+    let server = MockServer::start().await;
+    assert_error(
+        client(&server).head_pipeline("o/r", "42").await,
+        ErrorCode::MrHasNoPipeline,
+        &[("iid", "42"), ("project", "o/r")],
+    );
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/pulls/42"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "head": { "sha": "abc" } })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/runs"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "workflow_runs": [] })))
+        .mount(&server)
+        .await;
+    assert_error(
+        client(&server).head_pipeline("o/r", "42").await,
+        ErrorCode::MrHasNoPipeline,
+        &[("iid", "42"), ("project", "o/r")],
+    );
+}
+
+fn repo_json(full_name: &str) -> Value {
+    json!({ "full_name": full_name, "pushed_at": "2026-10-07T09:00:00Z", "default_branch": "main" })
+}
+
+fn project(full_name: &str) -> Project {
+    Project {
+        full_path: full_name.into(),
+        name: full_name.into(),
+        last_activity_at: Some("2026-10-07T09:00:00Z".into()),
+        default_branch: Some("main".into()),
+    }
+}
+
+#[tokio::test]
+async fn проект_и_его_отсутствие() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(repo_json("o/r")))
+        .mount(&server)
+        .await;
+    assert_eq!(
+        client(&server).fetch_project("o/r").await.unwrap(),
+        project("o/r")
+    );
+    assert_error(
+        client(&server).fetch_project("o/none").await,
+        ErrorCode::ProjectNotFound,
+        &[("host", "github.com"), ("project", "o/none")],
+    );
+}
+
+#[tokio::test]
+async fn свои_репозитории_поиск_по_странице_и_курсор_номером() {
+    let server = MockServer::start().await;
+    let next = format!(
+        "<{}/user/repos?sort=pushed&per_page=100&page=2>; rel=\"next\"",
+        server.uri()
+    );
+    Mock::given(method("GET"))
+        .and(path("/user/repos"))
+        .and(query_param("sort", "pushed"))
+        .and(query_param("page", "1"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("link", next.as_str())
+                .set_body_json(json!([repo_json("o/web"), repo_json("o/api")])),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/user/repos"))
+        .and(query_param("page", "2"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([repo_json("o/web-2")])))
+        .mount(&server)
+        .await;
+    let client = client(&server);
+    assert_eq!(
+        client.list_projects(" WEB ", None).await.unwrap(),
+        Page {
+            items: vec![project("o/web")],
+            next: Some("2".into())
+        }
+    );
+    assert_eq!(
+        client.list_projects("", Some("2")).await.unwrap(),
+        Page {
+            items: vec![project("o/web-2")],
+            next: None
+        }
+    );
+}
+
+#[tokio::test]
+async fn ветки_основная_первой_и_фильтр() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(repo_json("o/r")))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/branches"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([
+            { "name": "dev" }, { "name": "feature/x" }, { "name": "main" },
+        ])))
+        .mount(&server)
+        .await;
+    let client = client(&server);
+    assert_eq!(
+        client.list_branches("o/r", "").await.unwrap(),
+        vec!["main", "dev", "feature/x"]
+    );
+    assert_eq!(
+        client.list_branches("o/r", "FEAT").await.unwrap(),
+        vec!["feature/x"]
+    );
+}
+
+#[tokio::test]
+async fn последние_запуски_без_workflow_и_с_ним() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/runs"))
+        .and(query_param("branch", "main"))
+        .and(query_param("per_page", "20"))
+        .and(query_param("page", "1"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(json!({ "workflow_runs": [run_json()] })),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/workflows/ci.yml/runs"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "workflow_runs": [] })))
+        .expect(1)
+        .mount(&server)
+        .await;
+    let client = client(&server);
+    assert_eq!(
+        client
+            .recent_pipelines("o/r", Some("main"), None, None)
+            .await
+            .unwrap(),
+        Page {
+            items: vec![Pipeline {
+                id: "7".into(),
+                iid: "12".into(),
+                status: "success".into(),
+                source: Some("push".into()),
+                created_at: "2026-10-07T10:00:00.000Z".into(),
+                duration: Some(600_000),
+                commit: Some(Commit {
+                    sha: "abc123".into(),
+                    title: "fix: x".into()
+                }),
+                author: Some("u".into()),
+                url: "https://github.com/o/r/actions/runs/7".into(),
+            }],
+            next: None,
+        }
+    );
+    client
+        .recent_pipelines("o/r", None, Some("ci.yml"), None)
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn workflow_только_активные_имя_файла_без_пути() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/workflows"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(json!({ "workflows": [
+            { "name": "CI", "path": ".github/workflows/ci.yml", "state": "active" },
+            { "name": "Old", "path": ".github/workflows/old.yml", "state": "disabled_manually" },
+        ] })),
+        )
+        .mount(&server)
+        .await;
+    assert_eq!(
+        client(&server).list_workflows("o/r").await.unwrap(),
+        vec![Workflow {
+            file: "ci.yml".into(),
+            name: "CI".into()
+        }]
+    );
 }

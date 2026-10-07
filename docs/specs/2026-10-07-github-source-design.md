@@ -48,7 +48,7 @@ REST: `GET /repos/{owner}/{repo}/actions/runs/{id}/jobs?filter=all&per_page=100`
 | `bridge` | `false` |
 | `status` | `job.status` + `job.conclusion` → таблица 2.3 |
 | `started_at` / `finished_at` | `job.started_at` / `job.completed_at`; у `conclusion == skipped` — оба `None` (GitHub отдаёт им `started_at` позже `completed_at`) |
-| `queued_duration` | `started_at − created_at` в секундах; `None`, если не стартовала |
+| `queued_duration` | `started_at − created_at` в секундах; `None`, если не стартовала или разность отрицательна (копия джобы из прошлой попытки) |
 | `retried` | 2.6 |
 | `allow_failure` | `continue-on-error: true` у джобы в YAML; иначе `false` |
 | `web_path` | путь из `job.html_url` |

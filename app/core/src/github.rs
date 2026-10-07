@@ -1,6 +1,7 @@
 //! GitHub Actions: workflow run как пайплайн (спека, § 2), списки для формы (§ 6).
 
 mod client;
+mod lists;
 pub(crate) mod workflow;
 
 use std::cmp::Reverse;
@@ -12,8 +13,11 @@ use time::OffsetDateTime;
 
 pub use client::{Client, probe, probe_at};
 
+use crate::browse::{Page, Pipeline, Project, Workflow as Flow};
 use crate::error::{Error, ErrorCode};
+use crate::gitlab::{Listed, PipelineFilter};
 use crate::model::{RawJob, RawPipeline, RawPipelineInfo};
+use crate::source::{Provider, Source};
 use workflow::{Matched, Workflow};
 
 const MAX_JOB_PAGES: usize = 50;
@@ -118,12 +122,14 @@ fn without_skipped_times(mut job: WireJob) -> WireJob {
     job
 }
 
+/// Старт и конец джобы.
+type Times = (Option<OffsetDateTime>, Option<OffsetDateTime>);
+
 /// Джобы всех попыток (спека, § 2.6): последняя попытка — основная; ранняя с теми же временами —
 /// копия, не запускавшаяся — не ретрай; остальные ранние — `retried`.
 fn attempts(mut jobs: Vec<WireJob>) -> Vec<(WireJob, bool)> {
     jobs.sort_by_key(|j| Reverse(j.run_attempt));
-    let mut seen: HashMap<String, Vec<(Option<OffsetDateTime>, Option<OffsetDateTime>)>> =
-        HashMap::new();
+    let mut seen: HashMap<String, Vec<Times>> = HashMap::new();
     let mut kept = Vec::new();
     for job in jobs {
         let times = (job.started_at, job.completed_at);
@@ -297,6 +303,62 @@ impl Client {
             .unwrap_or_else(PoisonError::into_inner)
             .insert(key, parsed.clone());
         parsed
+    }
+}
+
+impl Source for Client {
+    fn host(&self) -> &str {
+        Client::host(self)
+    }
+
+    fn provider(&self) -> Provider {
+        Provider::Github
+    }
+
+    async fn fetch_pipeline(&self, project: &str, id: &str) -> Result<RawPipeline, Error> {
+        self.fetch_run(project, id).await
+    }
+
+    async fn list_pipelines(
+        &self,
+        project: &str,
+        filter: &PipelineFilter,
+    ) -> Result<Listed, Error> {
+        self.list_runs(project, filter).await
+    }
+
+    async fn head_pipeline(&self, project: &str, number: &str) -> Result<String, Error> {
+        self.head_run(project, number).await
+    }
+
+    async fn fetch_project(&self, path: &str) -> Result<Project, Error> {
+        self.repo(path).await
+    }
+
+    async fn list_projects(
+        &self,
+        search: &str,
+        after: Option<&str>,
+    ) -> Result<Page<Project>, Error> {
+        self.repos(search, after).await
+    }
+
+    async fn list_branches(&self, project: &str, search: &str) -> Result<Vec<String>, Error> {
+        self.branches(project, search).await
+    }
+
+    async fn recent_pipelines(
+        &self,
+        project: &str,
+        r#ref: Option<&str>,
+        workflow: Option<&str>,
+        after: Option<&str>,
+    ) -> Result<Page<Pipeline>, Error> {
+        self.recent(project, r#ref, workflow, after).await
+    }
+
+    async fn list_workflows(&self, project: &str) -> Result<Vec<Flow>, Error> {
+        self.workflow_list(project).await
     }
 }
 

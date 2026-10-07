@@ -50,8 +50,11 @@ pub struct Client {
     token: String,
     permits: Semaphore,
     /// (путь, sha) → разобранный файл workflow; `None` — не загрузился
-    pub(crate) workflows: Mutex<HashMap<(String, String), Option<Arc<Workflow>>>>,
+    pub(crate) workflows: Mutex<WorkflowCache>,
 }
+
+/// (путь, sha) → разобранный файл workflow.
+pub(crate) type WorkflowCache = HashMap<(String, String), Option<Arc<Workflow>>>;
 
 /// Тело ответа и адрес следующей страницы.
 struct Body {

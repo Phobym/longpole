@@ -38,15 +38,26 @@ pub enum Report {
 pub enum Locale {
     Ru,
     En,
+    Fr,
+    Es,
+    De,
+    It,
+    Zh,
+    Ja,
 }
 
 impl Locale {
-    /// Тег системной локали (`ru-RU`, `en_US`): русский для `ru*`, иначе английский.
+    /// Тег системной локали (`ru-RU`, `zh_CN`, `ja`): язык по первым двум буквам, незнакомый — английский.
     pub fn from_tag(tag: &str) -> Locale {
-        if tag.to_ascii_lowercase().starts_with("ru") {
-            Locale::Ru
-        } else {
-            Locale::En
+        match tag.get(..2).map(str::to_ascii_lowercase).as_deref() {
+            Some("ru") => Locale::Ru,
+            Some("fr") => Locale::Fr,
+            Some("es") => Locale::Es,
+            Some("de") => Locale::De,
+            Some("it") => Locale::It,
+            Some("zh") => Locale::Zh,
+            Some("ja") => Locale::Ja,
+            _ => Locale::En,
         }
     }
 

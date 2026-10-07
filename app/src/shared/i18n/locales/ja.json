@@ -1,0 +1,213 @@
+{
+  "errors": {
+    "unauthorized": "{{host}} が {{status}} を返しました: トークンが無効か、アクセスが拒否されました",
+    "httpStatus": "{{host}} が {{status}} を返しました",
+    "graphql": "{{host}} から予期しない応答がありました: {{detail}}",
+    "network": "{{host}} に接続できませんでした: {{detail}}",
+    "projectNotFound": "{{host}} 上のプロジェクト {{project}} が見つからないか、アクセスが拒否されました",
+    "pipelineNotFound": "{{host}} 上のプロジェクト {{project}} のパイプライン {{pipeline}} が見つかりません",
+    "tooManyJobs": "プロジェクト {{project}} のパイプライン {{pipeline}}: ジョブが {{limit}} 件を超えたため、読み込みを中止しました",
+    "mrHasNoPipeline": "プロジェクト {{project}} の MR または PR {{iid}} にはパイプラインがありません",
+    "noPipelines": "フィルターに一致するパイプラインがありません: ブランチとステータスを確認してください",
+    "noToken": "{{host}} のトークンが必要です",
+    "emptyToken": "トークンが空です",
+    "keychainUnavailable": "システムのキーチェーンを利用できません: GITLAB_TOKEN と GITLAB_HOST (GitHub の場合は GH_TOKEN) を設定するか、libsecret をインストールしてください",
+    "storage": "アプリのデータを読み書きできませんでした: {{detail}}",
+    "invalidLink": "GitLab のパイプラインまたは MR のリンク (…/-/pipelines/<id>、…/-/merge_requests/<iid>)、または GitHub の run もしくは PR のリンク (…/actions/runs/<id>、…/pull/<n>) が必要です",
+    "invalidHost": "ホストを入力してください (例: gitlab.example.com)",
+    "invalidProject": "プロジェクトのパスを入力してください (例: group/project)",
+    "invalidLast": "パイプラインの数は 1 から {{max}} の範囲で指定してください",
+    "invalidStatuses": "ステータスを 1 つ以上選択するか、「任意」を選択してください",
+    "forbidden": "このリクエストはフォームのウィンドウからではありません",
+    "window": "ウィンドウを開けませんでした: {{detail}}",
+    "projectInputInvalid": "GitLab または GitHub のリポジトリのリンク、もしくはフォルダのパスではないようです",
+    "projectDirNoRemote": "このフォルダには origin リモートを持つ git リポジトリがありません",
+    "reportExpired": "レポートはメモリに残っていません。もう一度作成してください",
+    "rateLimited": "{{host}}: リクエスト制限を超えました。{{reset}} 以降に再試行してください",
+    "workflowRequired": "workflow を選択してください: GitHub の集計は 1 つの workflow が対象です",
+    "ipc": "コマンドを実行できませんでした: {{detail}}"
+  },
+  "form": {
+    "cancel": "キャンセル",
+    "language": "言語",
+    "loading": "読み込み中…",
+    "nothing": "見つかりませんでした",
+    "more": "さらに表示",
+    "progress": {
+      "start": "読み込み中…",
+      "step": "{{total}} 件中 {{loaded}} 件を読み込み中…"
+    },
+    "history": {
+      "clear": "消去",
+      "clearConfirm": "リクエストの履歴を消去しますか?",
+      "empty": "まだありません",
+      "remove": "履歴から削除: {{label}}"
+    },
+    "projects": {
+      "search": "プロジェクトを検索",
+      "searchPlaceholder": "名前またはパス…",
+      "activity": "アクティビティ {{time}}"
+    },
+    "link": {
+      "label": "パイプライン、MR、run、PR のリンクを貼り付け",
+      "placeholder": "https://gitlab.example.com/group/project/-/pipelines/123…",
+      "build": "作成"
+    },
+    "host": {
+      "label": "ホスト",
+      "add": "+ ホストを追加…",
+      "saved": "{{host}} — トークン保存済み",
+      "placeholder": "gitlab.example.com",
+      "token": "トークン",
+      "saveToken": "トークンを保存",
+      "removeToken": "トークンを削除",
+      "removeConfirm": "{{host}} のトークンを削除しますか?"
+    },
+    "branch": {
+      "label": "ブランチ"
+    },
+    "workflow": {
+      "label": "Workflow"
+    },
+    "aggregate": {
+      "statuses": "ステータス",
+      "any": "任意",
+      "last": "パイプラインの数",
+      "build_other": "{{value}} 件のパイプラインを集計"
+    },
+    "settingsButton": "設定",
+    "sidebar": {
+      "projects": "マイプロジェクト",
+      "add": "+ 追加",
+      "recent": "最近",
+      "removeProject": "リストから削除: {{name}}"
+    },
+    "empty": {
+      "title": "最初のプロジェクトを追加",
+      "text": "GitLab または GitHub のリポジトリのリンクを貼り付けるか、クローンのあるフォルダを選択してください。",
+      "add": "+ プロジェクトを追加"
+    },
+    "addProject": {
+      "title": "プロジェクトを追加",
+      "placeholder": "https://gitlab.example.com/group/project、https://github.com/owner/repo、またはフォルダのパス",
+      "hint": "リポジトリ、パイプライン、MR、run、PR のリンクを利用できます。",
+      "pickFolder": "フォルダを選択…",
+      "findOnHost": "ホストのプロジェクト一覧から探す",
+      "add": "追加"
+    },
+    "token": {
+      "need": "{{host}} のトークンが必要です",
+      "scope": "read_api スコープを持つ Personal Access Token。",
+      "create": "{{host}} で作成 ↗",
+      "stored": "システムのキーチェーンに保存されます。",
+      "scopeGithub": "Actions: read と Contents: read の権限を持つ Fine-grained token。"
+    },
+    "settings": {
+      "title": "設定",
+      "back": "← 戻る",
+      "hosts": "ホストとトークン",
+      "noHosts": "ホストはまだありません",
+      "addHost": "ホストを追加",
+      "linuxHint": "Linux ではトークンは Secret Service (gnome-keyring、KWallet) に保存されます。利用できない場合は、glab または環境変数 GITLAB_TOKEN と GITLAB_HOST を使用してください。",
+      "source": { "keychain": "キーチェーン", "glab": "glab", "gh": "gh", "env": "環境変数" },
+      "theme": "テーマ",
+      "themes": { "system": "システム", "light": "ライト", "dark": "ダーク" }
+    },
+    "reportView": {
+      "back": "← 戻る",
+      "loading": "レポートを読み込み中…"
+    }
+  },
+  "report": {
+    "stageLength": "長さ",
+    "stageToEnd": "終了まで",
+    "holds": "遅延",
+    "notRun": "未実行",
+    "notRunStatus": "未実行 · {{status}}",
+    "expand": "{{name}} を展開",
+    "collapse": "{{name}} を折りたたむ",
+    "stable": "安定",
+    "retried": "↻ {{present}} 件中 {{retried}} 件",
+    "retriedTitle_other": "{{present}} 件のパイプライン中 {{retried}} 件でリトライ",
+    "needFor": "↑ 依存される",
+    "waits": "↓ 待機先",
+    "loadFailed": "レポートのデータを読み取れませんでした: {{detail}}",
+    "allPipelines": "すべてのパイプライン",
+    "needsMissing": "ジョブの依存関係を取得できません: workflow ファイルにアクセスできません。ステージは 1 つで、クリティカルパスは所要時間のみで決まります。",
+    "back": "← 集計に戻る",
+    "language": "言語",
+    "help": "操作方法",
+    "keys": {
+      "pan": "<k>ドラッグ</k>、<k>Shift</k> + ホイール、<k>[</k> <k>]</k> — 軸をスクロール",
+      "zoom": "<k>⌘</k>/<k>Ctrl</k> + ホイールまたはピンチ — カーソルを中心にズーム、横スワイプ — スクロール、<k>0</k> — パイプライン全体",
+      "rows": "<k>↑</k> <k>↓</k> — 隣の行へ移動、<k>Enter</k> — 選択",
+      "fold": "<k>←</k> <k>→</k> — 折りたたみと展開",
+      "stage": "ステージをクリック — その終了までのクリティカルパス",
+      "job": "ジョブをクリック — 関連するリンク、<k>Esc</k> — 選択を解除"
+    },
+    "chip": {
+      "pipelines_other": "<b>{{count}}</b> 件のパイプライン",
+      "length": "長さ <b>{{value}}</b>",
+      "lengthP": "長さ p50 · p90 <b>{{p50}} · {{p90}}</b>",
+      "retries": "リトライ <b>{{value}}</b>",
+      "saving": "最大 <b>{{value}}</b> 短縮可能",
+      "jobs_other": "<b>{{count}}</b> 件のジョブ"
+    },
+    "hotspots": {
+      "title": "注目すべき点",
+      "excess": "ステージ <n>{{stage}}</n> は、他のジョブの後でこのジョブを {{excess}} 待っています",
+      "excessCritical": "ステージ <n>{{stage}}</n> は、他のジョブの後でこのジョブを {{excess}} 待っています (クリティカルパス上)",
+      "retriesAgg": "{{present}} 件のパイプライン中 {{retried}} 件でリトライ",
+      "retries_other": "失敗した試行 {{count}} 回",
+      "retriesLast": "、直近 {{present}} 件中 {{retried}} 件でリトライ"
+    },
+    "panel": {
+      "close": "閉じる",
+      "stage": "ステージ",
+      "ran": "{{total}} 件中 {{present}} 件で実行",
+      "critAgg": "クリティカルパス {{percent}}%",
+      "onCritical": "クリティカルパス上",
+      "notOnCritical": "クリティカルパス外",
+      "stability": "安定性",
+      "attempts": "試行",
+      "loss": "損失",
+      "queue": "キュー",
+      "retries": "リトライ",
+      "retriesIn_other": "{{present}} 件のパイプライン中 {{retried}} 件",
+      "lossAvg": "平均 {{time}}",
+      "queueP": "p50 {{p50}} · p90 {{p90}}",
+      "relations": "関連",
+      "relationUp": "選択中のジョブから依存される",
+      "relationDown": "選択中のジョブを待機",
+      "openIn": "{{name}} で開く ↗",
+      "hostLink": "{{name}} ↗",
+      "longest": "最長",
+      "showAll_other": "すべての {{count}} 件のパイプライン ▾",
+      "collapseAll": "折りたたむ ▴"
+    },
+    "kpi": {
+      "duration": "所要時間",
+      "start": "開始",
+      "toEnd": "終了まで",
+      "p90": "p90 {{time}}"
+    },
+    "strip": {
+      "title_other": "{{count}} 件のパイプラインの所要時間",
+      "dotRetried": "{{label}} · リトライ"
+    },
+    "verdict": {
+      "holds": "<n>{{name}}</n> を <b>+{{time}}</b> 遅らせています。",
+      "stagePath": "ステージ終了までのクリティカルパスをウォーターフォールで強調表示しています。",
+      "pipelinePath": "クリティカルパスをウォーターフォールで強調表示しています。",
+      "off": "クリティカルパス外: 高速化しても、パイプラインは<b>短縮されません</b>。",
+      "on": "クリティカルパス上: 高速化すると、パイプラインが<b>短縮されます</b>。",
+      "onAgg": "パイプラインの {{percent}}% でクリティカルパス上: 高速化すると、パイプラインが<b>短縮されます</b>。",
+      "onAggSometimes": "パイプラインの {{percent}}% でクリティカルパス上: 高速化すると、パイプラインが<b>短縮されることがあります</b>。",
+      "saving": "最大 <b>−{{time}}</b> 短縮できます。",
+      "holdsStage": "ステージ <n>{{stage}}</n> を <b>+{{time}}</b> 遅らせています。",
+      "retriesAgg": "リトライの確認をおすすめします — <b>{{present}} 件中 {{retried}} 件</b>。",
+      "attempts_other": "<b>失敗した試行 {{count}} 回</b>",
+      "lost": "、{{time}} のロス"
+    }
+  }
+}

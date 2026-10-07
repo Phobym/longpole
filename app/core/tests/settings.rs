@@ -14,11 +14,21 @@ fn settings() -> (TempDir, Settings) {
 }
 
 #[test]
-fn системная_локаль_ru_даёт_русский_остальное_английский() {
+fn системная_локаль_даёт_свой_язык_незнакомая_английский() {
     for tag in ["ru", "ru-RU", "RU_ru", "ru-UA"] {
         assert_eq!(Locale::from_tag(tag), Locale::Ru, "{tag}");
     }
-    for tag in ["en-US", "de-DE", "uk-UA", ""] {
+    for (tag, locale) in [
+        ("fr-CA", Locale::Fr),
+        ("es_MX", Locale::Es),
+        ("de-DE", Locale::De),
+        ("it", Locale::It),
+        ("zh-Hans-CN", Locale::Zh),
+        ("ja_JP", Locale::Ja),
+    ] {
+        assert_eq!(Locale::from_tag(tag), locale, "{tag}");
+    }
+    for tag in ["en-US", "uk-UA", "r", "ф", ""] {
         assert_eq!(Locale::from_tag(tag), Locale::En, "{tag:?}");
     }
 }

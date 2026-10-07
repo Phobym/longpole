@@ -2,13 +2,10 @@ import i18next from 'i18next'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ReportPage } from '../../pages/report'
-import { fixtures, type Locale, type Report } from '../../shared/api'
-import { initI18n } from '../../shared/i18n'
+import { fixtures, type Report } from '../../shared/api'
+import { browserLocale, initI18n } from '../../shared/i18n'
 import { applyTheme } from '../../shared/lib/theme'
 import '../../shared/ui/theme.css'
-
-// Сохранённый файл открывается в браузере на языке браузера.
-const browserLocale = (): Locale => (navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en')
 
 async function readReport(): Promise<Report> {
   // dev-сервер: данных от Rust нет, берём эталонные фикстуры (?fixture=single|aggregate)

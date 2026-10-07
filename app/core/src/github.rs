@@ -195,6 +195,7 @@ fn raw_job(
         web_path: job.html_url.as_deref().map(path_of).unwrap_or_default(),
         stage: stages[matched.map_or(0, |m| m.job.level)].clone(),
         needs,
+        shard_group: matched.and_then(|m| m.group.clone()),
     }
 }
 

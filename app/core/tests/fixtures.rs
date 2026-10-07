@@ -85,6 +85,7 @@ pub fn job(name: &str, stage: &str, o: JobOpts) -> RawJob {
         web_path: format!("/g/p/-/jobs/{}", encode_uri_component(name)),
         stage: stage.into(),
         needs: o.deps.iter().map(|&d| d.into()).collect(),
+        shard_group: None,
     }
 }
 

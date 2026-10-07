@@ -206,6 +206,7 @@ impl WireJob {
                 .into_iter()
                 .map(|n| n.name)
                 .collect(),
+            shard_group: None,
         };
         (job, self.downstream_pipeline)
     }

@@ -172,8 +172,8 @@ async fn run_с_перезапуском_копиями_и_matrix() {
     assert_eq!(
         jobs_view(&raw),
         vec![
-            ("13", "test: [linux]", "test", false, vec!["build"], false),
-            ("14", "test: [mac]", "test", false, vec!["build"], false),
+            ("13", "test (linux)", "test", false, vec!["build"], false),
+            ("14", "test (mac)", "test", false, vec!["build"], false),
             ("11", "build", "build · lint", false, vec![], false),
             ("12", "lint", "build · lint", false, vec![], true),
             ("1", "build", "build · lint", true, vec![], false),
@@ -677,8 +677,58 @@ async fn отчёт_по_run_зависимости_из_needs_и_провайд
     assert_eq!(report["meta"]["needsMissing"], false);
     assert_eq!(report["meta"]["label"], "#12");
     let build = node(&report, "job", "build");
-    let shard = node(&report, "job", "test: [linux]");
+    let shard = node(&report, "job", "test (linux)");
     assert_eq!(shard["deps"], json!([build["id"]]));
+}
+
+/// Имена детей узла отчёта.
+fn kids(report: &Value, n: &Value) -> Vec<(String, String)> {
+    n["children"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|id| {
+            let c = &report["tree"]["nodes"][id.as_str().unwrap()];
+            (
+                c["kind"].as_str().unwrap().into(),
+                c["name"].as_str().unwrap().into(),
+            )
+        })
+        .collect()
+}
+
+async fn report_of_run(yaml: &str) -> Value {
+    let server = MockServer::start().await;
+    mount_run(&server, Some(yaml)).await;
+    let built = build_report(
+        &client(&server),
+        &Request::Pipeline {
+            project: "o/r".into(),
+            pipeline_id: "7".into(),
+        },
+        ENV,
+        |_| {},
+    )
+    .await
+    .unwrap();
+    serde_json::to_value(&built.report).unwrap()
+}
+
+#[tokio::test]
+async fn шарды_matrix_рядом_с_другой_джобой_стейджа_образуют_группу_по_ключу() {
+    // lint теперь в одном уровне с test
+    let yaml = YAML.replace("  lint:\n", "  lint:\n    needs: build\n");
+    let report = report_of_run(&yaml).await;
+    let group = node(&report, "group", "test");
+    let mut shards = kids(&report, group);
+    shards.sort();
+    assert_eq!(
+        shards,
+        [
+            ("job".to_string(), "test (linux)".to_string()),
+            ("job".into(), "test (mac)".into())
+        ]
+    );
 }
 
 #[tokio::test]

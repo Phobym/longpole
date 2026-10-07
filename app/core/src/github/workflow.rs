@@ -62,8 +62,10 @@ pub(crate) struct Workflow {
 #[derive(Debug)]
 pub(crate) struct Matched<'a> {
     pub(crate) job: &'a Job,
-    /// имя для отчёта: шарды matrix — `X: [..]`, их сворачивает `model::shard_group_name`
+    /// имя для отчёта: как в API, шарды matrix не переименовываются
     pub(crate) name: String,
+    /// ключ группы шардов matrix (`model::RawJob::shard_group`); не matrix — `None`
+    pub(crate) group: Option<String>,
 }
 
 pub(crate) fn parse(text: &str) -> Option<Workflow> {
@@ -178,6 +180,7 @@ impl Workflow {
             Some(Matched {
                 job: found.job,
                 name: api_name.into(),
+                group: None,
             })
         })
     }
@@ -188,9 +191,10 @@ impl Workflow {
             return Some(Matched {
                 job,
                 name: api_name.into(),
+                group: None,
             });
         }
-        if let Some((base, values)) = matrix_suffix(api_name)
+        if let Some((base, _)) = matrix_suffix(api_name)
             && let Some(job) = self
                 .jobs
                 .iter()
@@ -199,19 +203,19 @@ impl Workflow {
         {
             return Some(Matched {
                 job,
-                name: format!("{base}: [{values}]"),
+                name: api_name.into(),
+                group: Some(base.into()),
             });
         }
         let job = self
             .jobs
             .iter()
             .find(|j| j.pattern.as_ref().is_some_and(|p| p.is_match(api_name)))?;
-        let name = if job.matrix {
-            format!("{}: [{api_name}]", job.key)
-        } else {
-            api_name.into()
-        };
-        Some(Matched { job, name })
+        Some(Matched {
+            job,
+            name: api_name.into(),
+            group: job.matrix.then(|| job.display().into()),
+        })
     }
 
     /// Имена уровней `0..=max` (спека, § 2.4): `a`, `a · b`, `a · b · +N`.
@@ -271,6 +275,10 @@ jobs:
         w.find(api).map(|m| (m.job.key.clone(), m.name))
     }
 
+    fn group_of(w: &Workflow, api: &str) -> Option<String> {
+        w.find(api).and_then(|m| m.group)
+    }
+
     #[test]
     fn уровни_по_needs_строкой_и_списком() {
         let w = parse(YAML).unwrap();
@@ -314,11 +322,11 @@ jobs:
         );
         assert_eq!(
             key_and_name(&w, "test (linux)"),
-            Some(("test".into(), "test: [linux]".into()))
+            Some(("test".into(), "test (linux)".into()))
         );
         assert_eq!(
             key_and_name(&w, "e2e 1 on linux"),
-            Some(("e2e".into(), "e2e: [e2e 1 on linux]".into()))
+            Some(("e2e".into(), "e2e 1 on linux".into()))
         );
         assert_eq!(
             key_and_name(&w, "call / deploy prod"),
@@ -326,6 +334,22 @@ jobs:
         );
         // шаблон из одних выражений ничего не ловит, иначе забрал бы все имена
         assert_eq!(key_and_name(&w, "что-то своё"), None);
+    }
+
+    #[test]
+    fn группа_шардов_только_у_matrix_по_имени_без_суффикса_или_по_ключу_шаблона() {
+        let w = parse(YAML).unwrap();
+        assert_eq!(group_of(&w, "test (mac)"), Some("test".into()));
+        assert_eq!(group_of(&w, "e2e 2 on linux"), Some("e2e".into()));
+        assert_eq!(group_of(&w, "build"), None);
+        assert_eq!(group_of(&w, "Lint code"), None);
+        assert_eq!(group_of(&w, "call / deploy prod"), None);
+        // `name:` без выражений у matrix-джобы — группа по нему
+        let named = parse(
+            "jobs:\n  s:\n    name: Stats\n    strategy:\n      matrix:\n        b: [w, t]\n",
+        )
+        .unwrap();
+        assert_eq!(group_of(&named, "Stats (w)"), Some("Stats".into()));
     }
 
     #[test]

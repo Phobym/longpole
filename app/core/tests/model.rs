@@ -605,3 +605,60 @@ fn shard_group_name_снимает_оба_формата_суффикса() {
     assert_eq!(shard_group_name("rspec 3/10"), "rspec");
     assert_eq!(shard_group_name("build:server"), "build:server");
 }
+
+fn шард(name: &str, group: Option<&str>, start: i64, end: i64) -> RawJob {
+    RawJob {
+        shard_group: group.map(Into::into),
+        ..job(
+            name,
+            "test",
+            JobOpts {
+                start: Some(start),
+                end: Some(end),
+                ..Default::default()
+            },
+        )
+    }
+}
+
+#[test]
+fn шарды_с_явным_ключом_группируются_по_нему_имя_шарда_остаётся() {
+    let tree = build(&raw_pipeline(
+        vec![
+            шард("Stats (webpack)", Some("stats"), 0, 50),
+            шард("Stats (turbopack)", Some("stats"), 5, 80),
+            шард("solo", None, 1, 2),
+        ],
+        PipelineOpts::default(),
+    ));
+    let stage = find(&tree, "test");
+    let kinds: Vec<_> = stage
+        .children
+        .iter()
+        .map(|s| (s.kind, s.name.as_str()))
+        .collect();
+    assert_eq!(kinds, [(Kind::Group, "stats"), (Kind::Job, "solo")]);
+    assert_eq!(
+        names(&stage.children[0]),
+        ["Stats (webpack)", "Stats (turbopack)"]
+    );
+}
+
+#[test]
+fn две_группы_в_стейдже_остаются_группами() {
+    let tree = build(&raw_pipeline(
+        vec![
+            шард("a 1/2", None, 0, 10),
+            шард("a 2/2", None, 1, 11),
+            шард("b 1/2", None, 2, 12),
+            шард("b 2/2", None, 3, 13),
+        ],
+        PipelineOpts::default(),
+    ));
+    let kinds: Vec<_> = find(&tree, "test")
+        .children
+        .iter()
+        .map(|s| s.kind)
+        .collect();
+    assert_eq!(kinds, [Kind::Group, Kind::Group]);
+}

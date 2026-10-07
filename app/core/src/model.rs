@@ -60,6 +60,8 @@ pub struct RawJob {
     pub stage: String,
     /// имена джоб из `previousStageJobsOrNeeds`
     pub needs: Vec<String>,
+    /// ключ группы шардов; `None` — группа выводится из имени (`shard_group_name`)
+    pub shard_group: Option<String>,
 }
 
 /// Вид узла дерева.
@@ -150,6 +152,8 @@ pub struct Span {
     pub after: Option<String>,
     /// узел агрегата
     pub stats: Option<Stats>,
+    /// ключ группы шардов из `RawJob`; только пока стейдж собирается
+    pub shard_group: Option<String>,
 }
 
 impl Span {
@@ -201,6 +205,7 @@ fn span(id: String, kind: Kind, name: String) -> Span {
         children: vec![],
         after: None,
         stats: None,
+        shard_group: None,
     }
 }
 
@@ -405,6 +410,7 @@ impl Ctx<'_> {
         };
         Span {
             stage: Some(j.stage.clone()),
+            shard_group: j.shard_group.clone(),
             start: j.started_at.map(|t| self.at(t)),
             end,
             children,
@@ -457,12 +463,17 @@ fn stage_names<'a>(declared: &'a [String], ordered: &[&'a RawJob]) -> Vec<&'a st
     names
 }
 
-/// Шарды одного имени (`e2e: [1]`, `e2e: [2]`) сворачиваются в группу на месте первого из них.
+/// Шарды одного ключа (явный `shard_group` или имя без суффикса: `e2e: [1]`, `e2e: [2]`)
+/// сворачиваются в группу на месте первого из них.
 fn group_shards(mut members: Vec<Span>, stage_id: &str) -> Vec<Span> {
     members.sort_by_key(by_start);
     let groups: Vec<String> = members
         .iter()
-        .map(|s| shard_group_name(&s.name).to_owned())
+        .map(|s| {
+            s.shard_group
+                .clone()
+                .unwrap_or_else(|| shard_group_name(&s.name).to_owned())
+        })
         .collect();
     let mut slots: Vec<Option<Span>> = members.into_iter().map(Some).collect();
     let mut children = vec![];

@@ -121,6 +121,7 @@ async fn fetch_pipeline_переносит_поля_пайплайна_и_джо
             web_path: "/g/p/-/jobs/7".into(),
             stage: "test".into(),
             needs: vec!["build".into(), "lint".into()],
+            shard_group: None,
         }]
     );
 }

@@ -230,11 +230,11 @@ pub async fn build(
 ) -> Cmd<u32> {
     ensure_form(&webview)?;
     let parsed = parse_form(&form)?;
-    // ссылка сама говорит, чей хост: проба не нужна
+    // ссылка подсказывает тип только незнакомому хосту: проба не нужна, а известный тип не затирается
     if form.mode == FormMode::Link
         && let Some(provider) = link_provider(&form.url)
     {
-        state.settings.set_host_kind(&parsed.host, provider)?;
+        state.settings.remember_host_kind(&parsed.host, provider)?;
     }
     let source = source_for(&app, &parsed.host).await?;
     if source.provider() == Provider::Github

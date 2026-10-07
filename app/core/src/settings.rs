@@ -123,6 +123,21 @@ impl Settings {
         Ok(())
     }
 
+    /// Подсказка типа (например, по ссылке): пишет, только если хоста в карте ещё нет;
+    /// пробу или прежнюю подсказку не затирает.
+    pub fn remember_host_kind(&self, host: &str, provider: Provider) -> Result<(), Error> {
+        if host == GITHUB_COM {
+            return Ok(());
+        }
+        let _guard = json_file::lock(&self.lock);
+        let mut stored: Stored = json_file::read(&self.file)?;
+        if !stored.host_kinds.contains_key(host) {
+            stored.host_kinds.insert(host.into(), provider);
+            json_file::write(&self.file, &stored)?;
+        }
+        Ok(())
+    }
+
     /// Проект убран из списка: он больше не «последний».
     pub fn forget_project(&self, project: &ProjectRef) -> Result<(), Error> {
         let _guard = json_file::lock(&self.lock);

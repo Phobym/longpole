@@ -437,16 +437,6 @@ fn в_стейдже_джоба_стоит_после_соседа_которо�
                     ..Default::default()
                 },
             ),
-            // сосед не даёт группе e2e занять весь стейдж и раскрыться
-            job(
-                "unit",
-                "test",
-                JobOpts {
-                    start: Some(405),
-                    end: Some(406),
-                    ..Default::default()
-                },
-            ),
             job(
                 "e2e: [1]",
                 "test",
@@ -616,12 +606,12 @@ fn shard_group_name_снимает_оба_формата_суффикса() {
     assert_eq!(shard_group_name("build:server"), "build:server");
 }
 
-fn шард(name: &str, group: Option<&str>, start: i64, end: i64) -> RawJob {
+fn шард(stage: &str, name: &str, group: Option<&str>, start: i64, end: i64) -> RawJob {
     RawJob {
         shard_group: group.map(Into::into),
         ..job(
             name,
-            "test",
+            stage,
             JobOpts {
                 start: Some(start),
                 end: Some(end),
@@ -635,9 +625,9 @@ fn шард(name: &str, group: Option<&str>, start: i64, end: i64) -> RawJob {
 fn шарды_с_явным_ключом_группируются_по_нему_имя_шарда_остаётся() {
     let tree = build(&raw_pipeline(
         vec![
-            шард("Stats (webpack)", Some("stats"), 0, 50),
-            шард("Stats (turbopack)", Some("stats"), 5, 80),
-            шард("solo", None, 1, 2),
+            шард("test", "Stats (webpack)", Some("stats"), 0, 50),
+            шард("test", "Stats (turbopack)", Some("stats"), 5, 80),
+            шард("test", "solo", None, 1, 2),
         ],
         PipelineOpts::default(),
     ));
@@ -655,15 +645,15 @@ fn шарды_с_явным_ключом_группируются_по_нему_
 }
 
 #[test]
-fn группа_на_весь_стейдж_раскрывается_в_шарды_стейджа() {
+fn группа_с_именем_стейджа_раскрывается_в_шарды_стейджа() {
     let tree = build(&raw_pipeline(
         vec![
-            шард("Stats (webpack)", Some("test"), 0, 50),
-            шард("Stats (turbopack)", Some("test"), 5, 80),
+            шард("stats", "Stats (webpack)", Some("stats"), 0, 50),
+            шард("stats", "Stats (turbopack)", Some("stats"), 5, 80),
         ],
         PipelineOpts::default(),
     ));
-    let stage = find(&tree, "test");
+    let stage = find(&tree, "stats");
     let kinds: Vec<_> = stage
         .children
         .iter()
@@ -685,13 +675,31 @@ fn группа_на_весь_стейдж_раскрывается_в_шард�
 }
 
 #[test]
+fn группа_с_другим_именем_на_весь_стейдж_остаётся() {
+    let tree = build(&raw_pipeline(
+        vec![
+            шард("test", "rspec 1/2", None, 0, 50),
+            шард("test", "rspec 2/2", None, 5, 80),
+        ],
+        PipelineOpts::default(),
+    ));
+    let stage = find(&tree, "test");
+    let kinds: Vec<_> = stage
+        .children
+        .iter()
+        .map(|s| (s.kind, s.name.as_str()))
+        .collect();
+    assert_eq!(kinds, [(Kind::Group, "rspec")]);
+}
+
+#[test]
 fn две_группы_в_стейдже_остаются_группами() {
     let tree = build(&raw_pipeline(
         vec![
-            шард("a 1/2", None, 0, 10),
-            шард("a 2/2", None, 1, 11),
-            шард("b 1/2", None, 2, 12),
-            шард("b 2/2", None, 3, 13),
+            шард("test", "a 1/2", None, 0, 10),
+            шард("test", "a 2/2", None, 1, 11),
+            шард("test", "b 1/2", None, 2, 12),
+            шард("test", "b 2/2", None, 3, 13),
         ],
         PipelineOpts::default(),
     ));

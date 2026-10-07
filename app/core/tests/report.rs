@@ -231,8 +231,6 @@ fn причуда_в_агрегате_свой_stats_critical_у_стейджа_
         raw_pipeline(
             vec![
                 job("compile", "build", run(0, 10, &[])),
-                // сосед не даёт группе занять весь стейдж и раскрыться
-                job("unit", "test", run(10, 20, &[])),
                 shard("e2e 1/3"),
                 shard("e2e 2/3"),
                 shard("e2e 3/3"),

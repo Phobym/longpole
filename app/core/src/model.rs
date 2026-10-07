@@ -361,7 +361,7 @@ impl Ctx<'_> {
                 let members = jobs
                     .extract_if(.., |s| s.stage.as_deref() == Some(stage))
                     .collect();
-                let children = unwrap_sole_group(group_shards(members, &id));
+                let children = unwrap_namesake_group(group_shards(members, &id), stage);
                 let (start, end) = bounds(&children);
                 Span {
                     position: Some(position),
@@ -463,11 +463,13 @@ fn stage_names<'a>(declared: &'a [String], ordered: &[&'a RawJob]) -> Vec<&'a st
     names
 }
 
-/// Группа на весь стейдж — дубль его заголовка: дети стейджа — её шарды.
+/// Единственная группа стейджа с его именем — дубль заголовка (GitHub: стейдж `stats` и группа
+/// `stats`): дети стейджа — её шарды. Группа с другим именем остаётся: состав стейджа GitLab
+/// меняется от запуска к запуску (`rules:`), и обёртка разъедется в агрегате.
 /// Id шардов — id джоб, от обёртки не зависят.
-fn unwrap_sole_group(mut children: Vec<Span>) -> Vec<Span> {
+fn unwrap_namesake_group(mut children: Vec<Span>, stage: &str) -> Vec<Span> {
     match children.as_slice() {
-        [only] if only.kind == Kind::Group => children.remove(0).children,
+        [only] if only.kind == Kind::Group && only.name == stage => children.remove(0).children,
         _ => children,
     }
 }

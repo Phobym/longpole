@@ -169,8 +169,6 @@ pub fn sample_pipeline(i: usize) -> RawPipeline {
             job("build:static", "build", ran(10, 242, &[])),
             job("lint", "build", failed_after(0, 50, &[])),
             job("lint", "build", ran(60, 240, &[])),
-            // сосед не даёт группе e2e занять весь стейдж и раскрыться
-            job("unit", "test", ran(335, 400, &[])),
             job("e2e: [1]", "test", ran(330, 780, &["build:server"])),
             job(
                 "e2e: [3]",
@@ -200,8 +198,6 @@ pub fn clean_pipeline(i: usize) -> RawPipeline {
             job("build:server", "build", ran(0, 302, &[])),
             job("build:static", "build", ran(10, 242, &[])),
             job("lint", "build", ran(60, 240, &[])),
-            // сосед не даёт группе e2e занять весь стейдж и раскрыться
-            job("unit", "test", ran(335, 400, &[])),
             job("e2e: [1]", "test", ran(330, 780, &["build:server"])),
             job("e2e: [3]", "test", ran(860, 1318, &["build:server"])),
             job(

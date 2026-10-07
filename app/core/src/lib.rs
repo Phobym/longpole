@@ -4,6 +4,7 @@ pub mod aggregate;
 pub mod browse;
 pub mod critical_path;
 pub mod error;
+pub mod github;
 pub mod gitlab;
 pub mod history;
 pub mod hosts;

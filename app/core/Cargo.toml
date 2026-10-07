@@ -11,6 +11,7 @@ regex = "1"
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+serde_yaml_ng = "0.10.0"
 sys-locale = "0.3"
 thiserror = "2"
 time = { version = "0.3", features = ["macros", "serde-well-known"] }

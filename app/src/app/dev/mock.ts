@@ -11,8 +11,9 @@ const iso = (minutesAgo: number) => new Date(now - minutesAgo * 60_000).toISOStr
 
 let settings: AppSettings = { locale: 'ru', theme: 'system', lastProject: { host: HOST, path: 'g/p' } }
 const hosts: HostInfo[] = [
-  { host: HOST, source: 'keychain' },
-  { host: 'gitlab.com', source: 'glab' },
+  { host: HOST, source: 'keychain', provider: 'gitlab' },
+  { host: 'gitlab.com', source: 'glab', provider: 'gitlab' },
+  { host: 'github.com', source: 'gh', provider: 'github' },
 ]
 let saved: SavedProject[] = [
   { host: HOST, path: 'g/p', name: 'group / project', addedAt: iso(60 * 24 * 3) },

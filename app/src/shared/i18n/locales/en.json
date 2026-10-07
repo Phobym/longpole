@@ -106,7 +106,7 @@
       "noHosts": "No hosts yet",
       "addHost": "Add host",
       "linuxHint": "On Linux the token is stored in Secret Service (gnome-keyring, KWallet). Without it, use glab or the GITLAB_TOKEN and GITLAB_HOST variables.",
-      "source": { "keychain": "keychain", "glab": "glab", "env": "environment variables" },
+      "source": { "keychain": "keychain", "glab": "glab", "gh": "gh", "env": "environment variables" },
       "theme": "Theme",
       "themes": { "system": "System", "light": "Light", "dark": "Dark" }
     },

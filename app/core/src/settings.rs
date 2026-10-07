@@ -1,5 +1,6 @@
 //! Настройки приложения: `settings.json` — язык, тема, последний открытый проект.
 
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
@@ -10,6 +11,7 @@ use crate::error::Error;
 use crate::json_file;
 use crate::request::ProjectRef;
 use crate::schema::Locale;
+use crate::source::{GITHUB_COM, Provider};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
@@ -28,6 +30,9 @@ struct Stored {
     locale: Option<Locale>,
     theme: Option<Theme>,
     last_project: Option<ProjectRef>,
+    /// хост → тип; `github.com` не пишется — он известен
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    host_kinds: BTreeMap<String, Provider>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
@@ -94,6 +99,28 @@ impl Settings {
         json_file::write(&self.file, &stored)?;
         drop(_guard);
         self.get()
+    }
+
+    /// Тип хоста без сети: `github.com` — GitHub, остальные — из кэша пробы.
+    pub fn host_kind(&self, host: &str) -> Result<Option<Provider>, Error> {
+        if host == GITHUB_COM {
+            return Ok(Some(Provider::Github));
+        }
+        let stored: Stored = json_file::read(&self.file)?;
+        Ok(stored.host_kinds.get(host).copied())
+    }
+
+    pub fn set_host_kind(&self, host: &str, provider: Provider) -> Result<(), Error> {
+        if host == GITHUB_COM {
+            return Ok(());
+        }
+        let _guard = json_file::lock(&self.lock);
+        let mut stored: Stored = json_file::read(&self.file)?;
+        if stored.host_kinds.get(host) != Some(&provider) {
+            stored.host_kinds.insert(host.into(), provider);
+            json_file::write(&self.file, &stored)?;
+        }
+        Ok(())
     }
 
     /// Проект убран из списка: он больше не «последний».

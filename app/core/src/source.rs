@@ -8,8 +8,10 @@ use ts_rs::TS;
 
 use crate::browse::{self, Page, Pipeline, Project, Workflow};
 use crate::error::Error;
+use crate::github;
 use crate::gitlab::{self, Gql, Listed, PipelineFilter};
 use crate::model::RawPipeline;
+use crate::settings::Settings;
 
 /// Хост GitHub, тип которого известен без пробы и кэша.
 pub const GITHUB_COM: &str = "github.com";
@@ -20,6 +22,25 @@ pub const GITHUB_COM: &str = "github.com";
 pub enum Provider {
     Gitlab,
     Github,
+}
+
+/// Тип хоста (спека, § 3): кэш, иначе проба `/api/v3/meta` с записью в кэш. Сбой сети пробы — ошибка, кэш не пишется.
+pub async fn resolve_provider(host: &str, settings: &Settings) -> Result<Provider, Error> {
+    resolve_provider_at(host, settings, &format!("https://{host}")).await
+}
+
+/// `base_url` — адрес хоста; тесты подставляют wiremock.
+pub async fn resolve_provider_at(
+    host: &str,
+    settings: &Settings,
+    base_url: &str,
+) -> Result<Provider, Error> {
+    if let Some(known) = settings.host_kind(host)? {
+        return Ok(known);
+    }
+    let probed = github::probe_at(host, base_url).await?;
+    settings.set_host_kind(host, probed)?;
+    Ok(probed)
 }
 
 /// Операции, которые нужны отчёту и экранам формы.

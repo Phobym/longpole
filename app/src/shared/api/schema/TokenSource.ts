@@ -3,4 +3,4 @@
 /**
  * Откуда у хоста токен; «Удалить» в настройках есть только у `Keychain`.
  */
-export type TokenSource = "keychain" | "glab" | "env";
+export type TokenSource = "keychain" | "glab" | "env" | "gh";

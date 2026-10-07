@@ -1,5 +1,6 @@
 //! Токены GitLab: системная связка ключей через `keyring-core`, `glab` и поиск токена для хоста.
 
+use std::collections::BTreeMap;
 use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
@@ -7,11 +8,12 @@ use std::process::{Command, Stdio};
 use std::sync::Arc;
 
 use keyring_core::{CredentialStore, Entry, Error as KeyringError};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::error::{Error, ErrorCode};
 use crate::hosts::{HostList, bare, normalize_host};
+use crate::source::{GITHUB_COM, Provider};
 
 /// Service записи в связке ключей; account — хост.
 pub const SERVICE: &str = "dev.pipeline-trace.desktop";
@@ -161,6 +163,7 @@ pub enum TokenSource {
     Keychain,
     Glab,
     Env,
+    Gh,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
@@ -168,6 +171,8 @@ pub enum TokenSource {
 pub struct HostInfo {
     pub host: String,
     pub source: TokenSource,
+    /// `None` — хост из связки ключей, тип ещё не определён
+    pub provider: Option<Provider>,
 }
 
 /// Хосты, для которых токен найдётся: связка ключей (по алфавиту), хост `glab` по умолчанию, `GITLAB_HOST`.
@@ -182,11 +187,16 @@ pub fn list_hosts(
         .map(|host| HostInfo {
             host,
             source: TokenSource::Keychain,
+            provider: None,
         })
         .collect();
     let mut push = |host: String, source: TokenSource| {
         if !hosts.iter().any(|h| h.host == host) {
-            hosts.push(HostInfo { host, source });
+            hosts.push(HostInfo {
+                host,
+                source,
+                provider: Some(Provider::Gitlab),
+            });
         }
     };
     if let Some(host) = glab(&["config", "get", "host"]).map(|h| bare(&h).to_string())
@@ -233,28 +243,118 @@ impl Glab {
     }
 
     pub fn find_in(dirs: &[PathBuf]) -> Option<Glab> {
-        let name = format!("glab{}", env::consts::EXE_SUFFIX);
-        dirs.iter()
-            .map(|dir| dir.join(&name))
-            .find(|path| path.is_file())
-            .map(Glab)
+        find_tool("glab", dirs).map(Glab)
     }
 
     pub fn path(&self) -> &Path {
         &self.0
     }
 
-    /// Вывод команды; любой сбой и пустой вывод — `None`: `glab` может быть не настроен, это не ошибка.
-    // ponytail: без таймаута, `glab config get` локальный и мгновенный
     pub fn value(&self, args: &[&str]) -> Option<String> {
-        let output = Command::new(&self.0)
-            .args(args)
-            .stdin(Stdio::null())
-            .output()
-            .ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        Some(String::from_utf8_lossy(&output.stdout).trim().to_string()).filter(|s| !s.is_empty())
+        tool_value(&self.0, args)
     }
+}
+
+/// Найденный исполняемый файл `gh`.
+pub struct Gh(PathBuf);
+
+impl Gh {
+    pub fn find() -> Option<Gh> {
+        let dirs = Glab::search_dirs(env::var_os("PATH").as_deref(), env::home_dir().as_deref());
+        find_tool("gh", &dirs).map(Gh)
+    }
+
+    pub fn value(&self, args: &[&str]) -> Option<String> {
+        tool_value(&self.0, args)
+    }
+}
+
+fn find_tool(name: &str, dirs: &[PathBuf]) -> Option<PathBuf> {
+    let name = format!("{name}{}", env::consts::EXE_SUFFIX);
+    dirs.iter()
+        .map(|dir| dir.join(&name))
+        .find(|path| path.is_file())
+}
+
+/// Вывод команды; любой сбой и пустой вывод — `None`: CLI может быть не настроен, это не ошибка.
+// ponytail: без таймаута, `config get` и `auth token` локальные и мгновенные
+fn tool_value(path: &Path, args: &[&str]) -> Option<String> {
+    let output = Command::new(path)
+        .args(args)
+        .stdin(Stdio::null())
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    Some(String::from_utf8_lossy(&output.stdout).trim().to_string()).filter(|s| !s.is_empty())
+}
+
+/// Токен GitHub (спека, § 4): хранилище → `gh auth token` → `GH_TOKEN`/`GITHUB_TOKEN` для github.com,
+/// `GH_ENTERPRISE_TOKEN`/`GITHUB_ENTERPRISE_TOKEN` для GHES из `GH_HOST`.
+pub fn find_github_token(
+    host: &str,
+    store: &TokenStore,
+    env: &dyn Fn(&str) -> Option<String>,
+    gh: &dyn Fn(&[&str]) -> Option<String>,
+) -> Result<String, Error> {
+    if let Some(token) = store.get(host)? {
+        return Ok(token);
+    }
+    if let Some(token) = gh(&["auth", "token", "--hostname", host]) {
+        return Ok(token);
+    }
+    let named = |name: &str| env(name).filter(|t| !t.is_empty());
+    let token = if host == GITHUB_COM {
+        named("GH_TOKEN").or_else(|| named("GITHUB_TOKEN"))
+    } else if env("GH_HOST").is_some_and(|h| bare(&h) == host) {
+        named("GH_ENTERPRISE_TOKEN").or_else(|| named("GITHUB_ENTERPRISE_TOKEN"))
+    } else {
+        None
+    };
+    token.ok_or_else(|| Error::new(ErrorCode::NoToken).with("host", host))
+}
+
+#[derive(Deserialize)]
+struct GhStatus {
+    hosts: BTreeMap<String, Vec<GhAccount>>,
+}
+
+#[derive(Deserialize)]
+struct GhAccount {
+    state: String,
+}
+
+/// Хосты GitHub с токеном у `gh` (по алфавиту) и github.com из окружения.
+pub fn github_hosts(
+    env: &dyn Fn(&str) -> Option<String>,
+    gh: &dyn Fn(&[&str]) -> Option<String>,
+) -> Vec<HostInfo> {
+    let info = |host: String, source| HostInfo {
+        host,
+        source,
+        provider: Some(Provider::Github),
+    };
+    let mut hosts: Vec<HostInfo> = match gh(&["auth", "status", "--json", "hosts"])
+        .and_then(|text| serde_json::from_str::<GhStatus>(&text).ok())
+    {
+        Some(status) => status
+            .hosts
+            .into_iter()
+            .filter(|(_, accounts)| accounts.iter().any(|a| a.state == "success"))
+            .map(|(host, _)| info(host, TokenSource::Gh))
+            .collect(),
+        // старый `gh` без `--json`
+        None => gh(&["auth", "token", "--hostname", GITHUB_COM])
+            .map(|_| info(GITHUB_COM.into(), TokenSource::Gh))
+            .into_iter()
+            .collect(),
+    };
+    let env_token = ["GH_TOKEN", "GITHUB_TOKEN"]
+        .iter()
+        .any(|name| env(name).is_some_and(|t| !t.is_empty()));
+    if env_token && !hosts.iter().any(|h| h.host == GITHUB_COM) {
+        hosts.push(info(GITHUB_COM.into(), TokenSource::Env));
+    }
+    hosts
 }

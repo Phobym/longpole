@@ -108,7 +108,7 @@
       "noHosts": "Пока нет ни одного хоста",
       "addHost": "Добавить хост",
       "linuxHint": "На Linux токен хранится в Secret Service (gnome-keyring, KWallet). Без него используй glab или переменные GITLAB_TOKEN и GITLAB_HOST.",
-      "source": { "keychain": "связка ключей", "glab": "glab", "env": "переменные окружения" },
+      "source": { "keychain": "связка ключей", "glab": "glab", "gh": "gh", "env": "переменные окружения" },
       "theme": "Тема",
       "themes": { "system": "Системная", "light": "Светлая", "dark": "Тёмная" }
     },

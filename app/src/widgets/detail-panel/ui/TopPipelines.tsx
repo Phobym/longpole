@@ -5,7 +5,7 @@ import type { AggNode } from '../../../shared/api'
 import { useTranslation } from '../../../shared/i18n'
 import { cn } from '../../../shared/lib/cn'
 import { duration } from '../../../shared/lib/format'
-import { GitlabLink } from './GitlabLink'
+import { SourceLink, sourceName } from './SourceLink'
 import { Section } from './Section'
 
 const TOP = 5
@@ -33,9 +33,9 @@ export function TopPipelines({ node }: { node: AggNode }) {
               <span className={cn('block h-1.5 rounded-[3px]', x.retries ? 'bg-fail' : 'bg-ok')} style={{ width: `${(ms / longest) * 100}%` }} />
             </span>
             <span className="text-right">{duration(ms)}</span>
-            <GitlabLink url={pipeline.url} className="text-[11px]">
-              {t('report.panel.gitlab')}
-            </GitlabLink>
+            <SourceLink url={pipeline.url} className="text-[11px]">
+              {t('report.panel.hostLink', { name: sourceName(report.meta.provider) })}
+            </SourceLink>
           </div>
         )
       })}

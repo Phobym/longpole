@@ -12,6 +12,7 @@ use crate::insights::{
     stability_key,
 };
 use crate::model::{Attempt, Kind, Ms, Span, Stats, leaf_ids};
+use crate::source::Provider;
 
 /// Порог подсветки узла агрегата на критическом пути.
 const AGG_CRITICAL: f64 = 0.5;
@@ -66,6 +67,9 @@ pub struct Meta {
     pub status_counts: Option<BTreeMap<String, u32>>,
     /// ISO 8601
     pub generated_at: String,
+    pub provider: Provider,
+    /// GitHub: файл workflow не загрузился — стейджи и связи джоб неизвестны
+    pub needs_missing: bool,
 }
 
 #[derive(Debug, Serialize, TS)]

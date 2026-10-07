@@ -5,6 +5,7 @@ use fixtures::{T0, clean_pipeline};
 use pipeline_trace_core::model::build_tree;
 use pipeline_trace_core::render::{DATA_PLACEHOLDER, render};
 use pipeline_trace_core::schema::{Locale, Meta, Report};
+use pipeline_trace_core::source::Provider;
 
 const TEMPLATE_HEAD: &str = "<!doctype html><title>t</title><body>";
 const TEMPLATE_TAIL: &str = "<script>console.log(1)</script></body>";
@@ -21,6 +22,8 @@ fn report(project: &str) -> Report {
         locale: Locale::Ru,
         status_counts: None,
         generated_at: "2026-09-24T00:00:00.000Z".into(),
+        provider: Provider::Gitlab,
+        needs_missing: false,
     };
     Report::single(meta, &build_tree(&clean_pipeline(1), "https://h", T0))
 }

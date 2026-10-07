@@ -118,7 +118,7 @@ async fn load_trees(
     ids: &[String],
     env: BuildEnv,
     on_progress: impl Fn(Progress) + Send + Sync,
-) -> Result<Vec<Span>, Error> {
+) -> Result<(Vec<Span>, bool), Error> {
     let total = ids.len();
     let loaded = AtomicUsize::new(0);
     on_progress(Progress { loaded: 0, total });
@@ -129,11 +129,13 @@ async fn load_trees(
         Ok::<_, Error>(raw)
     }))
     .await?;
+    let needs_missing = raws.iter().any(|raw| raw.needs_missing);
     let base_url = format!("https://{}", source.host());
-    Ok(raws
+    let trees = raws
         .iter()
         .map(|raw| build_tree(raw, &base_url, env.now))
-        .collect())
+        .collect();
+    Ok((trees, needs_missing))
 }
 
 /// Пайплайн, MR или агрегат по последним пайплайнам; `on_progress` зовут после каждого загруженного пайплайна.
@@ -146,7 +148,7 @@ pub async fn build_report(
 ) -> Result<Built, Error> {
     let target = resolve(source, request).await?;
     let project = request.project();
-    let trees = load_trees(source, project, &target.ids, env, on_progress).await?;
+    let (trees, needs_missing) = load_trees(source, project, &target.ids, env, on_progress).await?;
 
     let (label, aggregated) = match request {
         Request::Aggregate {
@@ -170,6 +172,8 @@ pub async fn build_report(
         locale: env.locale,
         status_counts: target.status_counts,
         generated_at: iso(env.now),
+        provider: source.provider(),
+        needs_missing,
     };
     let report = if aggregated {
         Report::aggregate(meta, &trees)

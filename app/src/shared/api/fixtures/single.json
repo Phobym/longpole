@@ -6,7 +6,9 @@
     "label": "#1",
     "locale": "ru",
     "statusCounts": null,
-    "generatedAt": "2026-09-24T07:30:00.000Z"
+    "generatedAt": "2026-09-24T07:30:00.000Z",
+    "provider": "gitlab",
+    "needsMissing": false
   },
   "tree": {
     "root": "gid://gitlab/Ci::Pipeline/1",

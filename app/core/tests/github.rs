@@ -7,6 +7,9 @@ use pipeline_trace_core::error::ErrorCode;
 use pipeline_trace_core::github::Client;
 use pipeline_trace_core::gitlab::PipelineFilter;
 use pipeline_trace_core::model::RawPipeline;
+use pipeline_trace_core::report::{BuildEnv, build_report};
+use pipeline_trace_core::request::Request;
+use pipeline_trace_core::schema::Locale;
 use pipeline_trace_core::source::{Provider, Source};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -632,4 +635,97 @@ async fn ветка_и_имя_файла_workflow_кодируются() {
     f.workflow = Some("my ci.yml".into());
     let listed = client(&server).list_pipelines("o/r", &f).await.unwrap();
     assert_eq!(listed.ids, vec!["1"]);
+}
+
+const ENV: BuildEnv = BuildEnv {
+    now: datetime!(2026-10-07 11:00:00 UTC),
+    locale: Locale::Ru,
+};
+
+/// Узел отчёта по имени и виду.
+fn node<'a>(report: &'a Value, kind: &str, name: &str) -> &'a Value {
+    report["tree"]["nodes"]
+        .as_object()
+        .unwrap()
+        .values()
+        .find(|n| n["kind"] == kind && n["name"] == name)
+        .unwrap_or_else(|| panic!("нет узла {kind} {name}"))
+}
+
+#[tokio::test]
+async fn отчёт_по_run_зависимости_из_needs_и_провайдер() {
+    let server = MockServer::start().await;
+    mount_run(&server, Some(YAML)).await;
+    let built = build_report(
+        &client(&server),
+        &Request::Pipeline {
+            project: "o/r".into(),
+            pipeline_id: "7".into(),
+        },
+        ENV,
+        |_| {},
+    )
+    .await
+    .unwrap();
+    assert_eq!(built.file_name, "pipeline-trace-o-r-7.html");
+    let report = serde_json::to_value(&built.report).unwrap();
+    assert_eq!(report["meta"]["provider"], "github");
+    assert_eq!(report["meta"]["needsMissing"], false);
+    assert_eq!(report["meta"]["label"], "#12");
+    let build = node(&report, "job", "build");
+    let shard = node(&report, "job", "test: [linux]");
+    assert_eq!(shard["deps"], json!([build["id"]]));
+}
+
+#[tokio::test]
+async fn агрегат_по_workflow_подпись_и_имя_файла() {
+    let server = MockServer::start().await;
+    mount_run(&server, Some(YAML)).await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/workflows/ci.yml/runs"))
+        .and(query_param("branch", "main"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({ "workflow_runs": [listed_run(7, "success", 40)] })),
+        )
+        .mount(&server)
+        .await;
+    let built = build_report(
+        &client(&server),
+        &Request::Aggregate {
+            project: "o/r".into(),
+            r#ref: Some("main".into()),
+            source: None,
+            last: 10,
+            statuses: None,
+            workflow: Some("ci.yml".into()),
+        },
+        ENV,
+        |_| {},
+    )
+    .await
+    .unwrap();
+    assert_eq!(built.file_name, "pipeline-trace-o-r-ci-main.html");
+    let report = serde_json::to_value(&built.report).unwrap();
+    assert_eq!(report["meta"]["label"], "ci.yml · main");
+    assert_eq!(report["meta"]["statusCounts"], json!({ "SUCCESS": 1 }));
+}
+
+#[tokio::test]
+async fn без_файла_workflow_отчёт_помечен() {
+    let server = MockServer::start().await;
+    mount_run(&server, None).await;
+    let built = build_report(
+        &client(&server),
+        &Request::Pipeline {
+            project: "o/r".into(),
+            pipeline_id: "7".into(),
+        },
+        ENV,
+        |_| {},
+    )
+    .await
+    .unwrap();
+    let report = serde_json::to_value(&built.report).unwrap();
+    assert_eq!(report["meta"]["needsMissing"], true);
 }

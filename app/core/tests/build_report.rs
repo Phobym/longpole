@@ -95,6 +95,9 @@ async fn pipeline_одно_дерево_метка_по_имени_прогре�
     assert_eq!(meta.locale, Locale::Ru);
     assert_eq!(meta.status_counts, None);
     assert_eq!(meta.generated_at, "2026-09-24T07:00:00.000Z");
+    let json = serde_json::to_value(&built.report).unwrap();
+    assert_eq!(json["meta"]["provider"], "gitlab");
+    assert_eq!(json["meta"]["needsMissing"], false);
     assert_eq!(built.file_name, "pipeline-trace-g-p-5.html");
     assert_eq!(
         *progress.lock().unwrap(),

@@ -3,7 +3,7 @@ import { isLeaf } from '../../../entities/report'
 import { isAggNode, type ReportNode } from '../../../shared/api'
 import { useTranslation } from '../../../shared/i18n'
 import { duration } from '../../../shared/lib/format'
-import { GitlabLink } from './GitlabLink'
+import { SourceLink } from './SourceLink'
 import { Section } from './Section'
 
 /** Попытки, потери и очередь джобы; у остальных узлов раздела нет. */
@@ -23,7 +23,7 @@ export function StabilitySection({ node }: { node: ReportNode }) {
         t('report.panel.attempts'),
         tries.map((a, i) => (
           <div key={i}>
-            <GitlabLink url={a.url}>{a.status}</GitlabLink> {a.start == null || a.end == null ? '' : duration(a.end - a.start)}
+            <SourceLink url={a.url}>{a.status}</SourceLink> {a.start == null || a.end == null ? '' : duration(a.end - a.start)}
           </div>
         )),
       ])

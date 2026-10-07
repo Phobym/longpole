@@ -83,6 +83,11 @@ export function ReportHeader() {
         <Trans i18nKey="report.chip.jobs" count={jobs} components={BOLD} />
       </Chip>
       <BackToAggregate />
+      {meta.needsMissing && (
+        <p role="note" className="basis-full text-[12.5px] text-muted-foreground">
+          {t('report.needsMissing')}
+        </p>
+      )}
       <div className="ml-auto flex items-center gap-2">
         {!embedded && <LanguageSwitch />}
         <KeysHelp />

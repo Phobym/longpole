@@ -12,7 +12,7 @@ export default defineConfig([
   {
     files: [
       './src/widgets/{waterfall,report-header,hotspots,detail-panel,pipelines-list,aggregate-block,language-switch}/**',
-      './src/features/{timeline-navigation,group-toggle,keys-help,select-branch,history-actions,choose-theme,build-aggregate,node-selection,tree-switch}/**',
+      './src/features/{timeline-navigation,group-toggle,keys-help,select-branch,select-workflow,history-actions,choose-theme,build-aggregate,node-selection,tree-switch}/**',
       './src/entities/{pipeline,node}/**',
     ],
     rules: { 'fsd/insignificant-slice': 'off' },

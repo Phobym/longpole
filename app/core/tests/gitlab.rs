@@ -121,6 +121,7 @@ async fn fetch_pipeline_переносит_поля_пайплайна_и_джо
             web_path: "/g/p/-/jobs/7".into(),
             stage: "test".into(),
             needs: vec!["build".into(), "lint".into()],
+            shard_group: None,
         }]
     );
 }
@@ -252,6 +253,7 @@ async fn list_pipelines_фильтрует_статусы_считает_их_и
         source: None,
         statuses: Some(vec!["SUCCESS".into(), "MANUAL".into()]),
         last: 2,
+        workflow: None,
     };
     let listed = list_pipelines(&gql, "g/p", &filter).await.unwrap();
     assert_eq!(listed.ids, ["a", "c"]);
@@ -280,6 +282,7 @@ async fn list_pipelines_статусы_сравниваются_без_учёт�
         source: None,
         statuses: Some(vec!["success".into()]),
         last: 10,
+        workflow: None,
     };
     let listed = list_pipelines(&gql, "g/p", &filter).await.unwrap();
     assert_eq!(listed.ids, ["a"]);
@@ -294,6 +297,7 @@ async fn list_pipelines_нет_проекта() {
         source: None,
         statuses: None,
         last: 5,
+        workflow: None,
     };
     assert_error(
         list_pipelines(&gql, "g/p", &filter).await,

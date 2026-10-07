@@ -1,6 +1,6 @@
 export {
-  addProject, branches, build, clearHistory, findReport, getSettings, history, hosts, pipelines, projects, removeHistory,
-  removeProject, removeToken, report, savedProjects, setCurrentReport, setSettings, setToken,
+  addProject, branches, build, clearHistory, findReport, getSettings, history, hosts, hostProvider, pipelines, projects, removeHistory,
+  removeProject, removeToken, report, savedProjects, setCurrentReport, setSettings, setToken, workflows,
   type ApiError, type Result,
 } from './api'
 export { isAggNode, type ReportNode } from './node'
@@ -21,6 +21,7 @@ export type { Pipeline } from './schema/Pipeline'
 export type { Progress } from './schema/Progress'
 export type { Project } from './schema/Project'
 export type { ProjectRef } from './schema/ProjectRef'
+export type { Provider } from './schema/Provider'
 export type { Request } from './schema/Request'
 export type { SavedProject } from './schema/SavedProject'
 export type { SettingsPatch } from './schema/SettingsPatch'
@@ -31,6 +32,7 @@ export type { Stability } from './schema/Stability'
 export type { Theme } from './schema/Theme'
 export type { TokenSource } from './schema/TokenSource'
 export type { Tree } from './schema/Tree'
+export type { Workflow } from './schema/Workflow'
 
 /** Эталонные отчёты для dev-сервера; грузятся лениво, в сборку отчёта не попадают. */
 export const fixtures = {

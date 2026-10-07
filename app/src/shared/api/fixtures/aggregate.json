@@ -9,7 +9,9 @@
       "FAILED": 1,
       "SUCCESS": 4
     },
-    "generatedAt": "2026-09-24T07:30:00.000Z"
+    "generatedAt": "2026-09-24T07:30:00.000Z",
+    "provider": "gitlab",
+    "needsMissing": false
   },
   "agg": {
     "root": "agg",

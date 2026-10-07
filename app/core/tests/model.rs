@@ -605,3 +605,108 @@ fn shard_group_name_снимает_оба_формата_суффикса() {
     assert_eq!(shard_group_name("rspec 3/10"), "rspec");
     assert_eq!(shard_group_name("build:server"), "build:server");
 }
+
+fn шард(stage: &str, name: &str, group: Option<&str>, start: i64, end: i64) -> RawJob {
+    RawJob {
+        shard_group: group.map(Into::into),
+        ..job(
+            name,
+            stage,
+            JobOpts {
+                start: Some(start),
+                end: Some(end),
+                ..Default::default()
+            },
+        )
+    }
+}
+
+#[test]
+fn шарды_с_явным_ключом_группируются_по_нему_имя_шарда_остаётся() {
+    let tree = build(&raw_pipeline(
+        vec![
+            шард("test", "Stats (webpack)", Some("stats"), 0, 50),
+            шард("test", "Stats (turbopack)", Some("stats"), 5, 80),
+            шард("test", "solo", None, 1, 2),
+        ],
+        PipelineOpts::default(),
+    ));
+    let stage = find(&tree, "test");
+    let kinds: Vec<_> = stage
+        .children
+        .iter()
+        .map(|s| (s.kind, s.name.as_str()))
+        .collect();
+    assert_eq!(kinds, [(Kind::Group, "stats"), (Kind::Job, "solo")]);
+    assert_eq!(
+        names(&stage.children[0]),
+        ["Stats (webpack)", "Stats (turbopack)"]
+    );
+}
+
+#[test]
+fn группа_с_именем_стейджа_раскрывается_в_шарды_стейджа() {
+    let tree = build(&raw_pipeline(
+        vec![
+            шард("stats", "Stats (webpack)", Some("stats"), 0, 50),
+            шард("stats", "Stats (turbopack)", Some("stats"), 5, 80),
+        ],
+        PipelineOpts::default(),
+    ));
+    let stage = find(&tree, "stats");
+    let kinds: Vec<_> = stage
+        .children
+        .iter()
+        .map(|s| (s.kind, s.name.as_str()))
+        .collect();
+    assert_eq!(
+        kinds,
+        [
+            (Kind::Job, "Stats (webpack)"),
+            (Kind::Job, "Stats (turbopack)")
+        ]
+    );
+    assert_eq!((stage.start, stage.end), (Some(0), Some(80_000)));
+    // id шарда не зависит от обёртки
+    assert_eq!(
+        stage.children[0].id,
+        "gid://gitlab/Ci::Build/Stats (webpack)"
+    );
+}
+
+#[test]
+fn группа_с_другим_именем_на_весь_стейдж_остаётся() {
+    let tree = build(&raw_pipeline(
+        vec![
+            шард("test", "rspec 1/2", None, 0, 50),
+            шард("test", "rspec 2/2", None, 5, 80),
+        ],
+        PipelineOpts::default(),
+    ));
+    let stage = find(&tree, "test");
+    let kinds: Vec<_> = stage
+        .children
+        .iter()
+        .map(|s| (s.kind, s.name.as_str()))
+        .collect();
+    assert_eq!(kinds, [(Kind::Group, "rspec")]);
+}
+
+#[test]
+fn две_группы_в_стейдже_остаются_группами() {
+    let tree = build(&raw_pipeline(
+        vec![
+            шард("test", "a 1/2", None, 0, 10),
+            шард("test", "a 2/2", None, 1, 11),
+            шард("test", "b 1/2", None, 2, 12),
+            шард("test", "b 2/2", None, 3, 13),
+        ],
+        PipelineOpts::default(),
+    ));
+    let kinds: Vec<_> = find(&tree, "test")
+        .children
+        .iter()
+        .map(|s| s.kind)
+        .collect();
+    assert_eq!(kinds, [Kind::Group, Kind::Group]);
+}

@@ -12,6 +12,8 @@ const COMMANDS: &[&str] = &[
     "projects",
     "branches",
     "pipelines",
+    "workflows",
+    "host_provider",
     "build",
     "report",
     "find_report",

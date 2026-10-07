@@ -12,6 +12,7 @@ use pipeline_trace_core::model::{RawPipeline, Span, build_tree};
 use pipeline_trace_core::schema::{
     AggNode, Bar, BaseNode, Holds, Locale, Meta, Report, SingleNode, Tree,
 };
+use pipeline_trace_core::source::Provider;
 
 fn build(raw: &RawPipeline) -> Span {
     build_tree(raw, "https://h", T0)
@@ -32,6 +33,8 @@ fn meta(label: Option<&str>) -> Meta {
         locale: Locale::Ru,
         status_counts: None,
         generated_at: "2026-09-24T07:30:00.000Z".into(),
+        provider: Provider::Gitlab,
+        needs_missing: false,
     }
 }
 fn single(raw: &RawPipeline) -> Tree<SingleNode> {

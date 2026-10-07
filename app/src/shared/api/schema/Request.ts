@@ -8,4 +8,8 @@ export type Request = { "mode": "pipeline", project: string, pipelineId: string,
 /**
  * `None` — любые статусы
  */
-statuses: Array<Status> | null, };
+statuses: Array<Status> | null, 
+/**
+ * файл workflow GitHub; старые записи истории — `None`
+ */
+workflow: string | null, };

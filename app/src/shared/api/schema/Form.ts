@@ -9,4 +9,8 @@ export type Form = { mode: FormMode, host: string, url: string, project: string,
 /**
  * `ANY` — без фильтра
  */
-statuses: Array<string>, };
+statuses: Array<string>, 
+/**
+ * файл workflow GitHub (`ci.yml`); у GitLab форма шлёт пустую строку
+ */
+workflow: string, };

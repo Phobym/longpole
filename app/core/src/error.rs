@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::fmt::Write;
 
 use serde::Serialize;
 use ts_rs::TS;
@@ -50,6 +51,10 @@ pub enum ErrorCode {
     ProjectDirNoRemote,
     /// отчёт вытеснен из памяти: `id`
     ReportExpired,
+    /// лимит запросов GitHub: `host`, `reset` — ISO 8601, когда можно повторить
+    RateLimited,
+    /// агрегат GitHub без workflow
+    WorkflowRequired,
 }
 
 /// Ошибка ядра: код и параметры, без готового текста.
@@ -88,6 +93,7 @@ pub enum Field {
     Project,
     Last,
     Statuses,
+    Workflow,
 }
 
 /// Что получает фронтенд от команды: общая ошибка или ошибки по полям формы (их возвращает только `build`).
@@ -109,4 +115,18 @@ impl From<BTreeMap<Field, Error>> for CmdError {
     fn from(errors: BTreeMap<Field, Error>) -> Self {
         Self::Fields { errors }
     }
+}
+
+/// Текст ошибки reqwest со всей цепочкой причин: сам по себе он ничего не говорит.
+pub(crate) fn network_error(host: &str, e: reqwest::Error) -> Error {
+    let e = e.without_url();
+    let mut detail = e.to_string();
+    let mut source = std::error::Error::source(&e);
+    while let Some(cause) = source {
+        write!(detail, ": {cause}").expect("запись в String не падает");
+        source = cause.source();
+    }
+    Error::new(ErrorCode::Network)
+        .with("host", host)
+        .with("detail", detail)
 }

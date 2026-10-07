@@ -11,33 +11,35 @@ const iso = (minutesAgo: number) => new Date(now - minutesAgo * 60_000).toISOStr
 
 let settings: AppSettings = { locale: 'ru', theme: 'system', lastProject: { host: HOST, path: 'g/p' } }
 const hosts: HostInfo[] = [
-  { host: HOST, source: 'keychain' },
-  { host: 'gitlab.com', source: 'glab' },
+  { host: HOST, source: 'keychain', provider: 'gitlab' },
+  { host: 'gitlab.com', source: 'glab', provider: 'gitlab' },
+  { host: 'github.com', source: 'gh', provider: 'github' },
 ]
 let saved: SavedProject[] = [
   { host: HOST, path: 'g/p', name: 'group / project', addedAt: iso(60 * 24 * 3) },
   { host: HOST, path: 'platform/web-app', name: 'platform / web-app', addedAt: iso(60 * 24) },
   { host: 'gitlab.com', path: 'acme/billing-service', name: 'acme / billing-service', addedAt: iso(30) },
+  { host: 'github.com', path: 'o/r', name: 'o / r', addedAt: iso(10) },
 ]
 let history: HistoryEntry[] = [
   {
     at: iso(12),
     host: HOST,
-    form: { mode: 'aggregate', host: HOST, url: '', project: 'g/p', ref: 'main', source: '', last: '20', statuses: ['ANY'] },
-    request: { mode: 'aggregate', project: 'g/p', ref: 'main', source: null, last: 20, statuses: null },
+    form: { mode: 'aggregate', host: HOST, url: '', project: 'g/p', ref: 'main', source: '', last: '20', statuses: ['ANY'], workflow: '' },
+    request: { mode: 'aggregate', project: 'g/p', ref: 'main', source: null, last: 20, statuses: null, workflow: null },
     label: { project: 'g/p', label: null },
   },
   {
     at: iso(60 * 5),
     host: HOST,
-    form: { mode: 'link', host: HOST, url: `https://${HOST}/platform/web-app/-/pipelines/4821`, project: '', ref: '', source: '', last: '', statuses: [] },
+    form: { mode: 'link', host: HOST, url: `https://${HOST}/platform/web-app/-/pipelines/4821`, project: '', ref: '', source: '', last: '', statuses: [], workflow: '' },
     request: { mode: 'pipeline', project: 'platform/web-app', pipelineId: '4821' },
     label: { project: 'platform/web-app', label: '#4821' },
   },
   {
     at: iso(60 * 26),
     host: HOST,
-    form: { mode: 'link', host: HOST, url: `https://${HOST}/g/p/-/merge_requests/312`, project: '', ref: '', source: '', last: '', statuses: [] },
+    form: { mode: 'link', host: HOST, url: `https://${HOST}/g/p/-/merge_requests/312`, project: '', ref: '', source: '', last: '', statuses: [], workflow: '' },
     request: { mode: 'mr', project: 'g/p', mrIid: '312' },
     label: { project: 'g/p', label: '!312' },
   },
@@ -61,6 +63,7 @@ const pipelines: Pipeline[] = [
   duration: duration as number | null,
   commit: { sha: 'deadbeef', title: String(title) },
   author: String(author),
+  url: `https://${HOST}/g/p/-/pipelines/${iid}`,
 }))
 const projects: Project[] = [
   { fullPath: 'platform/web-app', name: 'web-app', lastActivityAt: iso(20), defaultBranch: 'main' },
@@ -98,6 +101,14 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
     await delay(300)
     return { items: pipelines, next: null }
   },
+  workflows: ({ host }) =>
+    host === 'github.com'
+      ? [
+          { file: 'ci.yml', name: 'CI' },
+          { file: 'release.yml', name: 'Release' },
+        ]
+      : [],
+  host_provider: ({ host }) => (host === 'github.com' ? 'github' : 'gitlab'),
   build: async () => {
     await delay(900)
     return 1

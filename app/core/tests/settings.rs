@@ -4,6 +4,7 @@ use pipeline_trace_core::error::ErrorCode;
 use pipeline_trace_core::request::ProjectRef;
 use pipeline_trace_core::schema::Locale;
 use pipeline_trace_core::settings::{AppSettings, Settings, SettingsPatch, Theme};
+use pipeline_trace_core::source::Provider;
 use tempfile::TempDir;
 
 fn settings() -> (TempDir, Settings) {
@@ -115,5 +116,62 @@ fn старый_файл_только_с_locale_читается() {
     assert_eq!(
         (got.locale, got.theme, got.last_project),
         (Locale::En, Theme::System, None)
+    );
+}
+
+#[test]
+fn тип_хоста_github_com_без_кэша_остальные_из_кэша() {
+    let (_dir, settings) = settings();
+    assert_eq!(
+        settings.host_kind("github.com").unwrap(),
+        Some(Provider::Github)
+    );
+    assert_eq!(settings.host_kind("ghe.example").unwrap(), None);
+    settings
+        .set_host_kind("ghe.example", Provider::Github)
+        .unwrap();
+    settings
+        .set_host_kind("gl.example", Provider::Gitlab)
+        .unwrap();
+    assert_eq!(
+        settings.host_kind("ghe.example").unwrap(),
+        Some(Provider::Github)
+    );
+    assert_eq!(
+        settings.host_kind("gl.example").unwrap(),
+        Some(Provider::Gitlab)
+    );
+    // кэш не мешает остальным настройкам
+    settings
+        .update(SettingsPatch {
+            theme: Some(Theme::Dark),
+            ..Default::default()
+        })
+        .unwrap();
+    assert_eq!(
+        settings.host_kind("ghe.example").unwrap(),
+        Some(Provider::Github)
+    );
+}
+
+#[test]
+fn тип_хоста_перезаписывается_а_github_com_не_меняется() {
+    let (_dir, settings) = settings();
+    settings
+        .set_host_kind("ghe.example", Provider::Gitlab)
+        .unwrap();
+    settings
+        .set_host_kind("ghe.example", Provider::Github)
+        .unwrap();
+    settings
+        .set_host_kind("github.com", Provider::Gitlab)
+        .unwrap();
+    assert_eq!(
+        settings.host_kind("ghe.example").unwrap(),
+        Some(Provider::Github)
+    );
+    assert_eq!(
+        settings.host_kind("github.com").unwrap(),
+        Some(Provider::Github)
     );
 }

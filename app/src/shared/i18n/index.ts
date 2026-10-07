@@ -43,6 +43,14 @@ void (ru.errors satisfies Record<ErrorCodes, string>)
 
 type Failure = ApiError | { code: ErrorCodes; params: Record<string, string> }
 
+/** Параметры для подстановки: `reset` лимита приходит как ISO 8601, человеку нужно местное время. */
+const textParams = ({ code, params }: { code: ErrorCodes; params: Record<string, string> }) => {
+  if (code !== 'rateLimited') return params
+  const reset = new Date(params.reset ?? '')
+  if (Number.isNaN(reset.getTime())) return params
+  return { ...params, reset: reset.toLocaleTimeString(i18next.language, { hour: '2-digit', minute: '2-digit' }) }
+}
+
 /**
  * Текст ошибки по `code` и `params`; у `fields` — тексты всех полей подряд (вне `build` их не бывает).
  * `t` приведён к простой сигнатуре: для объединения ключей i18next требует все переменные всех строк сразу,
@@ -53,7 +61,7 @@ export const errorText = (t: TFunction, e: Failure): string =>
     ? Object.values(e.errors)
         .flatMap((body) => (body ? [errorText(t, body)] : []))
         .join(' ')
-    : (t as unknown as (key: string, options: object) => string)(`errors.${e.code}`, e.params)
+    : (t as unknown as (key: string, options: object) => string)(`errors.${e.code}`, textParams(e))
 
 export const useErrorText = () => {
   const { t } = useTranslation()

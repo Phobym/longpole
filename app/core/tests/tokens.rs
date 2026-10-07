@@ -9,8 +9,10 @@ use keyring_core::mock::{Cred, Store};
 use keyring_core::{CredentialStore, Entry, Error as KeyringError};
 use pipeline_trace_core::error::{Error, ErrorCode};
 use pipeline_trace_core::hosts::normalize_host;
+use pipeline_trace_core::source::Provider;
 use pipeline_trace_core::tokens::{
-    Glab, HostInfo, SERVICE, TokenSource, TokenStore, find_token, list_hosts,
+    Gh, Glab, HostInfo, SERVICE, TokenSource, TokenStore, find_github_token, find_token,
+    github_hosts, list_hosts,
 };
 use tempfile::TempDir;
 
@@ -358,6 +360,7 @@ fn list_hosts_связка_потом_glab_потом_env_без_дублей() 
     let info = |host: &str, source: TokenSource| HostInfo {
         host: host.into(),
         source,
+        provider: (source != TokenSource::Keychain).then_some(Provider::Gitlab),
     };
     assert_eq!(
         list_hosts(&f.tokens, &env, &glab).unwrap(),
@@ -456,4 +459,118 @@ fn glab_value_это_обрезанный_stdout_а_сбой_и_пустота_�
         fake_glab(failing.path(), "echo oops; exit 1").value(&["x"]),
         None
     );
+}
+
+fn no_cli(_: &[&str]) -> Option<String> {
+    None
+}
+
+#[test]
+fn github_токен_хранилище_затем_gh_затем_env() {
+    let f = fixture();
+    let env = |name: &str| match name {
+        "GH_TOKEN" => Some("gh-env".to_string()),
+        "GITHUB_TOKEN" => Some("github-env".to_string()),
+        _ => None,
+    };
+    let gh = |args: &[&str]| {
+        (args == ["auth", "token", "--hostname", "github.com"]).then(|| "gh-cli".to_string())
+    };
+    assert_eq!(
+        find_github_token("github.com", &f.tokens, &env, &gh).unwrap(),
+        "gh-cli"
+    );
+    assert_eq!(
+        find_github_token("github.com", &f.tokens, &env, &no_cli).unwrap(),
+        "gh-env"
+    );
+    f.tokens.set("github.com", "stored").unwrap();
+    assert_eq!(
+        find_github_token("github.com", &f.tokens, &env, &gh).unwrap(),
+        "stored"
+    );
+}
+
+#[test]
+fn ghes_токен_из_enterprise_переменных_только_для_gh_host() {
+    let f = fixture();
+    let env = |name: &str| match name {
+        "GH_HOST" => Some("https://ghe.example/".to_string()),
+        "GH_ENTERPRISE_TOKEN" => Some("ent".to_string()),
+        "GH_TOKEN" => Some("public".to_string()),
+        _ => None,
+    };
+    assert_eq!(
+        find_github_token("ghe.example", &f.tokens, &env, &no_cli).unwrap(),
+        "ent"
+    );
+    let err = find_github_token("other.example", &f.tokens, &env, &no_cli).unwrap_err();
+    assert_eq!(err.code, ErrorCode::NoToken);
+}
+
+#[test]
+fn хосты_github_из_gh_и_окружения() {
+    let status = r#"{"hosts":{"github.com":[{"state":"success"}],"ghe.example":[{"state":"success"}],"dead.example":[{"state":"error"}]}}"#;
+    let gh =
+        |args: &[&str]| (args == ["auth", "status", "--json", "hosts"]).then(|| status.to_string());
+    let info = |host: &str, source| HostInfo {
+        host: host.into(),
+        source,
+        provider: Some(Provider::Github),
+    };
+    let no_env = |_: &str| None;
+    assert_eq!(
+        github_hosts(&no_env, &gh),
+        vec![
+            info("dead.example", TokenSource::Gh),
+            info("ghe.example", TokenSource::Gh),
+            info("github.com", TokenSource::Gh)
+        ]
+    );
+    let env = |name: &str| (name == "GITHUB_TOKEN").then(|| "t".to_string());
+    assert_eq!(
+        github_hosts(&env, &no_cli),
+        vec![info("github.com", TokenSource::Env)]
+    );
+}
+
+#[cfg(unix)]
+fn fake_gh(script: &str) -> (TempDir, Gh) {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = TempDir::new().unwrap();
+    let path = dir.path().join("gh");
+    std::fs::write(&path, format!("#!/bin/sh\n{script}\n")).unwrap();
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let gh = Gh::find_in(&[dir.path().into()]).expect("gh");
+    (dir, gh)
+}
+
+#[cfg(unix)]
+#[test]
+fn статус_gh_с_кодом_1_но_с_json_даёт_хосты() {
+    let (_dir, gh) = fake_gh(
+        r#"case "$*" in
+  "auth status --json hosts") echo '{"hosts":{"ghe.example":[{"state":"error"}]}}'; exit 1 ;;
+  *) echo not-a-token; exit 1 ;;
+esac"#,
+    );
+    let hosts = github_hosts(&|_: &str| None, &|args| gh.value(args));
+    assert_eq!(
+        hosts.iter().map(|h| h.host.as_str()).collect::<Vec<_>>(),
+        ["ghe.example"]
+    );
+    // токен по-прежнему требует успешного выхода
+    assert_eq!(
+        gh.value(&["auth", "token", "--hostname", "ghe.example"]),
+        None
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn зависший_gh_обрывается_по_таймауту() {
+    let (_dir, gh) = fake_gh("exec sleep 30");
+    let started = std::time::Instant::now();
+    assert_eq!(gh.value(&["auth", "status"]), None);
+    assert!(started.elapsed() < std::time::Duration::from_secs(15));
 }

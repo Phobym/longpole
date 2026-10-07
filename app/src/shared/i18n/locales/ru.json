@@ -1,28 +1,30 @@
 {
   "errors": {
-    "unauthorized": "GitLab {{host}} ответил {{status}}: токен недействителен или нет доступа",
-    "httpStatus": "GitLab {{host}} ответил {{status}}",
-    "graphql": "GraphQL {{host}}: {{detail}}",
-    "network": "Не удалось связаться с GitLab {{host}}: {{detail}}",
+    "unauthorized": "{{host}} ответил {{status}}: токен недействителен или нет доступа",
+    "httpStatus": "{{host}} ответил {{status}}",
+    "graphql": "Неожиданный ответ {{host}}: {{detail}}",
+    "network": "Не удалось связаться с {{host}}: {{detail}}",
     "projectNotFound": "Проект {{project}} на {{host}} не найден или нет доступа",
     "pipelineNotFound": "Пайплайн {{pipeline}} в проекте {{project}} на {{host}} не найден",
     "tooManyJobs": "Пайплайн {{pipeline}} в проекте {{project}}: больше {{limit}} джоб, загрузка остановлена",
-    "mrHasNoPipeline": "У MR !{{iid}} в проекте {{project}} нет пайплайна",
+    "mrHasNoPipeline": "У MR или PR {{iid}} в проекте {{project}} нет пайплайна",
     "noPipelines": "Под фильтры не попал ни один пайплайн: проверь ветку и статусы",
     "noToken": "Нужен токен для {{host}}",
     "emptyToken": "Пустой токен",
-    "keychainUnavailable": "Системная связка ключей недоступна: задай GITLAB_TOKEN и GITLAB_HOST или установи libsecret",
+    "keychainUnavailable": "Системная связка ключей недоступна: задай GITLAB_TOKEN и GITLAB_HOST (для GitHub — GH_TOKEN) или установи libsecret",
     "storage": "Не удалось прочитать или записать данные приложения: {{detail}}",
-    "invalidLink": "Нужна ссылка вида https://<хост>/<группа>/<проект>/-/pipelines/<id> или …/-/merge_requests/<iid>",
-    "invalidHost": "Укажи хост GitLab, например gitlab.example.com",
+    "invalidLink": "Нужна ссылка на пайплайн или MR GitLab (…/-/pipelines/<id>, …/-/merge_requests/<iid>) либо на run или PR GitHub (…/actions/runs/<id>, …/pull/<n>)",
+    "invalidHost": "Укажи хост, например gitlab.example.com",
     "invalidProject": "Укажи путь проекта, например group/project",
     "invalidLast": "Число пайплайнов — от 1 до {{max}}",
     "invalidStatuses": "Выбери хотя бы один статус или «любой»",
     "forbidden": "Запрос не из окна формы",
     "window": "Не удалось открыть окно: {{detail}}",
-    "projectInputInvalid": "Не похоже на ссылку на проект GitLab или путь к папке",
+    "projectInputInvalid": "Не похоже на ссылку на репозиторий GitLab или GitHub или путь к папке",
     "projectDirNoRemote": "В папке нет git-репозитория с remote origin",
     "reportExpired": "Отчёт больше не в памяти, построй заново",
+    "rateLimited": "{{host}}: лимит запросов исчерпан, повтори после {{reset}}",
+    "workflowRequired": "Выбери workflow: агрегат GitHub строится по одному workflow",
     "ipc": "Не удалось выполнить команду: {{detail}}"
   },
   "form": {
@@ -47,7 +49,7 @@
       "activity": "активность {{time}}"
     },
     "link": {
-      "label": "Вставь ссылку на пайплайн или MR",
+      "label": "Вставь ссылку на пайплайн, MR, run или PR",
       "placeholder": "https://gitlab.example.com/group/project/-/pipelines/123…",
       "build": "Построить"
     },
@@ -63,6 +65,9 @@
     },
     "branch": {
       "label": "Ветка"
+    },
+    "workflow": {
+      "label": "Workflow"
     },
     "aggregate": {
       "statuses": "Статусы",
@@ -82,13 +87,13 @@
     },
     "empty": {
       "title": "Добавь первый проект",
-      "text": "Вставь ссылку на репозиторий GitLab или выбери папку с клоном.",
+      "text": "Вставь ссылку на репозиторий GitLab или GitHub или выбери папку с клоном.",
       "add": "+ Добавить проект"
     },
     "addProject": {
       "title": "Добавить проект",
-      "placeholder": "https://gitlab.example.com/group/project или путь к папке",
-      "hint": "Подойдёт ссылка на репозиторий, пайплайн или MR.",
+      "placeholder": "https://gitlab.example.com/group/project, https://github.com/owner/repo или путь к папке",
+      "hint": "Подойдёт ссылка на репозиторий, пайплайн, MR, run или PR.",
       "pickFolder": "Выбрать папку…",
       "findOnHost": "Найти в списке проектов хоста",
       "add": "Добавить"
@@ -97,7 +102,8 @@
       "need": "Нужен токен для {{host}}",
       "scope": "Personal Access Token со scope read_api.",
       "create": "Создать на {{host}} ↗",
-      "stored": "Хранится в системной связке ключей."
+      "stored": "Хранится в системной связке ключей.",
+      "scopeGithub": "Fine-grained token с правами Actions: read и Contents: read."
     },
     "settings": {
       "title": "Настройки",
@@ -106,7 +112,7 @@
       "noHosts": "Пока нет ни одного хоста",
       "addHost": "Добавить хост",
       "linuxHint": "На Linux токен хранится в Secret Service (gnome-keyring, KWallet). Без него используй glab или переменные GITLAB_TOKEN и GITLAB_HOST.",
-      "source": { "keychain": "связка ключей", "glab": "glab", "env": "переменные окружения" },
+      "source": { "keychain": "связка ключей", "glab": "glab", "gh": "gh", "env": "переменные окружения" },
       "theme": "Тема",
       "themes": { "system": "Системная", "light": "Светлая", "dark": "Тёмная" }
     },
@@ -130,6 +136,7 @@
     "waits": "↓ ждёт",
     "loadFailed": "Не удалось прочитать данные отчёта: {{detail}}",
     "allPipelines": "все пайплайны",
+    "needsMissing": "Зависимости джоб недоступны: нет доступа к файлу workflow. Стейдж один, критический путь — по времени.",
     "back": "← к агрегату",
     "language": "Язык",
     "help": "Управление",
@@ -187,8 +194,8 @@
       "relations": "Связи",
       "relationUp": "нужна для выбранной",
       "relationDown": "ждёт выбранную",
-      "openGitlab": "Открыть в GitLab ↗",
-      "gitlab": "GitLab ↗",
+      "openIn": "Открыть в {{name}} ↗",
+      "hostLink": "{{name}} ↗",
       "longest": "Самые долгие",
       "showAll_one": "Все {{count}} пайплайн ▾",
       "showAll_few": "Все {{count}} пайплайна ▾",

@@ -3,6 +3,7 @@ import { messageError } from '../../../shared/api'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { Input, labelClasses } from '../../../shared/ui/input'
+import { useHostProvider } from '../model/useHostProvider'
 import { useSaveToken } from '../model/useSaveToken'
 
 /** Токен для известного хоста прямо там, где он понадобился; после сохранения `onSaved` повторяет действие. */
@@ -14,8 +15,12 @@ export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => voi
   const [saving, setSaving] = useState(false)
   const { save, error } = useSaveToken()
   const failure = messageError(error)
-  // страница токенов GitLab с готовым именем и scope; `https` уходит в системный браузер через on_navigation
-  const createUrl = `https://${host}/-/user_settings/personal_access_tokens?name=pipeline-trace&scopes=read_api`
+  const provider = useHostProvider(host)
+  // страница создания токена с готовым именем и правами; `https` уходит в системный браузер через on_navigation
+  const createUrl =
+    provider === 'github'
+      ? `https://${host}/settings/personal-access-tokens/new`
+      : `https://${host}/-/user_settings/personal_access_tokens?name=pipeline-trace&scopes=read_api`
   return (
     <form
       className="flex flex-col gap-2 rounded-md border border-warn bg-secondary/40 p-3"
@@ -28,7 +33,7 @@ export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => voi
     >
       <p className="text-sm font-medium">{t('form.token.need', { host })}</p>
       <p className="text-xs text-muted-foreground">
-        {t('form.token.scope')}{' '}
+        {t(provider === 'github' ? 'form.token.scopeGithub' : 'form.token.scope')}{' '}
         <a href={createUrl} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
           {t('form.token.create', { host })}
         </a>

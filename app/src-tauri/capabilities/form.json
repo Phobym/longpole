@@ -13,6 +13,8 @@
     "allow-projects",
     "allow-branches",
     "allow-pipelines",
+    "allow-workflows",
+    "allow-host-provider",
     "allow-build",
     "allow-report",
     "allow-find-report",

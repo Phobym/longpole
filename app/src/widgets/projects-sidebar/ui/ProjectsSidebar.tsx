@@ -51,7 +51,7 @@ export function ProjectsSidebar() {
     if (host !== currentHost) resetSearch()
     pickHost(host)
     fillAggSettings(form)
-    void openProject({ host, project: form.project, branch: form.ref || undefined })
+    void openProject({ host, project: form.project, branch: form.ref || undefined, workflow: form.workflow || undefined })
   }
 
   const error = projectsError ?? historyError

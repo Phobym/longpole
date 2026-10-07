@@ -21,6 +21,7 @@ fn entry(i: usize) -> NewEntry {
         form: Form {
             mode: FormMode::Link,
             url: format!("u{i}"),
+            workflow: String::new(),
             ..Default::default()
         },
         request: Request::Pipeline {

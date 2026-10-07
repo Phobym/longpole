@@ -1,4 +1,3 @@
-use std::fmt::Write;
 use std::time::Duration;
 
 use serde::Deserialize;
@@ -6,7 +5,7 @@ use serde_json::{Value, json};
 use tokio::sync::Semaphore;
 
 use super::Gql;
-use crate::error::{Error, ErrorCode};
+use crate::error::{Error, ErrorCode, network_error};
 
 const MAX_PARALLEL: usize = 4;
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
@@ -54,20 +53,6 @@ impl Client {
             permits: Semaphore::new(MAX_PARALLEL),
         })
     }
-}
-
-/// Текст ошибки reqwest со всей цепочкой причин: сам по себе он ничего не говорит.
-fn network_error(host: &str, e: reqwest::Error) -> Error {
-    let e = e.without_url();
-    let mut detail = e.to_string();
-    let mut source = std::error::Error::source(&e);
-    while let Some(cause) = source {
-        write!(detail, ": {cause}").expect("запись в String не падает");
-        source = cause.source();
-    }
-    Error::new(ErrorCode::Network)
-        .with("host", host)
-        .with("detail", detail)
 }
 
 impl Gql for Client {

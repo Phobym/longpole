@@ -287,3 +287,22 @@ fn цикл_зависимостей_не_теряет_и_не_дублируе�
     got.sort();
     assert_eq!(got, ["a", "b"]);
 }
+
+#[test]
+fn шарды_раскрытой_группы_сливаются_по_имени_в_стейдже() {
+    let t = |i: usize| {
+        build(&raw_pipeline(
+            vec![
+                job("e2e 1/2", "e2e", run(0, 10)),
+                job("e2e 2/2", "e2e", run(1, 12)),
+            ],
+            opts(i),
+        ))
+    };
+    let agg = aggregate(&[t(1), t(2)]);
+    let stage = child(&agg, "stage:e2e");
+    assert_eq!(stage.children.len(), 2);
+    for key in ["job:e2e 1/2", "job:e2e 2/2"] {
+        assert_eq!(child(stage, key).stats().present, 2);
+    }
+}

@@ -87,7 +87,7 @@ export function stageOf(tree: Tree<ReportNode>, id: string): ReportNode | null {
   return null
 }
 
-/** Корень пайплайна из `trees` агрегата: имя `#iid` и ссылка на GitLab. */
+/** Корень пайплайна из `trees` агрегата: имя `#iid` и ссылка на источник. */
 export function pipelineOf(report: Report, index: number): SingleNode {
   if (report.mode !== 'aggregate') throw new Error('pipelineOf: отчёт не агрегат')
   const tree = report.trees[index]

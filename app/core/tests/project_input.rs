@@ -150,3 +150,45 @@ fn папка_без_git_или_без_origin_это_project_dir_no_remote() {
         ErrorCode::ProjectDirNoRemote
     );
 }
+
+#[test]
+fn страницы_github_дают_репозиторий() {
+    for input in [
+        "https://github.com/o/r",
+        "https://github.com/o/r.git",
+        "https://github.com/o/r/actions/runs/7",
+        "https://github.com/o/r/pull/42",
+        "https://github.com/o/r/tree/main/src",
+        "https://github.com/o/r/blob/main/README.md",
+        "git@github.com:o/r.git",
+        "ssh://git@ssh.github.com:443/o/r.git",
+    ] {
+        assert_eq!(
+            parse_project_input(input),
+            r("github.com", "o/r"),
+            "{input}"
+        );
+    }
+}
+
+#[test]
+fn проект_gitlab_с_словом_страницы_в_пути_не_обрезается() {
+    for (input, path) in [
+        ("https://gitlab.example.com/g/sub/tree", "g/sub/tree"),
+        ("git@gitlab.example.com:g/sub/tree.git", "g/sub/tree"),
+        (
+            "ssh://git@gitlab.example.com/g/sub/actions.git",
+            "g/sub/actions",
+        ),
+    ] {
+        assert_eq!(
+            parse_project_input(input),
+            r("gitlab.example.com", path),
+            "{input}"
+        );
+    }
+    assert_eq!(
+        parse_project_input("https://ghe.example/o/r/tree/main"),
+        r("ghe.example", "o/r")
+    );
+}

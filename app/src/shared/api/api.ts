@@ -9,10 +9,12 @@ import type { Pipeline } from './schema/Pipeline'
 import type { Progress } from './schema/Progress'
 import type { Project } from './schema/Project'
 import type { ProjectRef } from './schema/ProjectRef'
+import type { Provider } from './schema/Provider'
 import type { Report } from './schema/Report'
 import type { Request } from './schema/Request'
 import type { SavedProject } from './schema/SavedProject'
 import type { SettingsPatch } from './schema/SettingsPatch'
+import type { Workflow } from './schema/Workflow'
 
 /** Отказ самого `invoke` (нет команды, запрет ACL, нет моста) — не ответ ядра, кода в `ErrorCode` у него нет. */
 export type IpcError = { kind: 'message'; code: 'ipc'; params: { detail: string } }
@@ -43,8 +45,10 @@ export const projects = (host: string, search: string, after: string | null) =>
   call<Page<Project>>('projects', { host, search, after })
 export const branches = (host: string, project: string, search: string) =>
   call<string[]>('branches', { host, project, search })
-export const pipelines = (host: string, project: string, ref: string | null, after: string | null) =>
-  call<Page<Pipeline>>('pipelines', { host, project, ref, after })
+export const pipelines = (host: string, project: string, ref: string | null, workflow: string | null, after: string | null) =>
+  call<Page<Pipeline>>('pipelines', { host, project, ref, workflow, after })
+export const workflows = (host: string, project: string) => call<Workflow[]>('workflows', { host, project })
+export const hostProvider = (host: string) => call<Provider>('host_provider', { host })
 /** Собирает отчёт и возвращает его id для `/report/$id`; `onProgress` получает `{ loaded, total }` только от этой сборки. */
 export const build = (form: Form, onProgress: (p: Progress) => void) => {
   const channel = new Channel<Progress>(onProgress)

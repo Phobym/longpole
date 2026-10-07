@@ -3,7 +3,7 @@ import { isAggNode } from '../../../shared/api'
 import { useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { DurationStrip } from './DurationStrip'
-import { GitlabLink } from './GitlabLink'
+import { SourceLink, sourceName } from './SourceLink'
 import { Kpis } from './Kpis'
 import { PanelHead } from './PanelHead'
 import { Relations } from './Relations'
@@ -13,7 +13,7 @@ import { Verdict } from './Verdict'
 
 /** Панель справа: сужает водопад на широком окне, на узком перекрывает его. */
 export function DetailPanel() {
-  const { tree, state, dispatch } = useReportView()
+  const { tree, state, dispatch, report } = useReportView()
   const { t } = useTranslation()
   const node = state.selected ? tree.nodes[state.selected] : undefined
   if (!node) return null
@@ -31,7 +31,7 @@ export function DetailPanel() {
       <Relations />
       {agg ? <TopPipelines node={node} /> : node.url && (
         <p className="mt-4">
-          <GitlabLink url={node.url}>{t('report.panel.openGitlab')}</GitlabLink>
+          <SourceLink url={node.url}>{t('report.panel.openIn', { name: sourceName(report.meta.provider) })}</SourceLink>
         </p>
       )}
     </aside>

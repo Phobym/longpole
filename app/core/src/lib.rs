@@ -17,4 +17,5 @@ pub mod report;
 pub mod request;
 pub mod schema;
 pub mod settings;
+pub mod source;
 pub mod tokens;

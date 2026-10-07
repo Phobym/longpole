@@ -12,11 +12,12 @@ use time::OffsetDateTime;
 use ts_rs::TS;
 
 use crate::error::{Error, ErrorCode};
-use crate::gitlab::{Gql, PipelineFilter, fetch_pipeline, list_pipelines, mr_head_pipeline};
+use crate::gitlab::PipelineFilter;
 use crate::iso::iso;
 use crate::model::{Span, build_tree};
 use crate::request::Request;
 use crate::schema::{Locale, Meta, Report};
+use crate::source::Source;
 
 static UNSAFE_IN_NAME: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"[^A-Za-z0-9_.-]+").expect("верный шаблон"));
@@ -58,34 +59,35 @@ struct Target {
     status_counts: Option<BTreeMap<String, u32>>,
 }
 
-async fn resolve(gql: &impl Gql, request: &Request) -> Result<Target, Error> {
+async fn resolve(source: &impl Source, request: &Request) -> Result<Target, Error> {
     match request {
         Request::Pipeline { pipeline_id, .. } => Ok(Target {
-            ids: vec![format!("gid://gitlab/Ci::Pipeline/{pipeline_id}")],
+            ids: vec![pipeline_id.clone()],
             suffix: pipeline_id.clone(),
             status_counts: None,
         }),
         Request::Mr { project, mr_iid } => Ok(Target {
-            ids: vec![mr_head_pipeline(gql, project, mr_iid).await?],
+            ids: vec![source.head_pipeline(project, mr_iid).await?],
             suffix: format!("mr{mr_iid}"),
             status_counts: None,
         }),
         Request::Aggregate {
             project,
             r#ref,
-            source,
+            source: event,
             last,
             statuses,
         } => {
             let filter = PipelineFilter {
                 r#ref: r#ref.clone(),
-                source: source.clone(),
+                source: event.clone(),
                 statuses: statuses
                     .as_ref()
                     .map(|list| list.iter().map(|s| s.as_str().to_string()).collect()),
                 last: *last as usize,
+                workflow: None,
             };
-            let listed = list_pipelines(gql, project, &filter).await?;
+            let listed = source.list_pipelines(project, &filter).await?;
             if listed.ids.is_empty() {
                 return Err(Error::new(ErrorCode::NoPipelines));
             }
@@ -93,7 +95,7 @@ async fn resolve(gql: &impl Gql, request: &Request) -> Result<Target, Error> {
                 ids: listed.ids,
                 suffix: r#ref
                     .as_deref()
-                    .or(source.as_deref())
+                    .or(event.as_deref())
                     .unwrap_or("all")
                     .to_string(),
                 status_counts: Some(listed.counts),
@@ -103,7 +105,7 @@ async fn resolve(gql: &impl Gql, request: &Request) -> Result<Target, Error> {
 }
 
 async fn load_trees(
-    gql: &impl Gql,
+    source: &impl Source,
     project: &str,
     ids: &[String],
     env: BuildEnv,
@@ -113,13 +115,13 @@ async fn load_trees(
     let loaded = AtomicUsize::new(0);
     on_progress(Progress { loaded: 0, total });
     let raws = try_join_all(ids.iter().map(|id| async {
-        let raw = fetch_pipeline(gql, project, id).await?;
+        let raw = source.fetch_pipeline(project, id).await?;
         let loaded = loaded.fetch_add(1, Ordering::SeqCst) + 1;
         on_progress(Progress { loaded, total });
         Ok::<_, Error>(raw)
     }))
     .await?;
-    let base_url = format!("https://{}", gql.host());
+    let base_url = format!("https://{}", source.host());
     Ok(raws
         .iter()
         .map(|raw| build_tree(raw, &base_url, env.now))
@@ -127,16 +129,16 @@ async fn load_trees(
 }
 
 /// Пайплайн, MR или агрегат по последним пайплайнам; `on_progress` зовут после каждого загруженного пайплайна.
-/// Хост берётся у `gql`: он один и в запросах, и в ссылках отчёта.
+/// Хост берётся у `source`: он один и в запросах, и в ссылках отчёта.
 pub async fn build_report(
-    gql: &impl Gql,
+    source: &impl Source,
     request: &Request,
     env: BuildEnv,
     on_progress: impl Fn(Progress) + Send + Sync,
 ) -> Result<Built, Error> {
-    let target = resolve(gql, request).await?;
+    let target = resolve(source, request).await?;
     let project = request.project();
-    let trees = load_trees(gql, project, &target.ids, env, on_progress).await?;
+    let trees = load_trees(source, project, &target.ids, env, on_progress).await?;
 
     let (label, aggregated) = match request {
         Request::Aggregate { r#ref, source, .. } => {
@@ -149,7 +151,7 @@ pub async fn build_report(
         _ => (Some(trees[0].name.clone()), false),
     };
     let meta = Meta {
-        host: gql.host().into(),
+        host: source.host().into(),
         project: project.into(),
         label,
         locale: env.locale,

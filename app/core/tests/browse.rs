@@ -87,9 +87,11 @@ async fn recent_pipelines_преобразование_полей_и_курсо�
             "nodes": [
                 { "id": "gid://gitlab/Ci::Pipeline/1026324", "iid": "51256", "status": "MANUAL", "source": "push",
                   "createdAt": "2026-09-24T19:02:41+03:00", "duration": 3952,
+                  "path": "/g/p/-/pipelines/1026324",
                   "commit": { "shortId": "718e7e48", "title": "Publish" }, "user": { "username": "u" } },
                 { "id": "gid://gitlab/Ci::Pipeline/7", "iid": "1", "status": "RUNNING", "source": "web",
-                  "createdAt": "2026-09-24T19:00:00+03:00", "duration": null, "commit": null, "user": null },
+                  "createdAt": "2026-09-24T19:00:00+03:00", "duration": null,
+                  "path": null, "commit": null, "user": null },
             ],
         } } })
     });
@@ -111,6 +113,7 @@ async fn recent_pipelines_преобразование_полей_и_курсо�
                         title: "Publish".into()
                     }),
                     author: Some("u".into()),
+                    url: "https://h.example/g/p/-/pipelines/1026324".into(),
                 },
                 Pipeline {
                     id: "7".into(),
@@ -121,6 +124,7 @@ async fn recent_pipelines_преобразование_полей_и_курсо�
                     duration: None,
                     commit: None,
                     author: None,
+                    url: String::new(),
                 },
             ],
             next: None,

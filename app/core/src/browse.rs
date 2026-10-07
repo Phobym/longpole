@@ -58,6 +58,16 @@ pub struct Pipeline {
     pub duration: Option<i64>,
     pub commit: Option<Commit>,
     pub author: Option<String>,
+    /// страница пайплайна в вебе: по ней строится отчёт
+    pub url: String,
+}
+
+/// Workflow GitHub Actions; `file` — имя файла (`ci.yml`), им фильтруют запуски.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
+pub struct Workflow {
+    pub file: String,
+    pub name: String,
 }
 
 #[derive(Deserialize)]
@@ -170,7 +180,7 @@ const PIPELINES_QUERY: &str = "query($project: ID!, $ref: String, $after: String
   project(fullPath: $project) {
     pipelines(ref: $ref, first: 20, after: $after) {
       pageInfo { hasNextPage endCursor }
-      nodes { id iid status source createdAt duration commit { shortId title } user { username } }
+      nodes { id iid status source createdAt duration path commit { shortId title } user { username } }
     }
   }
 }";
@@ -190,6 +200,7 @@ struct WireRecentPipeline {
     created_at: String,
     /// секунды
     duration: Option<i64>,
+    path: Option<String>,
     commit: Option<WireCommit>,
     user: Option<WireUser>,
 }
@@ -215,6 +226,7 @@ pub async fn recent_pipelines(
 ) -> Result<Page<Pipeline>, Error> {
     let variables = json!({ "project": project, "ref": r#ref, "after": after });
     let found: PipelinesProject = query_project(gql, PIPELINES_QUERY, variables, project).await?;
+    let host = gql.host().to_string();
     Ok(Page::from_connection(found.pipelines, |p| Pipeline {
         id: p
             .id
@@ -231,5 +243,9 @@ pub async fn recent_pipelines(
             title: c.title,
         }),
         author: p.user.map(|u| u.username),
+        url: p
+            .path
+            .map(|path| format!("https://{host}{path}"))
+            .unwrap_or_default(),
     }))
 }

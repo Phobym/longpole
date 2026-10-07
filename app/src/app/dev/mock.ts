@@ -61,6 +61,7 @@ const pipelines: Pipeline[] = [
   duration: duration as number | null,
   commit: { sha: 'deadbeef', title: String(title) },
   author: String(author),
+  url: `https://${HOST}/g/p/-/pipelines/${iid}`,
 }))
 const projects: Project[] = [
   { fullPath: 'platform/web-app', name: 'web-app', lastActivityAt: iso(20), defaultBranch: 'main' },

@@ -16,4 +16,8 @@ status: string, source: string | null, createdAt: string,
 /**
  * мс
  */
-duration: number | null, commit: Commit | null, author: string | null, };
+duration: number | null, commit: Commit | null, author: string | null, 
+/**
+ * страница пайплайна в вебе: по ней строится отчёт
+ */
+url: string, };

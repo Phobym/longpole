@@ -131,6 +131,7 @@ pub fn raw_pipeline(mut jobs: Vec<RawJob>, o: PipelineOpts) -> RawPipeline {
         },
         jobs,
         downstream: o.downstream,
+        needs_missing: false,
     }
 }
 

@@ -25,6 +25,8 @@ pub struct RawPipeline {
     pub jobs: Vec<RawJob>,
     /// downstream-пайплайны по id bridge-джобы
     pub downstream: HashMap<String, RawPipeline>,
+    /// файл workflow GitHub не загрузился: стейджи и `needs` неизвестны
+    pub needs_missing: bool,
 }
 
 /// Поля самого пайплайна.

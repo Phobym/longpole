@@ -296,6 +296,7 @@ fn fetch_at_depth<'a, G: Gql>(
             pipeline: info,
             jobs,
             downstream,
+            needs_missing: false,
         })
     })
 }
@@ -308,6 +309,8 @@ pub struct PipelineFilter {
     /// `None` — любые статусы
     pub statuses: Option<Vec<String>>,
     pub last: usize,
+    /// файл workflow GitHub; GitLab его не читает
+    pub workflow: Option<String>,
 }
 
 /// Подошедшие пайплайны (от новых к старым) и сколько их в каком статусе.

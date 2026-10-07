@@ -69,12 +69,13 @@ const rootRoute = createRootRoute({ component: Layout })
 
 const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: HomePage })
 
-// Хост — параметр, путь проекта (`group/sub/project`) — splat, ветка — `?ref=`.
+// Хост — параметр, путь проекта (`group/sub/project`) — splat, ветка — `?ref=`, workflow GitHub — `?workflow=`.
 const projectRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/project/$host/$',
-  validateSearch: (search: Record<string, unknown>): { ref?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { ref?: string; workflow?: string } => ({
     ref: typeof search.ref === 'string' && search.ref !== '' ? search.ref : undefined,
+    workflow: typeof search.workflow === 'string' && search.workflow !== '' ? search.workflow : undefined,
   }),
   component: () => {
     const { host, _splat } = projectRoute.useParams()

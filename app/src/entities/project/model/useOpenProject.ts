@@ -7,14 +7,14 @@ declare module '@tanstack/history' {
   }
 }
 
-/** Проект на хосте и ветка, по которой смотрят его пайплайны (`undefined` — все ветки): общий словарь экрана «Проект». */
-export type ProjectRef = { host: string; project: string; branch: string | undefined }
+/** Проект на хосте, ветка (`undefined` — все ветки) и workflow GitHub (`undefined` — первый из списка): словарь экрана «Проект». */
+export type ProjectRef = { host: string; project: string; branch: string | undefined; workflow?: string }
 
 export type ProjectTarget = ProjectRef & { name?: string; replace?: boolean }
 
-/** Открывает экран «Проект»; ветка — в `?ref=`, имя — в `state` навигации. */
+/** Открывает экран «Проект»; ветка — в `?ref=`, workflow — в `?workflow=`, имя — в `state` навигации. */
 export function useOpenProject() {
   const navigate = useNavigate()
-  return ({ host, project, branch, name, replace }: ProjectTarget) =>
-    navigate({ to: '/project/$host/$', params: { host, _splat: project }, search: { ref: branch }, state: { name }, replace })
+  return ({ host, project, branch, workflow, name, replace }: ProjectTarget) =>
+    navigate({ to: '/project/$host/$', params: { host, _splat: project }, search: { ref: branch, workflow }, state: { name }, replace })
 }

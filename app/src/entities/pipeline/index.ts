@@ -1,2 +1,2 @@
-export { pipelineUrl, usePipelines } from './model/queries'
+export { usePipelines } from './model/queries'
 export { PipelineRow } from './ui/PipelineRow'

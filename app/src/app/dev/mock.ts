@@ -19,6 +19,7 @@ let saved: SavedProject[] = [
   { host: HOST, path: 'g/p', name: 'group / project', addedAt: iso(60 * 24 * 3) },
   { host: HOST, path: 'platform/web-app', name: 'platform / web-app', addedAt: iso(60 * 24) },
   { host: 'gitlab.com', path: 'acme/billing-service', name: 'acme / billing-service', addedAt: iso(30) },
+  { host: 'github.com', path: 'o/r', name: 'o / r', addedAt: iso(10) },
 ]
 let history: HistoryEntry[] = [
   {

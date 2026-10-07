@@ -1,26 +1,26 @@
 {
   "errors": {
-    "unauthorized": "GitLab {{host}} responded {{status}}: the token is invalid or access is denied",
-    "httpStatus": "GitLab {{host}} responded {{status}}",
-    "graphql": "GraphQL {{host}}: {{detail}}",
-    "network": "Could not reach GitLab {{host}}: {{detail}}",
+    "unauthorized": "{{host}} responded {{status}}: the token is invalid or access is denied",
+    "httpStatus": "{{host}} responded {{status}}",
+    "graphql": "Unexpected response from {{host}}: {{detail}}",
+    "network": "Could not reach {{host}}: {{detail}}",
     "projectNotFound": "Project {{project}} on {{host}} not found or access denied",
     "pipelineNotFound": "Pipeline {{pipeline}} in project {{project}} on {{host}} not found",
     "tooManyJobs": "Pipeline {{pipeline}} in project {{project}}: more than {{limit}} jobs, loading stopped",
-    "mrHasNoPipeline": "MR !{{iid}} in project {{project}} has no pipeline",
+    "mrHasNoPipeline": "MR or PR {{iid}} in project {{project}} has no pipeline",
     "noPipelines": "No pipelines matched the filters: check the branch and statuses",
     "noToken": "A token for {{host}} is needed",
     "emptyToken": "Empty token",
-    "keychainUnavailable": "The system keychain is unavailable: set GITLAB_TOKEN and GITLAB_HOST or install libsecret",
+    "keychainUnavailable": "The system keychain is unavailable: set GITLAB_TOKEN and GITLAB_HOST (GH_TOKEN for GitHub) or install libsecret",
     "storage": "Could not read or write the app data: {{detail}}",
-    "invalidLink": "A link like https://<host>/<group>/<project>/-/pipelines/<id> or …/-/merge_requests/<iid> is required",
-    "invalidHost": "Enter a GitLab host, for example gitlab.example.com",
+    "invalidLink": "A GitLab pipeline or MR link (…/-/pipelines/<id>, …/-/merge_requests/<iid>) or a GitHub run or PR link (…/actions/runs/<id>, …/pull/<n>) is required",
+    "invalidHost": "Enter a host, for example gitlab.example.com",
     "invalidProject": "Enter a project path, for example group/project",
     "invalidLast": "The number of pipelines must be from 1 to {{max}}",
     "invalidStatuses": "Select at least one status or “any”",
     "forbidden": "The request did not come from the form window",
     "window": "Could not open the window: {{detail}}",
-    "projectInputInvalid": "Doesn't look like a GitLab project link or a folder path",
+    "projectInputInvalid": "Doesn't look like a GitLab or GitHub repository link or a folder path",
     "projectDirNoRemote": "The folder has no git repository with an origin remote",
     "reportExpired": "The report is no longer in memory, build it again",
     "rateLimited": "{{host}}: rate limit exceeded, retry after {{reset}}",
@@ -49,7 +49,7 @@
       "activity": "activity {{time}}"
     },
     "link": {
-      "label": "Paste a pipeline or MR link",
+      "label": "Paste a pipeline, MR, run or PR link",
       "placeholder": "https://gitlab.example.com/group/project/-/pipelines/123…",
       "build": "Build"
     },
@@ -65,6 +65,9 @@
     },
     "branch": {
       "label": "Branch"
+    },
+    "workflow": {
+      "label": "Workflow"
     },
     "aggregate": {
       "statuses": "Statuses",
@@ -82,13 +85,13 @@
     },
     "empty": {
       "title": "Add your first project",
-      "text": "Paste a GitLab repository link or pick a folder with a clone.",
+      "text": "Paste a GitLab or GitHub repository link or pick a folder with a clone.",
       "add": "+ Add project"
     },
     "addProject": {
       "title": "Add project",
-      "placeholder": "https://gitlab.example.com/group/project or a folder path",
-      "hint": "A repository, pipeline or MR link works.",
+      "placeholder": "https://gitlab.example.com/group/project, https://github.com/owner/repo or a folder path",
+      "hint": "A repository, pipeline, MR, run or PR link works.",
       "pickFolder": "Pick folder…",
       "findOnHost": "Find in the host's project list",
       "add": "Add"
@@ -97,7 +100,8 @@
       "need": "A token for {{host}} is needed",
       "scope": "Personal Access Token with the read_api scope.",
       "create": "Create on {{host}} ↗",
-      "stored": "Stored in the system keychain."
+      "stored": "Stored in the system keychain.",
+      "scopeGithub": "Fine-grained token with Actions: read and Contents: read permissions."
     },
     "settings": {
       "title": "Settings",
@@ -106,9 +110,18 @@
       "noHosts": "No hosts yet",
       "addHost": "Add host",
       "linuxHint": "On Linux the token is stored in Secret Service (gnome-keyring, KWallet). Without it, use glab or the GITLAB_TOKEN and GITLAB_HOST variables.",
-      "source": { "keychain": "keychain", "glab": "glab", "gh": "gh", "env": "environment variables" },
+      "source": {
+        "keychain": "keychain",
+        "glab": "glab",
+        "gh": "gh",
+        "env": "environment variables"
+      },
       "theme": "Theme",
-      "themes": { "system": "System", "light": "Light", "dark": "Dark" }
+      "themes": {
+        "system": "System",
+        "light": "Light",
+        "dark": "Dark"
+      }
     },
     "reportView": {
       "back": "← Back",

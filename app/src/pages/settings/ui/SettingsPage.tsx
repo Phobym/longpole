@@ -41,6 +41,11 @@ export function SettingsPage() {
               <span translate="no" className="flex-1 truncate">
                 {h.host}
               </span>
+              {h.provider && (
+                <span translate="no" className="text-[11px] text-muted-foreground">
+                  {h.provider === 'github' ? 'GitHub' : 'GitLab'}
+                </span>
+              )}
               <span className="text-[11px] text-muted-foreground">{t(`form.settings.source.${h.source}`)}</span>
               {h.source === 'keychain' && <RemoveTokenButton host={h.host} />}
             </li>

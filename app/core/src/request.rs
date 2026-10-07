@@ -9,6 +9,7 @@ use ts_rs::TS;
 
 use crate::error::{Error, ErrorCode, Field};
 use crate::hosts::is_valid_host;
+use crate::source::{GITHUB_COM, Provider};
 
 const MAX_LAST: u32 = 500;
 
@@ -16,6 +17,13 @@ static LINK: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^https?://([^/]+)/(.+?)/-/(pipelines|merge_requests)/([0-9]+)(?:[/?#]|$)")
         .expect("верный шаблон")
 });
+/// `https://host/owner/repo/actions/runs/<id>[/job/…|/attempts/…]` или `…/pull/<n>[/…]`.
+static GITHUB_LINK: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^https?://([^/]+)/([^/]+/[^/]+)/(actions/runs|pull)/([0-9]+)(?:[/?#]|$)")
+        .expect("верный шаблон")
+});
+/// Третий сегмент пути на github: страница репозитория, а не часть пути проекта.
+const GITHUB_PAGES: [&str; 6] = ["actions", "pull", "tree", "blob", "commit", "issues"];
 /// Сегмент из одних точек (`..`) — не путь проекта; `regex` без lookahead, поэтому проверяем отдельно.
 static SEGMENT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[A-Za-z0-9_.-]+$").expect("верный шаблон"));
@@ -57,6 +65,8 @@ pub struct Form {
     pub last: String,
     /// `ANY` — без фильтра
     pub statuses: Vec<String>,
+    /// файл workflow GitHub (`ci.yml`); GitLab поле не читает
+    pub workflow: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -119,6 +129,9 @@ pub enum Request {
         last: u32,
         /// `None` — любые статусы
         statuses: Option<Vec<Status>>,
+        /// файл workflow GitHub; старые записи истории — `None`
+        #[serde(default)]
+        workflow: Option<String>,
     },
 }
 
@@ -155,17 +168,34 @@ fn parse_remote(input: &str) -> Result<ProjectRef, Error> {
     let invalid = || Error::new(ErrorCode::ProjectInputInvalid);
     let caps = LINK
         .captures(input)
+        .or_else(|| GITHUB_LINK.captures(input))
         .or_else(|| REPO_HTTP.captures(input))
         .or_else(|| REPO_SSH.captures(input))
         .or_else(|| REPO_SCP.captures(input))
         .ok_or_else(invalid)?;
-    let host = caps[1].to_string();
+    let host = match &caps[1] {
+        // ssh через 443 у github.com живёт на отдельном имени
+        "ssh.github.com" => GITHUB_COM.to_string(),
+        other => other.to_string(),
+    };
     if !is_valid_host(&host) {
         return Err(invalid());
     }
     let tail_cut = caps[2].split("/-/").next().unwrap_or_default();
-    let path = project(tail_cut).map_err(|_| invalid())?;
+    let path = project(cut_github_page(tail_cut)).map_err(|_| invalid())?;
     Ok(ProjectRef { host, path })
+}
+
+/// `o/r/tree/main/src` → `o/r`.
+// ponytail: проект GitLab `group/sub/tree` тоже обрежется до `group/sub`; если встретится — резать только для хостов GitHub из `hostKinds`
+fn cut_github_page(path: &str) -> &str {
+    let mut parts = path.splitn(4, '/');
+    match (parts.next(), parts.next(), parts.next()) {
+        (Some(owner), Some(repo), Some(page)) if GITHUB_PAGES.contains(&page) => {
+            &path[..owner.len() + 1 + repo.len()]
+        }
+        _ => path,
+    }
 }
 
 // ponytail: наивный разбор `.git/config` — без `[include]`, `url.<base>.insteadOf` и значений в кавычках; если реальные конфиги ломаются, нужен настоящий парсер git-config.
@@ -223,16 +253,32 @@ pub fn parse_form(form: &Form) -> Result<Parsed, FieldErrors> {
     }
 }
 
+/// Тип хоста по форме ссылки на пайплайн, MR, run или PR.
+pub fn link_provider(url: &str) -> Option<Provider> {
+    let url = url.trim();
+    if LINK.is_match(url) {
+        Some(Provider::Gitlab)
+    } else if GITHUB_LINK.is_match(url) {
+        Some(Provider::Github)
+    } else {
+        None
+    }
+}
+
 fn parse_link(url: &str) -> Result<Parsed, FieldErrors> {
     let invalid = || BTreeMap::from([(Field::Url, Error::new(ErrorCode::InvalidLink))]);
-    let caps = LINK.captures(url.trim()).ok_or_else(invalid)?;
+    let url = url.trim();
+    let caps = LINK
+        .captures(url)
+        .or_else(|| GITHUB_LINK.captures(url))
+        .ok_or_else(invalid)?;
     let host = caps[1].to_string();
     if !is_valid_host(&host) {
         return Err(invalid());
     }
     let project = project(&caps[2]).map_err(|_| invalid())?;
     let id = caps[4].to_string();
-    let request = if &caps[3] == "pipelines" {
+    let request = if matches!(&caps[3], "pipelines" | "actions/runs") {
         Request::Pipeline {
             project,
             pipeline_id: id,
@@ -264,6 +310,7 @@ fn parse_aggregate(form: &Form) -> Result<Parsed, FieldErrors> {
             source: non_empty(&form.source),
             last,
             statuses,
+            workflow: non_empty(&form.workflow),
         },
     })
 }

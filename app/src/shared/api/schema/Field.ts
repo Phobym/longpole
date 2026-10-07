@@ -3,4 +3,4 @@
 /**
  * Поле формы сборки, к которому относится ошибка.
  */
-export type Field = "url" | "host" | "project" | "last" | "statuses";
+export type Field = "url" | "host" | "project" | "last" | "statuses" | "workflow";

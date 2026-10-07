@@ -5,5 +5,5 @@ import { readAggSettings } from './aggSettings'
 export function useBuildAggregate({ host, project, branch }: ProjectRef) {
   const { start, ...build } = useBuild()
   // настройки читаем в момент клика: подписка на стор не нужна
-  return { ...build, start: () => start(aggregateForm({ host, project, ref: branch ?? '', ...readAggSettings() })) }
+  return { ...build, start: () => start(aggregateForm({ host, project, ref: branch ?? '', workflow: '', ...readAggSettings() })) }
 }

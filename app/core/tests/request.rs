@@ -3,7 +3,10 @@
 use std::collections::BTreeMap;
 
 use pipeline_trace_core::error::{Error, ErrorCode, Field};
-use pipeline_trace_core::request::{Form, FormMode, Parsed, Request, Status, parse_form};
+use pipeline_trace_core::request::{
+    Form, FormMode, Parsed, Request, Status, link_provider, parse_form,
+};
+use pipeline_trace_core::source::Provider;
 
 fn link(url: &str) -> Form {
     Form {
@@ -128,6 +131,7 @@ fn агрегат_поля_приводятся_к_запросу() {
                 source: None,
                 last: 20,
                 statuses: Some(vec![Status::Success, Status::Manual]),
+                workflow: None,
             },
         })
     );
@@ -151,6 +155,7 @@ fn агрегат_пустые_ref_и_source_это_none_а_пробелы_об�
                 source: Some("merge_request_event".into()),
                 last: 7,
                 statuses: Some(vec![Status::Success, Status::Manual]),
+                workflow: None,
             },
         })
     );
@@ -167,6 +172,7 @@ fn статус_any_снимает_фильтр() {
             source: None,
             last: 20,
             statuses: None,
+            workflow: None,
         }
     );
 }
@@ -226,4 +232,62 @@ fn хост_принимает_порт_и_отвергает_схему_про�
         let errs = errors(parse_form(&aggregate(|f| f.host = host.into())));
         assert_eq!(fields(&errs), [Field::Host], "{host:?}");
     }
+}
+
+#[test]
+fn ссылки_github_на_run_job_attempt_и_pr() {
+    let run = |url: &str| parse_form(&link(url)).map(|p| (p.host, p.request));
+    let pipeline = |id: &str| Request::Pipeline {
+        project: "o/r".into(),
+        pipeline_id: id.into(),
+    };
+    for url in [
+        "https://github.com/o/r/actions/runs/7",
+        "https://github.com/o/r/actions/runs/7/job/99",
+        "https://github.com/o/r/actions/runs/7/attempts/2",
+        " https://github.com/o/r/actions/runs/7?pr=3 ",
+    ] {
+        assert_eq!(run(url), Ok(("github.com".into(), pipeline("7"))), "{url}");
+    }
+    assert_eq!(
+        run("https://ghe.example/o/r/pull/42/files"),
+        Ok((
+            "ghe.example".into(),
+            Request::Mr {
+                project: "o/r".into(),
+                mr_iid: "42".into(),
+            }
+        ))
+    );
+}
+
+#[test]
+fn тип_хоста_по_форме_ссылки() {
+    assert_eq!(
+        link_provider("https://ghe.example/o/r/actions/runs/7"),
+        Some(Provider::Github)
+    );
+    assert_eq!(
+        link_provider("https://h.example/g/p/-/pipelines/1"),
+        Some(Provider::Gitlab)
+    );
+    assert_eq!(link_provider("https://h.example/g/p"), None);
+}
+
+#[test]
+fn агрегат_берёт_workflow_из_формы() {
+    let parsed = parse_form(&aggregate(|f| f.workflow = " ci.yml ".into())).unwrap();
+    let Request::Aggregate { workflow, .. } = parsed.request else {
+        panic!("ждали агрегат")
+    };
+    assert_eq!(workflow.as_deref(), Some("ci.yml"));
+}
+
+#[test]
+fn старая_запись_истории_без_workflow_читается() {
+    let request: Request = serde_json::from_value(serde_json::json!({
+        "mode": "aggregate", "project": "g/p", "ref": null, "source": null, "last": 5, "statuses": null,
+    }))
+    .unwrap();
+    assert!(matches!(request, Request::Aggregate { workflow: None, .. }));
 }

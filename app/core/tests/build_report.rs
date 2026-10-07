@@ -64,6 +64,7 @@ fn aggregate(r#ref: Option<&str>, source: Option<&str>, last: u32) -> Request {
         source: source.map(Into::into),
         last,
         statuses: Some(vec![Status::Success]),
+        workflow: None,
     }
 }
 

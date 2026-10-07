@@ -77,6 +77,7 @@ async fn resolve(source: &impl Source, request: &Request) -> Result<Target, Erro
             source: event,
             last,
             statuses,
+            workflow,
         } => {
             let filter = PipelineFilter {
                 r#ref: r#ref.clone(),
@@ -85,23 +86,30 @@ async fn resolve(source: &impl Source, request: &Request) -> Result<Target, Erro
                     .as_ref()
                     .map(|list| list.iter().map(|s| s.as_str().to_string()).collect()),
                 last: *last as usize,
-                workflow: None,
+                workflow: workflow.clone(),
             };
             let listed = source.list_pipelines(project, &filter).await?;
             if listed.ids.is_empty() {
                 return Err(Error::new(ErrorCode::NoPipelines));
             }
+            let filter_part = r#ref.as_deref().or(event.as_deref()).unwrap_or("all");
             Ok(Target {
                 ids: listed.ids,
-                suffix: r#ref
-                    .as_deref()
-                    .or(event.as_deref())
-                    .unwrap_or("all")
-                    .to_string(),
+                suffix: match workflow {
+                    Some(file) => format!("{}-{filter_part}", workflow_stem(file)),
+                    None => filter_part.to_string(),
+                },
                 status_counts: Some(listed.counts),
             })
         }
     }
+}
+
+/// `ci.yml` → `ci`.
+fn workflow_stem(file: &str) -> &str {
+    file.strip_suffix(".yml")
+        .or_else(|| file.strip_suffix(".yaml"))
+        .unwrap_or(file)
 }
 
 async fn load_trees(
@@ -141,8 +149,13 @@ pub async fn build_report(
     let trees = load_trees(source, project, &target.ids, env, on_progress).await?;
 
     let (label, aggregated) = match request {
-        Request::Aggregate { r#ref, source, .. } => {
-            let parts: Vec<&str> = [r#ref, source]
+        Request::Aggregate {
+            r#ref,
+            source: event,
+            workflow,
+            ..
+        } => {
+            let parts: Vec<&str> = [workflow, r#ref, event]
                 .into_iter()
                 .filter_map(|p| p.as_deref())
                 .collect();

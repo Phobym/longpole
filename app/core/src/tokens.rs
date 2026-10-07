@@ -255,7 +255,7 @@ impl Glab {
     }
 
     pub fn value(&self, args: &[&str]) -> Option<String> {
-        tool_value(Command::new(&self.0).args(args), None)
+        tool_value(Command::new(&self.0).args(args), None, false)
     }
 }
 
@@ -284,10 +284,14 @@ impl Gh {
 
     /// Токены окружения `gh` не отдаём: `gh auth token --hostname H` вернул бы `GH_ENTERPRISE_TOKEN`
     /// любому enterprise-хосту, а их привязку к `GH_HOST` разбирает `find_github_token`.
+    ///
+    /// `gh auth status` выходит с кодом 1, если хоть одна учётная запись не прошла проверку (офлайн,
+    /// отозванный токен), но JSON печатает; поэтому его вывод берём при любом коде, остальное — только при успехе.
     pub fn value(&self, args: &[&str]) -> Option<String> {
         tool_value(
             without_env_tokens(Command::new(&self.0).args(args)),
             Some(GH_TIMEOUT),
+            args.starts_with(&["auth", "status"]),
         )
     }
 }
@@ -308,9 +312,14 @@ fn without_env_tokens(command: &mut Command) -> &mut Command {
 }
 
 /// Вывод команды; любой сбой, таймаут и пустой вывод — `None`: CLI может быть не настроен, это не ошибка.
+/// `any_status` — брать вывод и при ненулевом коде выхода.
 // ponytail: у `glab` без таймаута — `config get` локальный и мгновенный; `gh auth status` ходит в сеть,
 // его ограничивают 5 с, после чего процесс убивается
-fn tool_value(command: &mut Command, timeout: Option<Duration>) -> Option<String> {
+fn tool_value(
+    command: &mut Command,
+    timeout: Option<Duration>,
+    any_status: bool,
+) -> Option<String> {
     command
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -331,7 +340,7 @@ fn tool_value(command: &mut Command, timeout: Option<Duration>) -> Option<String
         let _ = child.kill();
     }
     let status = child.wait().ok()?;
-    if !status.success() {
+    if !any_status && !status.success() {
         return None;
     }
     Some(String::from_utf8_lossy(&output?).trim().to_string()).filter(|s| !s.is_empty())

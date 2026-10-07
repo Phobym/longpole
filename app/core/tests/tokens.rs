@@ -547,6 +547,27 @@ fn fake_gh(script: &str) -> (TempDir, Gh) {
 
 #[cfg(unix)]
 #[test]
+fn статус_gh_с_кодом_1_но_с_json_даёт_хосты() {
+    let (_dir, gh) = fake_gh(
+        r#"case "$*" in
+  "auth status --json hosts") echo '{"hosts":{"ghe.example":[{"state":"error"}]}}'; exit 1 ;;
+  *) echo not-a-token; exit 1 ;;
+esac"#,
+    );
+    let hosts = github_hosts(&|_: &str| None, &|args| gh.value(args));
+    assert_eq!(
+        hosts.iter().map(|h| h.host.as_str()).collect::<Vec<_>>(),
+        ["ghe.example"]
+    );
+    // токен по-прежнему требует успешного выхода
+    assert_eq!(
+        gh.value(&["auth", "token", "--hostname", "ghe.example"]),
+        None
+    );
+}
+
+#[cfg(unix)]
+#[test]
 fn зависший_gh_обрывается_по_таймауту() {
     let (_dir, gh) = fake_gh("exec sleep 30");
     let started = std::time::Instant::now();

@@ -100,6 +100,14 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
     await delay(300)
     return { items: pipelines, next: null }
   },
+  workflows: ({ host }) =>
+    host === 'github.com'
+      ? [
+          { file: 'ci.yml', name: 'CI' },
+          { file: 'release.yml', name: 'Release' },
+        ]
+      : [],
+  host_provider: ({ host }) => (host === 'github.com' ? 'github' : 'gitlab'),
   build: async () => {
     await delay(900)
     return 1

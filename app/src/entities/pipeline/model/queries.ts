@@ -4,7 +4,7 @@ import { pipelines, unwrap } from '../../../shared/api'
 export const usePipelines = (host: string, project: string, ref: string | undefined) =>
   useInfiniteQuery({
     queryKey: ['pipelines', host, project, ref ?? null],
-    queryFn: ({ pageParam }) => unwrap(pipelines(host, project, ref ?? null, pageParam)),
+    queryFn: ({ pageParam }) => unwrap(pipelines(host, project, ref ?? null, null, pageParam)),
     initialPageParam: null as string | null,
     staleTime: 0, // список последних пайплайнов устаревает сразу: при каждом открытии проекта берём свежий
     getNextPageParam: (last) => last.next,

@@ -160,3 +160,95 @@ impl<G: Gql> Source for G {
         Ok(Vec::new())
     }
 }
+
+/// Клиент хоста, выбранный по типу: команды формы работают с ним через `Source`.
+pub enum AnySource {
+    Gitlab(gitlab::Client),
+    Github(github::Client),
+}
+
+impl Source for AnySource {
+    fn host(&self) -> &str {
+        match self {
+            Self::Gitlab(c) => Source::host(c),
+            Self::Github(c) => Source::host(c),
+        }
+    }
+
+    fn provider(&self) -> Provider {
+        match self {
+            Self::Gitlab(c) => c.provider(),
+            Self::Github(c) => c.provider(),
+        }
+    }
+
+    async fn fetch_pipeline(&self, project: &str, id: &str) -> Result<RawPipeline, Error> {
+        match self {
+            Self::Gitlab(c) => c.fetch_pipeline(project, id).await,
+            Self::Github(c) => c.fetch_pipeline(project, id).await,
+        }
+    }
+
+    async fn list_pipelines(
+        &self,
+        project: &str,
+        filter: &PipelineFilter,
+    ) -> Result<Listed, Error> {
+        match self {
+            Self::Gitlab(c) => c.list_pipelines(project, filter).await,
+            Self::Github(c) => c.list_pipelines(project, filter).await,
+        }
+    }
+
+    async fn head_pipeline(&self, project: &str, number: &str) -> Result<String, Error> {
+        match self {
+            Self::Gitlab(c) => c.head_pipeline(project, number).await,
+            Self::Github(c) => c.head_pipeline(project, number).await,
+        }
+    }
+
+    async fn fetch_project(&self, path: &str) -> Result<Project, Error> {
+        match self {
+            Self::Gitlab(c) => c.fetch_project(path).await,
+            Self::Github(c) => c.fetch_project(path).await,
+        }
+    }
+
+    async fn list_projects(
+        &self,
+        search: &str,
+        after: Option<&str>,
+    ) -> Result<Page<Project>, Error> {
+        match self {
+            Self::Gitlab(c) => c.list_projects(search, after).await,
+            Self::Github(c) => c.list_projects(search, after).await,
+        }
+    }
+
+    async fn list_branches(&self, project: &str, search: &str) -> Result<Vec<String>, Error> {
+        match self {
+            Self::Gitlab(c) => c.list_branches(project, search).await,
+            Self::Github(c) => c.list_branches(project, search).await,
+        }
+    }
+
+    async fn recent_pipelines(
+        &self,
+        project: &str,
+        r#ref: Option<&str>,
+        workflow: Option<&str>,
+        after: Option<&str>,
+    ) -> Result<Page<Pipeline>, Error> {
+        match self {
+            Self::Gitlab(c) => c.recent_pipelines(project, r#ref, workflow, after).await,
+            Self::Github(c) => c.recent_pipelines(project, r#ref, workflow, after).await,
+        }
+    }
+
+    async fn list_workflows(&self, project: &str) -> Result<Vec<Workflow>, Error> {
+        match self {
+            Self::Gitlab(c) => c.list_workflows(project).await,
+            Self::Github(c) => c.list_workflows(project).await,
+        }
+    }
+}

@@ -5,7 +5,8 @@ use std::sync::Mutex;
 
 use fixtures::fake_gql;
 use pipeline_trace_core::settings::Settings;
-use pipeline_trace_core::source::{Provider, Source, resolve_provider_at};
+use pipeline_trace_core::source::{AnySource, Provider, Source, resolve_provider_at};
+use pipeline_trace_core::{github, gitlab};
 use serde_json::json;
 use tempfile::TempDir;
 use wiremock::matchers::{method, path};
@@ -107,4 +108,12 @@ async fn сбой_пробы_не_кэшируется() {
             Provider::Github
         );
     }
+}
+
+#[tokio::test]
+async fn диспетчер_отдаёт_провайдера_и_хост_варианта() {
+    let gl = AnySource::Gitlab(gitlab::Client::new("gl.example", "t").unwrap());
+    let gh = AnySource::Github(github::Client::new("github.com", "t").unwrap());
+    assert_eq!((gl.provider(), gl.host()), (Provider::Gitlab, "gl.example"));
+    assert_eq!((gh.provider(), gh.host()), (Provider::Github, "github.com"));
 }

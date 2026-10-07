@@ -30,6 +30,8 @@ fn main() {
             commands::projects,
             commands::branches,
             commands::pipelines,
+            commands::workflows,
+            commands::host_provider,
             commands::build,
             commands::report,
             commands::find_report,
@@ -119,7 +121,7 @@ mod tests {
             .filter_map(|permission| permission.strip_prefix("allow-"))
             .map(|name| name.replace('-', "_"))
             .collect();
-        assert_eq!(in_build.len(), 18);
+        assert_eq!(in_build.len(), 20);
         assert_eq!(in_build, in_handler);
         assert_eq!(in_build, in_capability);
     }

@@ -1,20 +1,25 @@
 //! Команды формы. Токен не возвращает ни одна: форма видит только список хостов.
 //! Все `async`: синхронная команда Tauri исполняется на главном потоке, а тут файлы и связка ключей.
 
-use pipeline_trace_core::browse::{
-    Page, Pipeline, Project, fetch_project, list_branches, list_projects, recent_pipelines,
-};
-use pipeline_trace_core::error::{CmdError, Error, ErrorCode};
-use pipeline_trace_core::gitlab::Client;
+use std::collections::BTreeMap;
+
+use pipeline_trace_core::browse::{Page, Pipeline, Project, Workflow};
+use pipeline_trace_core::error::{CmdError, Error, ErrorCode, Field};
 use pipeline_trace_core::history::{HistoryEntry, HistoryLabel, NewEntry};
 use pipeline_trace_core::hosts::normalize_host;
 use pipeline_trace_core::projects::SavedProject;
 use pipeline_trace_core::render::render;
 use pipeline_trace_core::report::{BuildEnv, Progress, build_report};
-use pipeline_trace_core::request::{Form, ProjectRef, Request, parse_form, parse_project_input};
+use pipeline_trace_core::request::{
+    Form, FormMode, ProjectRef, Request, link_provider, parse_form, parse_project_input,
+};
 use pipeline_trace_core::schema::{Meta, Report};
 use pipeline_trace_core::settings::{AppSettings, SettingsPatch};
-use pipeline_trace_core::tokens::{Glab, HostInfo, find_token, list_hosts};
+use pipeline_trace_core::source::{AnySource, Provider, Source, resolve_provider};
+use pipeline_trace_core::tokens::{
+    Gh, Glab, HostInfo, find_github_token, find_token, github_hosts, list_hosts,
+};
+use pipeline_trace_core::{github, gitlab};
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, State, Webview};
 use time::OffsetDateTime;
@@ -40,41 +45,63 @@ fn ensure_form(webview: &Webview) -> Cmd<()> {
     }
 }
 
-/// Клиент хоста с токеном: хранилище → `glab` → `GITLAB_TOKEN`.
-/// Связка ключей может ждать ответа пользователя, `glab` — запускаться, поэтому поиск идёт в пуле блокирующих задач.
-// ponytail: у `glab` нет таймаута, зависший процесс займёт поток пула; добавить, если такое случится
-async fn client_for(app: &AppHandle, host: &str) -> Result<Client, Error> {
+/// Клиент хоста: тип (кэш или проба), токен по типу — GitLab: хранилище → `glab` → `GITLAB_TOKEN`,
+/// GitHub: хранилище → `gh` → `GH_TOKEN`. Связка ключей может ждать ответа, CLI — запускаться,
+/// поэтому поиск токена идёт в пуле блокирующих задач.
+// ponytail: у `glab` и `gh` нет таймаута, зависший процесс займёт поток пула; добавить, если такое случится
+async fn source_for(app: &AppHandle, host: &str) -> Result<AnySource, Error> {
     let host = normalize_host(host)?;
+    let provider = resolve_provider(&host, &app.state::<AppState>().settings).await?;
     let app = app.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let glab = Glab::find();
-        let token = find_token(
-            &host,
-            &app.state::<AppState>().tokens,
-            &|name| std::env::var(name).ok(),
-            &|args| glab.as_ref().and_then(|glab| glab.value(args)),
-        )?;
-        Client::new(&host, &token)
+        let tokens = &app.state::<AppState>().tokens;
+        let env = |name: &str| std::env::var(name).ok();
+        match provider {
+            Provider::Gitlab => {
+                let glab = Glab::find();
+                let token = find_token(&host, tokens, &env, &|args| {
+                    glab.as_ref().and_then(|glab| glab.value(args))
+                })?;
+                Ok(AnySource::Gitlab(gitlab::Client::new(&host, &token)?))
+            }
+            Provider::Github => {
+                let gh = Gh::find();
+                let token = find_github_token(&host, tokens, &env, &|args| {
+                    gh.as_ref().and_then(|gh| gh.value(args))
+                })?;
+                Ok(AnySource::Github(github::Client::new(&host, &token)?))
+            }
+        }
     })
     .await
     .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))?
 }
 
-/// Хосты с источником токена; `glab` запускается — поэтому в пуле блокирующих задач.
+/// Хосты с источником токена и типом; CLI запускаются — поэтому в пуле блокирующих задач.
 #[tauri::command]
 pub async fn hosts(app: AppHandle, webview: Webview) -> Cmd<Vec<HostInfo>> {
     ensure_form(&webview)?;
     tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<AppState>();
+        let env = |name: &str| std::env::var(name).ok();
         let glab = Glab::find();
-        list_hosts(
-            &app.state::<AppState>().tokens,
-            &|name| std::env::var(name).ok(),
-            &|args| glab.as_ref().and_then(|glab| glab.value(args)),
-        )
+        let gh = Gh::find();
+        let mut hosts = list_hosts(&state.tokens, &env, &|args| {
+            glab.as_ref().and_then(|glab| glab.value(args))
+        })?;
+        for found in github_hosts(&env, &|args| gh.as_ref().and_then(|gh| gh.value(args))) {
+            if !hosts.iter().any(|h| h.host == found.host) {
+                hosts.push(found);
+            }
+        }
+        for host in hosts.iter_mut().filter(|h| h.provider.is_none()) {
+            host.provider = state.settings.host_kind(&host.host)?;
+        }
+        Ok::<_, Error>(hosts)
     })
     .await
     .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))?
-    .map_err(Into::into)
+    .map_err(Into::<CmdError>::into)
 }
 
 #[tauri::command]
@@ -125,8 +152,8 @@ pub async fn projects(
     after: Option<String>,
 ) -> Cmd<Page<Project>> {
     ensure_form(&webview)?;
-    let gql = client_for(&app, &host).await?;
-    Ok(list_projects(&gql, &search, after.as_deref()).await?)
+    let source = source_for(&app, &host).await?;
+    Ok(source.list_projects(&search, after.as_deref()).await?)
 }
 
 #[tauri::command]
@@ -138,8 +165,8 @@ pub async fn branches(
     search: String,
 ) -> Cmd<Vec<String>> {
     ensure_form(&webview)?;
-    let gql = client_for(&app, &host).await?;
-    Ok(list_branches(&gql, &project, &search).await?)
+    let source = source_for(&app, &host).await?;
+    Ok(source.list_branches(&project, &search).await?)
 }
 
 #[tauri::command]
@@ -149,11 +176,40 @@ pub async fn pipelines(
     host: String,
     project: String,
     r#ref: Option<String>,
+    workflow: Option<String>,
     after: Option<String>,
 ) -> Cmd<Page<Pipeline>> {
     ensure_form(&webview)?;
-    let gql = client_for(&app, &host).await?;
-    Ok(recent_pipelines(&gql, &project, r#ref.as_deref(), after.as_deref()).await?)
+    let source = source_for(&app, &host).await?;
+    Ok(source
+        .recent_pipelines(
+            &project,
+            r#ref.as_deref(),
+            workflow.as_deref(),
+            after.as_deref(),
+        )
+        .await?)
+}
+
+/// Workflow проекта GitHub; у GitLab — пусто, экран проекта тогда не показывает выбор.
+#[tauri::command]
+pub async fn workflows(
+    app: AppHandle,
+    webview: Webview,
+    host: String,
+    project: String,
+) -> Cmd<Vec<Workflow>> {
+    ensure_form(&webview)?;
+    let source = source_for(&app, &host).await?;
+    Ok(source.list_workflows(&project).await?)
+}
+
+/// Тип хоста для подсказки о токене: из кэша или пробой.
+#[tauri::command]
+pub async fn host_provider(app: AppHandle, webview: Webview, host: String) -> Cmd<Provider> {
+    ensure_form(&webview)?;
+    let host = normalize_host(&host)?;
+    Ok(resolve_provider(&host, &app.state::<AppState>().settings).await?)
 }
 
 fn history_label(meta: &Meta) -> HistoryLabel {
@@ -174,11 +230,24 @@ pub async fn build(
 ) -> Cmd<u32> {
     ensure_form(&webview)?;
     let parsed = parse_form(&form)?;
-    let gql = client_for(&app, &parsed.host).await?;
+    // ссылка сама говорит, чей хост: проба не нужна
+    if form.mode == FormMode::Link
+        && let Some(provider) = link_provider(&form.url)
+    {
+        state.settings.set_host_kind(&parsed.host, provider)?;
+    }
+    let source = source_for(&app, &parsed.host).await?;
+    if source.provider() == Provider::Github
+        && matches!(parsed.request, Request::Aggregate { workflow: None, .. })
+    {
+        return Err(
+            BTreeMap::from([(Field::Workflow, Error::new(ErrorCode::WorkflowRequired))]).into(),
+        );
+    }
     let now = OffsetDateTime::now_utc();
     let locale = state.locale();
     let built = build_report(
-        &gql,
+        &source,
         &parsed.request,
         BuildEnv { now, locale },
         |progress| {
@@ -264,8 +333,8 @@ pub async fn add_project(
     let project = tauri::async_runtime::spawn_blocking(move || parse_project_input(&input))
         .await
         .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))??;
-    let gql = client_for(&app, &project.host).await?;
-    let found = fetch_project(&gql, &project.path).await?;
+    let source = source_for(&app, &project.host).await?;
+    let found = source.fetch_project(&project.path).await?;
     let list = state
         .projects
         .add(project.clone(), &found.name, OffsetDateTime::now_utc())?;

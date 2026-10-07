@@ -1,0 +1,213 @@
+{
+  "errors": {
+    "unauthorized": "{{host}} 返回 {{status}}：令牌无效或无访问权限",
+    "httpStatus": "{{host}} 返回 {{status}}",
+    "graphql": "{{host}} 返回了意外的响应：{{detail}}",
+    "network": "无法连接到 {{host}}：{{detail}}",
+    "projectNotFound": "在 {{host}} 上未找到项目 {{project}}，或无访问权限",
+    "pipelineNotFound": "在 {{host}} 上的项目 {{project}} 中未找到流水线 {{pipeline}}",
+    "tooManyJobs": "项目 {{project}} 中的流水线 {{pipeline}}：作业数超过 {{limit}}，已停止加载",
+    "mrHasNoPipeline": "项目 {{project}} 中的 MR 或 PR {{iid}} 没有流水线",
+    "noPipelines": "没有符合筛选条件的流水线：请检查分支和状态",
+    "noToken": "需要 {{host}} 的令牌",
+    "emptyToken": "令牌为空",
+    "keychainUnavailable": "系统钥匙串不可用：请设置 GITLAB_TOKEN 和 GITLAB_HOST（GitHub 使用 GH_TOKEN），或安装 libsecret",
+    "storage": "无法读取或写入应用数据：{{detail}}",
+    "invalidLink": "需要 GitLab 流水线或 MR 链接（…/-/pipelines/<id>、…/-/merge_requests/<iid>），或 GitHub 的 run 或 PR 链接（…/actions/runs/<id>、…/pull/<n>）",
+    "invalidHost": "请输入主机，例如 gitlab.example.com",
+    "invalidProject": "请输入项目路径，例如 group/project",
+    "invalidLast": "流水线数量必须在 1 到 {{max}} 之间",
+    "invalidStatuses": "请至少选择一个状态或“任意”",
+    "forbidden": "请求并非来自表单窗口",
+    "window": "无法打开窗口：{{detail}}",
+    "projectInputInvalid": "看起来不是 GitLab 或 GitHub 仓库链接，也不是文件夹路径",
+    "projectDirNoRemote": "该文件夹中没有带 origin 远程的 git 仓库",
+    "reportExpired": "报告已不在内存中，请重新生成",
+    "rateLimited": "{{host}}：已超出请求频率限制，请在 {{reset}} 后重试",
+    "workflowRequired": "请选择 workflow：GitHub 聚合只针对一个 workflow",
+    "ipc": "无法执行命令：{{detail}}"
+  },
+  "form": {
+    "cancel": "取消",
+    "language": "语言",
+    "loading": "加载中…",
+    "nothing": "未找到任何内容",
+    "more": "显示更多",
+    "progress": {
+      "start": "加载中…",
+      "step": "正在加载 {{loaded}} / {{total}}…"
+    },
+    "history": {
+      "clear": "清除",
+      "clearConfirm": "清除请求历史？",
+      "empty": "暂无记录",
+      "remove": "从历史记录中移除：{{label}}"
+    },
+    "projects": {
+      "search": "搜索项目",
+      "searchPlaceholder": "名称或路径…",
+      "activity": "活动于 {{time}}"
+    },
+    "link": {
+      "label": "粘贴流水线、MR、run 或 PR 链接",
+      "placeholder": "https://gitlab.example.com/group/project/-/pipelines/123…",
+      "build": "生成"
+    },
+    "host": {
+      "label": "主机",
+      "add": "+ 添加主机…",
+      "saved": "{{host}} — 令牌已保存",
+      "placeholder": "gitlab.example.com",
+      "token": "令牌",
+      "saveToken": "保存令牌",
+      "removeToken": "移除令牌",
+      "removeConfirm": "移除 {{host}} 的令牌？"
+    },
+    "branch": {
+      "label": "分支"
+    },
+    "workflow": {
+      "label": "Workflow"
+    },
+    "aggregate": {
+      "statuses": "状态",
+      "any": "任意",
+      "last": "流水线数量",
+      "build_other": "聚合 {{value}} 条流水线"
+    },
+    "settingsButton": "设置",
+    "sidebar": {
+      "projects": "我的项目",
+      "add": "+ 添加",
+      "recent": "最近",
+      "removeProject": "从列表中移除：{{name}}"
+    },
+    "empty": {
+      "title": "添加你的第一个项目",
+      "text": "粘贴 GitLab 或 GitHub 仓库链接，或选择一个克隆所在的文件夹。",
+      "add": "+ 添加项目"
+    },
+    "addProject": {
+      "title": "添加项目",
+      "placeholder": "https://gitlab.example.com/group/project、https://github.com/owner/repo 或文件夹路径",
+      "hint": "支持仓库、流水线、MR、run 或 PR 链接。",
+      "pickFolder": "选择文件夹…",
+      "findOnHost": "在主机的项目列表中查找",
+      "add": "添加"
+    },
+    "token": {
+      "need": "需要 {{host}} 的令牌",
+      "scope": "具有 read_api 范围的 Personal Access Token。",
+      "create": "在 {{host}} 上创建 ↗",
+      "stored": "存储在系统钥匙串中。",
+      "scopeGithub": "具有 Actions: read 和 Contents: read 权限的 Fine-grained token。"
+    },
+    "settings": {
+      "title": "设置",
+      "back": "← 返回",
+      "hosts": "主机和令牌",
+      "noHosts": "暂无主机",
+      "addHost": "添加主机",
+      "linuxHint": "在 Linux 上，令牌存储在 Secret Service（gnome-keyring、KWallet）中。如果没有，请使用 glab 或 GITLAB_TOKEN 和 GITLAB_HOST 变量。",
+      "source": { "keychain": "钥匙串", "glab": "glab", "gh": "gh", "env": "环境变量" },
+      "theme": "主题",
+      "themes": { "system": "跟随系统", "light": "浅色", "dark": "深色" }
+    },
+    "reportView": {
+      "back": "← 返回",
+      "loading": "正在加载报告…"
+    }
+  },
+  "report": {
+    "stageLength": "时长",
+    "stageToEnd": "至结束",
+    "holds": "拖慢",
+    "notRun": "未运行",
+    "notRunStatus": "未运行 · {{status}}",
+    "expand": "展开 {{name}}",
+    "collapse": "折叠 {{name}}",
+    "stable": "稳定",
+    "retried": "↻ {{retried}} / {{present}}",
+    "retriedTitle_other": "{{present}} 条流水线中有 {{retried}} 条出现重试",
+    "needFor": "↑ 被依赖于",
+    "waits": "↓ 等待",
+    "loadFailed": "无法读取报告数据：{{detail}}",
+    "allPipelines": "所有流水线",
+    "needsMissing": "无法获取作业依赖：无权访问 workflow 文件。只有一个阶段，关键路径仅按耗时计算。",
+    "back": "← 返回聚合",
+    "language": "语言",
+    "help": "操作说明",
+    "keys": {
+      "pan": "<k>拖动</k>、<k>Shift</k> + 滚轮、<k>[</k> <k>]</k> — 平移时间轴",
+      "zoom": "<k>⌘</k>/<k>Ctrl</k> + 滚轮或双指捏合 — 以光标为中心缩放，水平滑动 — 平移，<k>0</k> — 显示整条流水线",
+      "rows": "<k>↑</k> <k>↓</k> — 相邻行，<k>Enter</k> — 选择",
+      "fold": "<k>←</k> <k>→</k> — 折叠和展开",
+      "stage": "点击阶段 — 显示到其结束的关键路径",
+      "job": "点击作业 — 显示其关联，<k>Esc</k> — 取消选择"
+    },
+    "chip": {
+      "pipelines_other": "<b>{{count}}</b> 条流水线",
+      "length": "时长 <b>{{value}}</b>",
+      "lengthP": "时长 p50 · p90 <b>{{p50}} · {{p90}}</b>",
+      "retries": "重试 <b>{{value}}</b>",
+      "saving": "最多可节省 <b>{{value}}</b>",
+      "jobs_other": "<b>{{count}}</b> 个作业"
+    },
+    "hotspots": {
+      "title": "重点关注",
+      "excess": "阶段 <n>{{stage}}</n> 在其他作业完成后还要等它 {{excess}}",
+      "excessCritical": "阶段 <n>{{stage}}</n> 在其他作业完成后还要等它 {{excess}}，且位于关键路径上",
+      "retriesAgg": "{{present}} 条流水线中有 {{retried}} 条出现重试",
+      "retries_other": "{{count}} 次失败尝试",
+      "retriesLast": "，最近 {{present}} 条中有 {{retried}} 条出现重试"
+    },
+    "panel": {
+      "close": "关闭",
+      "stage": "阶段",
+      "ran": "在 {{total}} 条中的 {{present}} 条里运行过",
+      "critAgg": "关键路径 {{percent}}%",
+      "onCritical": "在关键路径上",
+      "notOnCritical": "不在关键路径上",
+      "stability": "稳定性",
+      "attempts": "尝试",
+      "loss": "损耗",
+      "queue": "排队",
+      "retries": "重试",
+      "retriesIn_other": "{{present}} 条流水线中有 {{retried}} 条",
+      "lossAvg": "平均 {{time}}",
+      "queueP": "p50 {{p50}} · p90 {{p90}}",
+      "relations": "关联",
+      "relationUp": "被所选项依赖",
+      "relationDown": "等待所选项",
+      "openIn": "在 {{name}} 中打开 ↗",
+      "hostLink": "{{name}} ↗",
+      "longest": "最长",
+      "showAll_other": "全部 {{count}} 条流水线 ▾",
+      "collapseAll": "折叠 ▴"
+    },
+    "kpi": {
+      "duration": "时长",
+      "start": "开始",
+      "toEnd": "至结束",
+      "p90": "p90 {{time}}"
+    },
+    "strip": {
+      "title_other": "{{count}} 条流水线的时长",
+      "dotRetried": "{{label}} · 重试"
+    },
+    "verdict": {
+      "holds": "拖慢 <n>{{name}}</n> <b>+{{time}}</b>。",
+      "stagePath": "瀑布图中已高亮到该阶段结束的关键路径。",
+      "pipelinePath": "瀑布图中已高亮关键路径。",
+      "off": "不在关键路径上：加速它<b>不会缩短</b>流水线。",
+      "on": "在关键路径上：加速它<b>会缩短</b>流水线。",
+      "onAgg": "在 {{percent}}% 的流水线中位于关键路径上：加速它<b>会缩短</b>流水线。",
+      "onAggSometimes": "在 {{percent}}% 的流水线中位于关键路径上：加速它<b>有时会缩短</b>流水线。",
+      "saving": "最多可节省 <b>−{{time}}</b>。",
+      "holdsStage": "拖慢阶段 <n>{{stage}}</n> <b>+{{time}}</b>。",
+      "retriesAgg": "值得关注重试情况 — <b>{{present}} 条中有 {{retried}} 条</b>。",
+      "attempts_other": "<b>{{count}} 次失败尝试</b>",
+      "lost": "，损失 {{time}}"
+    }
+  }
+}

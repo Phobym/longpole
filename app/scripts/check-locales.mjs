@@ -1,7 +1,7 @@
-// Наборы ключей ru.json и en.json должны совпадать (вложенные ключи — через точку).
+// Наборы ключей всех словарей должны совпадать с ru.json (вложенные ключи — через точку).
 // Склонения (`key_one`, `key_few`, …) сравниваются по базовому ключу, а их формы — с категориями
-// `Intl.PluralRules` языка: в русском `one`/`few`/`many`/`other`, в английском `one`/`other`.
-import { readFileSync } from 'node:fs'
+// `Intl.PluralRules` языка: в русском `one`/`few`/`many`/`other`, в английском `one`/`other`, в китайском только `other`.
+import { readdirSync, readFileSync } from 'node:fs'
 
 const dir = new URL('../src/shared/i18n/locales/', import.meta.url)
 const PLURAL = /_(zero|one|two|few|many|other)$/
@@ -29,7 +29,9 @@ const load = (lang) => {
 }
 
 const ru = load('ru')
-const en = load('en')
-for (const k of ru) if (!en.has(k)) fail(`нет в en.json: ${k}`)
-for (const k of en) if (!ru.has(k)) fail(`нет в ru.json: ${k}`)
+for (const lang of readdirSync(dir).map((f) => f.replace(/\.json$/, '')).filter((l) => l !== 'ru')) {
+  const keys = load(lang)
+  for (const k of ru) if (!keys.has(k)) fail(`нет в ${lang}.json: ${k}`)
+  for (const k of keys) if (!ru.has(k)) fail(`нет в ru.json: ${k} (есть в ${lang}.json)`)
+}
 if (failed) process.exit(1)

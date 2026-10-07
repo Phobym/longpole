@@ -3,8 +3,8 @@ import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { settingsQuery } from '../../entities/settings'
-import { getSettings, type Locale } from '../../shared/api'
-import { initI18n } from '../../shared/i18n'
+import { getSettings } from '../../shared/api'
+import { browserLocale, initI18n } from '../../shared/i18n'
 import { applyTheme } from '../../shared/lib/theme'
 import '../../shared/ui/theme.css'
 import { router } from './router'
@@ -13,9 +13,6 @@ import { router } from './router'
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false, staleTime: 60_000 } },
 })
-
-// Вне Tauri (vite в браузере) `get_settings` недоступна — тогда язык браузера.
-const browserLocale = (): Locale => (navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en')
 
 async function main() {
   // в браузере без Tauri — мок моста, иначе `get_settings` падает на `invoke`

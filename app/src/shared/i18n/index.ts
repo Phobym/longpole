@@ -3,8 +3,14 @@ import { initReactI18next, useTranslation } from 'react-i18next'
 import type { Locale } from '../api/schema/Locale'
 import type { ApiError, IpcError } from '../api/api'
 import type { ErrorBody } from '../api/schema/ErrorBody'
+import de from './locales/de.json'
 import en from './locales/en.json'
+import es from './locales/es.json'
+import fr from './locales/fr.json'
+import it from './locales/it.json'
+import ja from './locales/ja.json'
 import ru from './locales/ru.json'
+import zh from './locales/zh.json'
 
 // Типизирует `t('errors.…')` по ru.json: ключ, которого нет в словаре, не проходит `tsc`.
 declare module 'i18next' {
@@ -19,6 +25,22 @@ export { useTranslation }
 /** Текущий язык интерфейса для `Intl`-форматирования из `shared/lib/format`. */
 export const useLocale = (): Locale => useTranslation().i18n.language as Locale
 
+/** Языки выпадающего списка: название — на самом языке, чтобы его нашёл тот, кто не читает текущий. */
+export const LOCALES: { value: Locale; label: string }[] = [
+  { value: 'ru', label: 'Русский' },
+  { value: 'en', label: 'English' },
+  { value: 'fr', label: 'Français' },
+  { value: 'es', label: 'Español' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'it', label: 'Italiano' },
+  { value: 'zh', label: '中文' },
+  { value: 'ja', label: '日本語' },
+]
+
+/** Язык по тегу `navigator.language` (`zh-CN`, `fr`) — как `Locale::from_tag` в ядре; незнакомый — английский. */
+export const browserLocale = (): Locale =>
+  LOCALES.find(({ value }) => navigator.language.toLowerCase().startsWith(value))?.value ?? 'en'
+
 /** `await` до первого рендера: форма — с `get_settings`, сохранённый отчёт — с языком браузера. */
 export const initI18n = async (locale: Locale) => {
   document.documentElement.lang = locale
@@ -26,7 +48,7 @@ export const initI18n = async (locale: Locale) => {
     document.documentElement.lang = lng
   })
   await i18next.use(initReactI18next).init({
-    resources: { ru: { translation: ru }, en: { translation: en } },
+    resources: Object.fromEntries(Object.entries({ ru, en, fr, es, de, it, zh, ja }).map(([l, translation]) => [l, { translation }])),
     lng: locale,
     fallbackLng: 'ru',
     // React экранирует сам; host и detail приходят чужими строками

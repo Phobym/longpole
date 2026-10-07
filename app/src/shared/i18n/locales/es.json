@@ -1,0 +1,231 @@
+{
+  "errors": {
+    "unauthorized": "{{host}} respondió {{status}}: el token no es válido o se denegó el acceso",
+    "httpStatus": "{{host}} respondió {{status}}",
+    "graphql": "Respuesta inesperada de {{host}}: {{detail}}",
+    "network": "No se pudo conectar con {{host}}: {{detail}}",
+    "projectNotFound": "No se encontró el proyecto {{project}} en {{host}} o se denegó el acceso",
+    "pipelineNotFound": "No se encontró el pipeline {{pipeline}} del proyecto {{project}} en {{host}}",
+    "tooManyJobs": "Pipeline {{pipeline}} del proyecto {{project}}: más de {{limit}} jobs, se detuvo la carga",
+    "mrHasNoPipeline": "El MR o PR {{iid}} del proyecto {{project}} no tiene pipeline",
+    "noPipelines": "Ningún pipeline coincide con los filtros: revisa la rama y los estados",
+    "noToken": "Se necesita un token para {{host}}",
+    "emptyToken": "Token vacío",
+    "keychainUnavailable": "El llavero del sistema no está disponible: define GITLAB_TOKEN y GITLAB_HOST (GH_TOKEN para GitHub) o instala libsecret",
+    "storage": "No se pudieron leer ni escribir los datos de la aplicación: {{detail}}",
+    "invalidLink": "Se requiere un enlace a un pipeline o MR de GitLab (…/-/pipelines/<id>, …/-/merge_requests/<iid>) o a una ejecución o PR de GitHub (…/actions/runs/<id>, …/pull/<n>)",
+    "invalidHost": "Introduce un host, por ejemplo gitlab.example.com",
+    "invalidProject": "Introduce la ruta de un proyecto, por ejemplo group/project",
+    "invalidLast": "El número de pipelines debe estar entre 1 y {{max}}",
+    "invalidStatuses": "Selecciona al menos un estado o «cualquiera»",
+    "forbidden": "La solicitud no procede de la ventana del formulario",
+    "window": "No se pudo abrir la ventana: {{detail}}",
+    "projectInputInvalid": "No parece un enlace a un repositorio de GitLab o GitHub ni la ruta de una carpeta",
+    "projectDirNoRemote": "La carpeta no contiene un repositorio git con un remoto origin",
+    "reportExpired": "El informe ya no está en memoria, vuelve a generarlo",
+    "rateLimited": "{{host}}: se superó el límite de solicitudes, vuelve a intentarlo después de {{reset}}",
+    "workflowRequired": "Elige un workflow: un agregado de GitHub abarca un solo workflow",
+    "ipc": "No se pudo ejecutar el comando: {{detail}}"
+  },
+  "form": {
+    "cancel": "Cancelar",
+    "language": "Idioma",
+    "loading": "Cargando…",
+    "nothing": "No se encontró nada",
+    "more": "Mostrar más",
+    "progress": {
+      "start": "Cargando…",
+      "step": "Cargando {{loaded}} de {{total}}…"
+    },
+    "history": {
+      "clear": "Borrar",
+      "clearConfirm": "¿Borrar el historial de solicitudes?",
+      "empty": "Aún no hay nada",
+      "remove": "Quitar del historial: {{label}}"
+    },
+    "projects": {
+      "search": "Buscar proyectos",
+      "searchPlaceholder": "Nombre o ruta…",
+      "activity": "actividad {{time}}"
+    },
+    "link": {
+      "label": "Pega un enlace a un pipeline, MR, ejecución o PR",
+      "placeholder": "https://gitlab.example.com/group/project/-/pipelines/123…",
+      "build": "Generar"
+    },
+    "host": {
+      "label": "Host",
+      "add": "+ Añadir host…",
+      "saved": "{{host}} — token guardado",
+      "placeholder": "gitlab.example.com",
+      "token": "Token",
+      "saveToken": "Guardar token",
+      "removeToken": "Eliminar token",
+      "removeConfirm": "¿Eliminar el token de {{host}}?"
+    },
+    "branch": {
+      "label": "Rama"
+    },
+    "workflow": {
+      "label": "Workflow"
+    },
+    "aggregate": {
+      "statuses": "Estados",
+      "any": "cualquiera",
+      "last": "Cuántos pipelines",
+      "build_one": "Agregado de {{value}} pipeline",
+      "build_many": "Agregado de {{value}} pipelines",
+      "build_other": "Agregado de {{value}} pipelines"
+    },
+    "settingsButton": "Ajustes",
+    "sidebar": {
+      "projects": "Mis proyectos",
+      "add": "+ Añadir",
+      "recent": "Recientes",
+      "removeProject": "Quitar de la lista: {{name}}"
+    },
+    "empty": {
+      "title": "Añade tu primer proyecto",
+      "text": "Pega un enlace a un repositorio de GitLab o GitHub o elige una carpeta con un clon.",
+      "add": "+ Añadir proyecto"
+    },
+    "addProject": {
+      "title": "Añadir proyecto",
+      "placeholder": "https://gitlab.example.com/group/project, https://github.com/owner/repo o la ruta de una carpeta",
+      "hint": "Sirve un enlace a un repositorio, pipeline, MR, ejecución o PR.",
+      "pickFolder": "Elegir carpeta…",
+      "findOnHost": "Buscar en la lista de proyectos del host",
+      "add": "Añadir"
+    },
+    "token": {
+      "need": "Se necesita un token para {{host}}",
+      "scope": "Personal Access Token con el permiso read_api.",
+      "create": "Crear en {{host}} ↗",
+      "stored": "Se guarda en el llavero del sistema.",
+      "scopeGithub": "Token de acceso granular con los permisos Actions: read y Contents: read."
+    },
+    "settings": {
+      "title": "Ajustes",
+      "back": "← Atrás",
+      "hosts": "Hosts y tokens",
+      "noHosts": "Aún no hay hosts",
+      "addHost": "Añadir host",
+      "linuxHint": "En Linux el token se guarda en Secret Service (gnome-keyring, KWallet). Si no está disponible, usa glab o las variables GITLAB_TOKEN y GITLAB_HOST.",
+      "source": { "keychain": "llavero", "glab": "glab", "gh": "gh", "env": "variables de entorno" },
+      "theme": "Tema",
+      "themes": { "system": "Sistema", "light": "Claro", "dark": "Oscuro" }
+    },
+    "reportView": {
+      "back": "← Atrás",
+      "loading": "Cargando el informe…"
+    }
+  },
+  "report": {
+    "stageLength": "duración",
+    "stageToEnd": "hasta el final",
+    "holds": "retiene",
+    "notRun": "no se ejecutó",
+    "notRunStatus": "no se ejecutó · {{status}}",
+    "expand": "Expandir {{name}}",
+    "collapse": "Contraer {{name}}",
+    "stable": "estable",
+    "retried": "↻ {{retried}} de {{present}}",
+    "retriedTitle_one": "reintentos en {{retried}} de {{present}} pipeline",
+    "retriedTitle_many": "reintentos en {{retried}} de {{present}} pipelines",
+    "retriedTitle_other": "reintentos en {{retried}} de {{present}} pipelines",
+    "needFor": "↑ lo necesitan",
+    "waits": "↓ espera a",
+    "loadFailed": "No se pudieron leer los datos del informe: {{detail}}",
+    "allPipelines": "todos los pipelines",
+    "needsMissing": "Las dependencias entre jobs no están disponibles: no hay acceso al archivo del workflow. Una sola etapa, la ruta crítica se basa solo en los tiempos.",
+    "back": "← volver al agregado",
+    "language": "Idioma",
+    "help": "Controles",
+    "keys": {
+      "pan": "<k>Arrastrar</k>, <k>Shift</k> + rueda, <k>[</k> <k>]</k> — desplazar el eje",
+      "zoom": "<k>⌘</k>/<k>Ctrl</k> + rueda o pellizco — zoom alrededor del cursor, deslizamiento horizontal — desplazar, <k>0</k> — todo el pipeline",
+      "rows": "<k>↑</k> <k>↓</k> — fila contigua, <k>Enter</k> — seleccionar",
+      "fold": "<k>←</k> <k>→</k> — contraer y expandir",
+      "stage": "Clic en una etapa — ruta crítica hasta su final",
+      "job": "Clic en un job — sus vínculos, <k>Esc</k> — quitar la selección"
+    },
+    "chip": {
+      "pipelines_one": "<b>{{count}}</b> pipeline",
+      "pipelines_many": "<b>{{count}}</b> pipelines",
+      "pipelines_other": "<b>{{count}}</b> pipelines",
+      "length": "<b>{{value}}</b> de duración",
+      "lengthP": "<b>{{p50}} · {{p90}}</b> de duración p50 · p90",
+      "retries": "reintentos <b>{{value}}</b>",
+      "saving": "se pueden ahorrar hasta <b>{{value}}</b>",
+      "jobs_one": "<b>{{count}}</b> job",
+      "jobs_many": "<b>{{count}}</b> jobs",
+      "jobs_other": "<b>{{count}}</b> jobs"
+    },
+    "hotspots": {
+      "title": "Dónde centrarse",
+      "excess": "la etapa <n>{{stage}}</n> espera {{excess}} por él después de las demás",
+      "excessCritical": "la etapa <n>{{stage}}</n> espera {{excess}} por él después de las demás, en la ruta crítica",
+      "retriesAgg": "reintentos en {{retried}} de {{present}} pipelines",
+      "retries_one": "{{count}} intento fallido",
+      "retries_many": "{{count}} intentos fallidos",
+      "retries_other": "{{count}} intentos fallidos",
+      "retriesLast": ", reintentos en {{retried}} de los últimos {{present}}"
+    },
+    "panel": {
+      "close": "Cerrar",
+      "stage": "etapa",
+      "ran": "se ejecutó en {{present}} de {{total}}",
+      "critAgg": "ruta crít. {{percent}}%",
+      "onCritical": "en la ruta crítica",
+      "notOnCritical": "fuera de la ruta crítica",
+      "stability": "Estabilidad",
+      "attempts": "Intentos",
+      "loss": "Pérdida",
+      "queue": "Cola",
+      "retries": "Reintentos",
+      "retriesIn_one": "en {{retried}} de {{present}} pipeline",
+      "retriesIn_many": "en {{retried}} de {{present}} pipelines",
+      "retriesIn_other": "en {{retried}} de {{present}} pipelines",
+      "lossAvg": "{{time}} de media",
+      "queueP": "p50 {{p50}} · p90 {{p90}}",
+      "relations": "Vínculos",
+      "relationUp": "lo necesita el seleccionado",
+      "relationDown": "espera al seleccionado",
+      "openIn": "Abrir en {{name}} ↗",
+      "hostLink": "{{name}} ↗",
+      "longest": "Más largos",
+      "showAll_one": "Todos: {{count}} pipeline ▾",
+      "showAll_many": "Todos: {{count}} pipelines ▾",
+      "showAll_other": "Todos: {{count}} pipelines ▾",
+      "collapseAll": "Contraer ▴"
+    },
+    "kpi": {
+      "duration": "Duración",
+      "start": "Inicio",
+      "toEnd": "Hasta el final",
+      "p90": "p90 {{time}}"
+    },
+    "strip": {
+      "title_one": "Duración en {{count}} pipeline",
+      "title_many": "Duración en {{count}} pipelines",
+      "title_other": "Duración en {{count}} pipelines",
+      "dotRetried": "{{label}} · reintentos"
+    },
+    "verdict": {
+      "holds": "Retiene <n>{{name}}</n> <b>+{{time}}</b>.",
+      "stagePath": "La ruta crítica hasta el final de la etapa está resaltada en la cascada.",
+      "pipelinePath": "La ruta crítica está resaltada en la cascada.",
+      "off": "Fuera de la ruta crítica: acelerarlo <b>no acortará</b> el pipeline.",
+      "on": "En la ruta crítica: acelerarlo <b>acortará</b> el pipeline.",
+      "onAgg": "En la ruta crítica en el {{percent}}% de los pipelines: acelerarlo <b>acortará</b> el pipeline.",
+      "onAggSometimes": "En la ruta crítica en el {{percent}}% de los pipelines: acelerarlo <b>a veces acorta</b> el pipeline.",
+      "saving": "Ahorra hasta <b>−{{time}}</b>.",
+      "holdsStage": "Retiene la etapa <n>{{stage}}</n> <b>+{{time}}</b>.",
+      "retriesAgg": "Conviene revisar los reintentos — <b>{{retried}} de {{present}}</b>.",
+      "attempts_one": "<b>{{count}} intento fallido</b>",
+      "attempts_many": "<b>{{count}} intentos fallidos</b>",
+      "attempts_other": "<b>{{count}} intentos fallidos</b>",
+      "lost": ", {{time}} perdidos"
+    }
+  }
+}

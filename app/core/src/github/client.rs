@@ -253,10 +253,6 @@ pub async fn probe_at(host: &str, base_url: &str) -> Result<Provider, Error> {
     })
 }
 
-pub async fn probe(host: &str) -> Result<Provider, Error> {
-    probe_at(host, &format!("https://{host}")).await
-}
-
 #[cfg(test)]
 mod tests {
     use reqwest::StatusCode;

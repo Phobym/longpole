@@ -11,7 +11,7 @@ use std::sync::{Arc, PoisonError};
 use serde::Deserialize;
 use time::OffsetDateTime;
 
-pub use client::{Client, probe, probe_at};
+pub use client::{Client, probe_at};
 
 use crate::browse::{Page, Pipeline, Project, Workflow as Flow};
 use crate::error::{Error, ErrorCode};

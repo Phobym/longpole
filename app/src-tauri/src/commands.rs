@@ -48,7 +48,7 @@ fn ensure_form(webview: &Webview) -> Cmd<()> {
 /// Клиент хоста: тип (кэш или проба), токен по типу — GitLab: хранилище → `glab` → `GITLAB_TOKEN`,
 /// GitHub: хранилище → `gh` → `GH_TOKEN`. Связка ключей может ждать ответа, CLI — запускаться,
 /// поэтому поиск токена идёт в пуле блокирующих задач.
-// ponytail: у `glab` и `gh` нет таймаута, зависший процесс займёт поток пула; добавить, если такое случится
+// ponytail: у `glab` нет таймаута, зависший процесс займёт поток пула; добавить, если такое случится (у `gh` 5 с)
 async fn source_for(app: &AppHandle, host: &str) -> Result<AnySource, Error> {
     let host = normalize_host(host)?;
     let provider = resolve_provider(&host, &app.state::<AppState>().settings).await?;
@@ -230,11 +230,11 @@ pub async fn build(
 ) -> Cmd<u32> {
     ensure_form(&webview)?;
     let parsed = parse_form(&form)?;
-    // ссылка подсказывает тип только незнакомому хосту: проба не нужна, а известный тип не затирается
+    // форма ссылки однозначна и главнее кэша пробы: так исправляется ошибочно определённый хост
     if form.mode == FormMode::Link
         && let Some(provider) = link_provider(&form.url)
     {
-        state.settings.remember_host_kind(&parsed.host, provider)?;
+        state.settings.set_host_kind(&parsed.host, provider)?;
     }
     let source = source_for(&app, &parsed.host).await?;
     if source.provider() == Provider::Github

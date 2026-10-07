@@ -155,27 +155,20 @@ fn тип_хоста_github_com_без_кэша_остальные_из_кэша
 }
 
 #[test]
-fn подсказка_типа_пишется_только_незнакомому_хосту() {
+fn тип_хоста_перезаписывается_а_github_com_не_меняется() {
     let (_dir, settings) = settings();
+    settings
+        .set_host_kind("ghe.example", Provider::Gitlab)
+        .unwrap();
     settings
         .set_host_kind("ghe.example", Provider::Github)
         .unwrap();
     settings
-        .remember_host_kind("ghe.example", Provider::Gitlab)
-        .unwrap();
-    settings
-        .remember_host_kind("new.example", Provider::Gitlab)
-        .unwrap();
-    settings
-        .remember_host_kind("github.com", Provider::Gitlab)
+        .set_host_kind("github.com", Provider::Gitlab)
         .unwrap();
     assert_eq!(
         settings.host_kind("ghe.example").unwrap(),
         Some(Provider::Github)
-    );
-    assert_eq!(
-        settings.host_kind("new.example").unwrap(),
-        Some(Provider::Gitlab)
     );
     assert_eq!(
         settings.host_kind("github.com").unwrap(),

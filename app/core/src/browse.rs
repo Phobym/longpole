@@ -227,25 +227,28 @@ pub async fn recent_pipelines(
     let variables = json!({ "project": project, "ref": r#ref, "after": after });
     let found: PipelinesProject = query_project(gql, PIPELINES_QUERY, variables, project).await?;
     let host = gql.host().to_string();
-    Ok(Page::from_connection(found.pipelines, |p| Pipeline {
-        id: p
-            .id
-            .rsplit_once('/')
-            .map_or(p.id.as_str(), |(_, tail)| tail)
-            .into(),
-        iid: p.iid,
-        status: p.status.to_lowercase(),
-        source: p.source,
-        created_at: p.created_at,
-        duration: p.duration.map(|seconds| seconds.saturating_mul(1000)),
-        commit: p.commit.map(|c| Commit {
-            sha: c.short_id,
-            title: c.title,
-        }),
-        author: p.user.map(|u| u.username),
-        url: p
-            .path
-            .map(|path| format!("https://{host}{path}"))
-            .unwrap_or_default(),
+    Ok(Page::from_connection(found.pipelines, |p| {
+        let id =
+            p.id.rsplit_once('/')
+                .map_or(p.id.as_str(), |(_, tail)| tail);
+        // без `path` ссылку собираем сами: GitLab открывает `/-/pipelines/` и по числовому id
+        let url = match &p.path {
+            Some(path) => format!("https://{host}{path}"),
+            None => format!("https://{host}/{project}/-/pipelines/{id}"),
+        };
+        Pipeline {
+            id: id.into(),
+            iid: p.iid,
+            status: p.status.to_lowercase(),
+            source: p.source,
+            created_at: p.created_at,
+            duration: p.duration.map(|seconds| seconds.saturating_mul(1000)),
+            commit: p.commit.map(|c| Commit {
+                sha: c.short_id,
+                title: c.title,
+            }),
+            author: p.user.map(|u| u.username),
+            url,
+        }
     }))
 }

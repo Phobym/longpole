@@ -124,7 +124,7 @@ async fn recent_pipelines_преобразование_полей_и_курсо�
                     duration: None,
                     commit: None,
                     author: None,
-                    url: String::new(),
+                    url: "https://h.example/g/p/-/pipelines/7".into(),
                 },
             ],
             next: None,

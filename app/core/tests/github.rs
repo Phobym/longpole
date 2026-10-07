@@ -531,6 +531,8 @@ async fn workflow_только_активные_имя_файла_без_пут�
             { "name": "Old", "path": ".github/workflows/old.yml", "state": "disabled_manually" },
             { "name": "build", "path": "", "state": "active" },
             { "name": "Copilot", "path": "dynamic/copilot-swe-agent/copilot", "state": "active" },
+            { "name": "Notes", "path": ".github/workflows/notes.txt", "state": "active" },
+            { "name": "Other", "path": "other/ci.yml", "state": "active" },
         ] })),
         )
         .mount(&server)

@@ -79,9 +79,9 @@ const projectRoute = createRoute({
   }),
   component: () => {
     const { host, _splat } = projectRoute.useParams()
-    const { ref } = projectRoute.useSearch()
+    const { ref, workflow } = projectRoute.useSearch()
     // key: другой проект — другая страница, прогресс, ошибки и подсказки веток прежнего не переносятся
-    return <ProjectPage key={`${host}/${_splat}`} host={host} project={_splat ?? ''} branch={ref} />
+    return <ProjectPage key={`${host}/${_splat}`} host={host} project={_splat ?? ''} branch={ref} workflow={workflow} />
   },
 })
 

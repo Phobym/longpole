@@ -1,5 +1,7 @@
 import { useLocation } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { apiError } from '../../../shared/api'
+import { useErrorText } from '../../../shared/i18n'
 import { Card } from '../../../shared/ui/card'
 import { BranchSelect } from '../../../features/select-branch'
 import { WorkflowSelect } from '../../../features/select-workflow'
@@ -11,15 +13,18 @@ import { PipelinesList } from '../../../widgets/pipelines-list'
 export function ProjectPage(target: ProjectRef) {
   const openProject = useOpenProject()
   const update = useUpdateSettings()
+  const errorText = useErrorText()
   // имя приходит в state навигации; из записи истории его нет — тогда заголовок это путь
   const name = useLocation({ select: (location) => location.state.name })
   // страница смонтирована с key по проекту: эффект идёт один раз на проект
   useEffect(() => {
     void update({ lastProject: { host: target.host, path: target.project } })
   }, [update, target.host, target.project])
-  // GitHub без выбора — первый workflow; у GitLab список пуст и workflow нет
-  const { data: workflows = [] } = useWorkflows(target.host, target.project)
-  const current: ProjectRef = { ...target, workflow: target.workflow ?? workflows[0]?.file }
+  // GitHub без выбора (или с устаревшим) — первый workflow; у GitLab список пуст и workflow нет
+  const query = useWorkflows(target.host, target.project)
+  const workflows = query.data ?? []
+  const current: ProjectRef = { ...target, workflow: workflows.find((w) => w.file === target.workflow)?.file ?? workflows[0]?.file }
+  const failure = apiError(query.error)
   return (
     <Card>
       <h1 translate="no" className="truncate text-[17px] font-semibold">
@@ -29,8 +34,18 @@ export function ProjectPage(target: ProjectRef) {
       {workflows.length > 0 && current.workflow && (
         <WorkflowSelect workflows={workflows} value={current.workflow} onChange={(workflow) => void openProject({ ...current, workflow, name, replace: true })} />
       )}
-      <PipelinesList {...current} />
-      <AggregateBlock {...current} />
+      {query.isError && (
+        <p role="alert" className="text-sm text-destructive">
+          {failure && errorText(failure)}
+        </p>
+      )}
+      {/* пока список workflow не ответил (или ответил ошибкой), запросы пайплайнов и агрегат ушли бы без workflow */}
+      {query.isSuccess && (
+        <>
+          <PipelinesList {...current} />
+          <AggregateBlock {...current} />
+        </>
+      )}
     </Card>
   )
 }

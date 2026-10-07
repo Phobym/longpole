@@ -361,11 +361,22 @@ mod tests {
 
     #[tokio::test]
     async fn чужой_абсолютный_адрес_отказ_до_запроса() {
-        let client = Client::with_api_url("h", "https://api.github.com", "t").unwrap();
+        use wiremock::matchers::any;
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let own = MockServer::start().await;
+        let foreign = MockServer::start().await;
+        Mock::given(any())
+            .respond_with(ResponseTemplate::new(200))
+            .expect(0)
+            .mount(&foreign)
+            .await;
+        let client = Client::with_api_url("h", &own.uri(), "t").unwrap();
         let err = client
-            .json::<serde_json::Value>("https://api.github.com.evil/x")
+            .json::<serde_json::Value>(&format!("{}/x", foreign.uri()))
             .await
             .unwrap_err();
         assert_eq!(err.code, ErrorCode::Network);
+        assert_eq!(err.params["detail"], "адрес вне API хоста");
     }
 }

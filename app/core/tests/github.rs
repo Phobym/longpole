@@ -57,7 +57,8 @@ fn job(
     })
 }
 
-async fn mount_run(server: &MockServer, workflow: Option<&str>) {
+/// Run и его джобы, без файла workflow.
+async fn mount_run_and_jobs(server: &MockServer) {
     Mock::given(method("GET"))
         .and(path("/repos/o/r/actions/runs/7"))
         .and(header("authorization", "Bearer t"))
@@ -103,6 +104,10 @@ async fn mount_run(server: &MockServer, workflow: Option<&str>) {
         })))
         .mount(server)
         .await;
+}
+
+async fn mount_run(server: &MockServer, workflow: Option<&str>) {
+    mount_run_and_jobs(server).await;
     let contents = Mock::given(method("GET"))
         .and(path("/repos/o/r/contents/.github/workflows/ci.yml"))
         .and(query_param("ref", "abc123"))
@@ -170,6 +175,8 @@ async fn run_с_перезапуском_копиями_и_matrix() {
     assert_eq!(build.web_path, "/o/r/actions/runs/7/job/11");
     assert_eq!(build.status, "SUCCESS");
     assert_eq!(raw.jobs[4].status, "FAILED");
+    // копия из первой попытки: создана позже старта, очереди не было
+    assert_eq!(raw.jobs[3].queued_duration, None);
 }
 
 #[tokio::test]
@@ -210,4 +217,25 @@ async fn нет_run_это_pipeline_not_found() {
             ("project", "o/r"),
         ],
     );
+}
+
+#[tokio::test]
+async fn временная_ошибка_файла_workflow_не_кэшируется() {
+    let server = MockServer::start().await;
+    mount_run_and_jobs(&server).await;
+    // файл: сначала 500, потом YAML
+    let contents =
+        || Mock::given(method("GET")).and(path("/repos/o/r/contents/.github/workflows/ci.yml"));
+    contents()
+        .respond_with(ResponseTemplate::new(500))
+        .up_to_n_times(1)
+        .mount(&server)
+        .await;
+    contents()
+        .respond_with(ResponseTemplate::new(200).set_body_string(YAML))
+        .mount(&server)
+        .await;
+    let client = client(&server);
+    assert!(client.fetch_run("o/r", "7").await.unwrap().needs_missing);
+    assert!(!client.fetch_run("o/r", "7").await.unwrap().needs_missing);
 }

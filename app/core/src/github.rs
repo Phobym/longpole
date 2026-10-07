@@ -138,6 +138,60 @@ fn attempts(mut jobs: Vec<WireJob>) -> Vec<(WireJob, bool)> {
     kept
 }
 
+type Found<'a> = (WireJob, bool, Option<Matched<'a>>);
+
+/// Ключ YAML → имена джоб API последней попытки: из них `needs`.
+fn names_by_key(found: &[Found<'_>]) -> HashMap<String, Vec<String>> {
+    let mut names: HashMap<String, Vec<String>> = HashMap::new();
+    for (_, retried, matched) in found {
+        if let Some(m) = matched
+            && !retried
+        {
+            names
+                .entry(m.job.key.clone())
+                .or_default()
+                .push(m.name.clone());
+        }
+    }
+    names
+}
+
+fn raw_job(
+    job: &WireJob,
+    retried: bool,
+    matched: Option<&Matched<'_>>,
+    names: &HashMap<String, Vec<String>>,
+    stages: &[String],
+) -> RawJob {
+    let needs = matched
+        .map(|m| {
+            m.job
+                .needs
+                .iter()
+                .flat_map(|key| names.get(key).into_iter().flatten().cloned())
+                .collect()
+        })
+        .unwrap_or_default();
+    RawJob {
+        id: job.id.to_string(),
+        name: matched.map_or_else(|| job.name.clone(), |m| m.name.clone()),
+        bridge: false,
+        status: status(&job.status, job.conclusion.as_deref()).into(),
+        started_at: job.started_at,
+        finished_at: job.completed_at,
+        // у копии из ранней попытки `created_at` позже `started_at`: очереди не было
+        queued_duration: job
+            .started_at
+            .map(|s| (s - job.created_at).as_seconds_f64())
+            .filter(|q| *q >= 0.0),
+        retried,
+        allow_failure: matched.is_some_and(|m| m.job.allow_failure),
+        web_path: job.html_url.as_deref().map(path_of).unwrap_or_default(),
+        stage: stages[matched.map_or(0, |m| m.job.level)].clone(),
+        needs,
+    }
+}
+
 /// Run и его джобы → `RawPipeline`; `workflow == None` — файл не загрузился.
 fn to_raw(
     project: &str,
@@ -145,66 +199,23 @@ fn to_raw(
     jobs: Vec<WireJob>,
     workflow: Option<&Workflow>,
 ) -> RawPipeline {
-    let mut found: Vec<(WireJob, bool, Option<Matched<'_>>)> =
-        attempts(jobs.into_iter().map(without_skipped_times).collect())
-            .into_iter()
-            .map(|(job, retried)| {
-                let matched = workflow.and_then(|w| w.find(&job.name));
-                (job, retried, matched)
-            })
-            .collect();
+    let mut found: Vec<Found<'_>> = attempts(jobs.into_iter().map(without_skipped_times).collect())
+        .into_iter()
+        .map(|(job, retried)| {
+            let matched = workflow.and_then(|w| w.find(&job.name));
+            (job, retried, matched)
+        })
+        .collect();
     // как у GitLab: от новых к старым
     found.sort_by_key(|(job, ..)| Reverse(job.created_at));
-
-    // ключ YAML → имена джоб API последней попытки: из них `needs`
-    let mut names_by_key: HashMap<String, Vec<String>> = HashMap::new();
-    for (_, retried, matched) in &found {
-        if let Some(m) = matched
-            && !retried
-        {
-            names_by_key
-                .entry(m.job.key.clone())
-                .or_default()
-                .push(m.name.clone());
-        }
-    }
+    let names = names_by_key(&found);
     let stages = match workflow {
         Some(w) => w.stage_names(),
         None => vec![run.name.clone().unwrap_or_default()],
     };
-
-    let raw_jobs = found
+    let jobs = found
         .iter()
-        .map(|(job, retried, matched)| {
-            let needs = matched
-                .as_ref()
-                .map(|m| {
-                    m.job
-                        .needs
-                        .iter()
-                        .flat_map(|key| names_by_key.get(key).into_iter().flatten().cloned())
-                        .collect()
-                })
-                .unwrap_or_default();
-            RawJob {
-                id: job.id.to_string(),
-                name: matched
-                    .as_ref()
-                    .map_or_else(|| job.name.clone(), |m| m.name.clone()),
-                bridge: false,
-                status: status(&job.status, job.conclusion.as_deref()).into(),
-                started_at: job.started_at,
-                finished_at: job.completed_at,
-                queued_duration: job
-                    .started_at
-                    .map(|s| (s - job.created_at).as_seconds_f64()),
-                retried: *retried,
-                allow_failure: matched.as_ref().is_some_and(|m| m.job.allow_failure),
-                web_path: job.html_url.as_deref().map(path_of).unwrap_or_default(),
-                stage: stages[matched.as_ref().map_or(0, |m| m.job.level)].clone(),
-                needs,
-            }
-        })
+        .map(|(job, retried, matched)| raw_job(job, *retried, matched.as_ref(), &names, &stages))
         .collect();
 
     RawPipeline {
@@ -219,7 +230,7 @@ fn to_raw(
             path: path_of(&run.html_url),
             stages,
         },
-        jobs: raw_jobs,
+        jobs,
         downstream: HashMap::new(),
         needs_missing: workflow.is_none(),
     }
@@ -258,7 +269,7 @@ impl Client {
         Ok(to_raw(project, &run, jobs, workflow.as_deref()))
     }
 
-    /// Файл workflow на коммите запуска; любой сбой — `None`: отчёт строится без `needs` (спека, § 2.4).
+    /// Файл workflow на коммите запуска; любой сбой — `None`: отчёт строится без `needs` (спека, § 2.4); в кэше только окончательные исходы.
     // ponytail: параллельные запуски одного агрегата могут скачать файл одновременно — лишний запрос, не ошибка
     async fn workflow(&self, project: &str, run: &WireRun) -> Option<Arc<Workflow>> {
         let path = run.path.split('@').next().unwrap_or(&run.path);
@@ -272,14 +283,14 @@ impl Client {
         if let Some(cached) = cached {
             return cached;
         }
+        // временная ошибка (лимит, сеть) в кэш не идёт: следующий запуск попробует снова
         let text = self
             .raw(&format!(
                 "/repos/{project}/contents/{path}?ref={}",
                 run.head_sha
             ))
             .await
-            .ok()
-            .flatten();
+            .ok()?;
         let parsed = text.as_deref().and_then(workflow::parse).map(Arc::new);
         self.workflows
             .lock()

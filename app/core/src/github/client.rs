@@ -82,6 +82,12 @@ impl Client {
 
     async fn get(&self, target: &str, accept: &str) -> Result<Option<Body>, Error> {
         let url = if target.starts_with("http://") || target.starts_with("https://") {
+            // токен уходит только на свой API, даже если адрес пришёл не из `next_link`
+            if !own_url(&self.api, target) {
+                return Err(Error::new(ErrorCode::Network)
+                    .with("host", &self.host)
+                    .with("detail", "адрес вне API хоста"));
+            }
             target.to_string()
         } else {
             format!("{}{target}", self.api)
@@ -167,7 +173,8 @@ pub(crate) fn status_error(
                 .with("reset", iso(reset))
         };
         if let Some(seconds) = header("retry-after").and_then(|v| v.parse::<i64>().ok()) {
-            return limited(now + time::Duration::seconds(seconds));
+            let wait = time::Duration::seconds(seconds.max(0));
+            return limited(now.checked_add(wait).unwrap_or(now));
         }
         if header("x-ratelimit-remaining") == Some("0") {
             let reset = header("x-ratelimit-reset")
@@ -201,16 +208,29 @@ pub(crate) fn next_link(headers: &HeaderMap, api: &str) -> Option<String> {
                     .to_string()
             })
         })
-        .filter(|url| url.starts_with(api))
+        .filter(|url| own_url(api, url))
 }
 
-/// Тип хоста по `GET /api/v3/meta` без токена: GHES отвечает 200 с `installed_version`, GitLab — нет.
+/// Адрес на этом API: сам корень или путь под ним, а не просто общий префикс строки
+/// (`https://api.github.com.evil/…` под префикс подходит, но чужой).
+fn own_url(api: &str, url: &str) -> bool {
+    url == api || url.starts_with(&format!("{api}/"))
+}
+
+/// Тип хоста по `GET /api/v3/meta` без токена: GHES ставит `X-GitHub-Enterprise-Version` на каждый
+/// ответ API, в том числе 401 приватного режима; иначе GHES — 200 с `installed_version`, GitLab — нет.
 pub async fn probe_at(host: &str, base_url: &str) -> Result<Provider, Error> {
     let response = http(host)?
         .get(format!("{}/api/v3/meta", base_url.trim_end_matches('/')))
         .send()
         .await
         .map_err(|e| network_error(host, e))?;
+    if response
+        .headers()
+        .contains_key("x-github-enterprise-version")
+    {
+        return Ok(Provider::Github);
+    }
     if !response.status().is_success() {
         return Ok(Provider::Gitlab);
     }
@@ -304,6 +324,33 @@ mod tests {
             None
         );
         assert_eq!(next_link(&HeaderMap::new(), "https://api.github.com"), None);
+        let own = r#"<https://api.github.com/x>; rel="next""#;
+        assert_eq!(
+            next_link(&headers(&[("link", own)]), "https://api.github.com").as_deref(),
+            Some("https://api.github.com/x")
+        );
+        for foreign in [
+            "https://api.github.com.evil/x",
+            "https://api.github.com:8443/x",
+        ] {
+            let link = format!(r#"<{foreign}>; rel="next""#);
+            assert_eq!(
+                next_link(&headers(&[("link", &link)]), "https://api.github.com"),
+                None
+            );
+        }
+    }
+
+    #[test]
+    fn огромный_retry_after_не_паникует() {
+        let e = status_error(
+            "h",
+            StatusCode::TOO_MANY_REQUESTS,
+            &headers(&[("retry-after", "9223372036854775807")]),
+            NOW,
+        );
+        assert_eq!(e.code, ErrorCode::RateLimited);
+        assert_eq!(e.params["reset"], "2026-10-07T10:00:00.000Z");
     }
 
     #[test]

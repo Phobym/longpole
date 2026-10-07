@@ -116,7 +116,7 @@ REST: `GET /repos/{owner}/{repo}/actions/runs/{id}/jobs?filter=all&per_page=100`
 
 1. `github.com` — всегда `Github`, без запросов.
 2. Иначе — карта `hostKinds` (хост → `gitlab` | `github`) в `settings.json`.
-3. Хоста нет в карте — проба `GET https://<host>/api/v3/meta` без токена, таймаут соединения 15 с: 200 с полем `installed_version` — `Github`, любой другой ответ — `Gitlab`. Результат пишется в карту.
+3. Хоста нет в карте — проба `GET https://<host>/api/v3/meta` без токена, таймаут соединения 15 с: заголовок `X-GitHub-Enterprise-Version` в ответе с любым статусом (GHES ставит его на каждый ответ API, в том числе на 401 приватного режима) или 200 с полем `installed_version` — `Github`, любой другой ответ — `Gitlab`. Результат пишется в карту.
 4. Сетевая ошибка пробы — ошибка `network`, в карту ничего не пишется.
 
 Ссылка, разобранная как GitHub (раздел 5), пишет `github` в карту без пробы; ссылка вида `/-/pipelines/` — `gitlab`.

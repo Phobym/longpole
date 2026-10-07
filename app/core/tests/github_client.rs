@@ -49,3 +49,19 @@ async fn проба_без_соединения_это_network() {
     let result = probe_at("down.example", "http://127.0.0.1:9").await;
     assert_eq!(result.unwrap_err().code, ErrorCode::Network);
 }
+
+#[tokio::test]
+async fn проба_ghes_приватного_режима_по_заголовку_при_401() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/api/v3/meta"))
+        .respond_with(
+            ResponseTemplate::new(401).insert_header("x-github-enterprise-version", "3.14.0"),
+        )
+        .mount(&server)
+        .await;
+    assert_eq!(
+        probe_at("ghe.example", &server.uri()).await.unwrap(),
+        Provider::Github
+    );
+}

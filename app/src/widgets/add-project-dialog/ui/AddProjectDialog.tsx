@@ -58,7 +58,7 @@ function AddProjectBody() {
         }}
       >
         <div className="flex gap-2">
-          <Tip id="add-project.input">
+          <Tip id="add-project.input" side="top">
             <Input id={id} autoFocus translate="no" placeholder={t('form.addProject.placeholder')} aria-invalid={showError} aria-describedby={showError ? `${id}-error` : undefined} value={input} onChange={(e) => setInput(e.target.value)} />
           </Tip>
           <Button type="button" variant="outline" className="shrink-0" disabled={busy} onClick={() => void pick()}>

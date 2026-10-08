@@ -10,7 +10,7 @@ export function OnboardingSync() {
   const { data } = useSettings()
   const update = useUpdateSettings()
   const hydrated = useRef(false)
-  useEffect(() => setPersist((patch) => void update(patch)), [update])
+  useEffect(() => setPersist((patch) => update(patch)), [update])
   useEffect(() => {
     if (!data || hydrated.current) return
     hydrated.current = true

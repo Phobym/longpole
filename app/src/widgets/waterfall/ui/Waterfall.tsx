@@ -10,6 +10,9 @@ import { LinksOverlay } from './LinksOverlay'
 import { Row } from './Row'
 import { StageCard } from './StageCard'
 
+// подсказки, что висят на строках водопада, в порядке реестра
+const ROW_TIPS = ['report.critical', 'report.retries', 'report.aggregate'] as const satisfies readonly TipId[]
+
 /** Ось и строки отчёта: стейджи карточками, жесты и клавиши, линии связей выбранного узла. */
 export function Waterfall() {
   const { tree, state, crit, rel } = useReportView()
@@ -20,7 +23,7 @@ export function Waterfall() {
   const active = useActiveTip()
   const rowTips = useMemo(() => {
     const agg = isAggNode(tree.nodes[tree.root])
-    const first: Partial<Record<'report.critical' | 'report.retries' | 'report.aggregate', string>> = {}
+    const first: Partial<Record<(typeof ROW_TIPS)[number], string>> = {}
     for (const { rows: entries } of blocks) {
       for (const { node } of entries) {
         if (first['report.critical'] === undefined && isLeaf(node) && crit.ids.has(node.id)) first['report.critical'] = node.id
@@ -30,7 +33,7 @@ export function Waterfall() {
     }
     // Кандидаты строки — в порядке реестра; открытая подсказка держится, хотя уже попала в seen.
     const candidates = new Map<string, TipId[]>()
-    for (const id of ['report.critical', 'report.retries', 'report.aggregate'] as const) {
+    for (const id of ROW_TIPS) {
       const row = first[id]
       if (row !== undefined) candidates.set(row, [...(candidates.get(row) ?? []), id])
     }

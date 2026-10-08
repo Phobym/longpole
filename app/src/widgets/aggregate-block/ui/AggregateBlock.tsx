@@ -25,7 +25,10 @@ export function AggregateBlock(target: ProjectRef) {
             <BuildAggregateButton busy={busy} progressLabel={progressLabel} onClick={start} />
           </div>
         </Tip>
-        {busy && <Giraffe pose="loading" size={72} progress={progress ?? undefined} />}
+        {/* слот под жирафа занят всегда: строка не прыгает, когда он появляется */}
+        <div className="h-[82px] w-[72px] shrink-0" aria-hidden>
+          {busy && <Giraffe pose="loading" size={72} progress={progress ?? undefined} />}
+        </div>
       </div>
       {failure && (
         <p role="alert" className="text-sm text-destructive">

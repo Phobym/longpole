@@ -217,3 +217,25 @@ fn подсказки_сохраняются_и_читаются_заново() 
     assert!(!got.tips);
     assert_eq!(got.seen_tips, vec!["report.hotspots", "add-project.input"]);
 }
+
+#[test]
+fn патч_без_подсказок_их_не_трогает() {
+    let (dir, settings) = settings();
+    settings
+        .update(SettingsPatch {
+            tips: Some(false),
+            seen_tips: Some(vec!["report.hotspots".into()]),
+            ..Default::default()
+        })
+        .unwrap();
+    settings
+        .update(SettingsPatch {
+            theme: Some(Theme::Dark),
+            ..Default::default()
+        })
+        .unwrap();
+    let again = Settings::new(dir.path().join("data").join("settings.json"));
+    let got = again.get().unwrap();
+    assert!(!got.tips);
+    assert_eq!(got.seen_tips, vec!["report.hotspots"]);
+}

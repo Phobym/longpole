@@ -17,8 +17,12 @@ const useStore = create<State>(() => ({ enabled: false, seen: [], ready: [], act
 
 // запись в settings.json ставит `OnboardingSync`: стор лежит ниже react-query и не знает о нём
 let persist: (patch: SettingsPatch) => void = () => {}
-export const setPersist = (fn: (patch: SettingsPatch) => void) => {
-  persist = fn
+// записи идут по очереди: `seenTips` заменяет список целиком, и обогнавший старый патч вернул бы показанную подсказку
+export const setPersist = (fn: (patch: SettingsPatch) => Promise<unknown> | void) => {
+  let queue: Promise<unknown> = Promise.resolve()
+  persist = (patch) => {
+    queue = queue.then(() => fn(patch))
+  }
 }
 
 /** Показанная подсказка сразу просмотрена: быстрое закрытие диалога не даёт повтора. */
@@ -71,7 +75,7 @@ export const disableTips = () => setTipsEnabled(false)
 
 /** «Показать заново» в настройках: подсказки включены, просмотренных нет. */
 export function resetTips() {
-  useStore.setState({ enabled: true, seen: [], active: null })
+  useStore.setState({ enabled: true, seen: [], active: null, leftReport: false })
   persist({ tips: true, seenTips: [] })
   repick()
 }

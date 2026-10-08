@@ -9,6 +9,8 @@ type Props = {
   id: TipId | null
   /** событие наступило; пока `false`, подсказка не регистрируется и не открывается — дерево то же, якорь не перемонтируется */
   when?: boolean
+  /** с какой стороны якоря пузырь */
+  side?: 'top' | 'right' | 'bottom' | 'left'
   /** один элемент, передающий ref и пропсы в DOM */
   children: ReactElement
 }
@@ -17,7 +19,7 @@ type Props = {
  * Подсказка у элемента. Пузырь порталится в `body`, но остаётся в React-дереве якоря, поэтому Radix-слои внутри модального Dialog считают его своим: клик и фокус работают.
  * Фокус не забирает, клик мимо не закрывает; Esc закрывает только подсказку (`stopPropagation` до `useReportKeys` и корневого обработчика).
  */
-export function Tip({ id, when = true, children }: Props) {
+export function Tip({ id, when = true, side = 'bottom', children }: Props) {
   const titleId = useId()
   const open = useTipOpen(id) && when
   useEffect(() => {
@@ -31,7 +33,7 @@ export function Tip({ id, when = true, children }: Props) {
         {children}
       </PopoverAnchor>
       <PopoverContent
-        side="bottom"
+        side={side}
         align="start"
         collisionPadding={8}
         aria-labelledby={titleId}

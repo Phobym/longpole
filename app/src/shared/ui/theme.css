@@ -46,6 +46,30 @@
   --color-crit-fg: #a35500;
   --color-crit-soft: #ffd9a8;
   --color-crit-bg: #fff7eb;
+  /* маскот-жираф: силуэт, подложка и рамка подсказки (спека онбординга, § 3) */
+  --color-mascot: #e8701a;
+  --color-mascot-bg: #fff4e8;
+  --color-mascot-border: #f2c79c;
+
+  --animate-tip-in: tip-in 150ms ease-out;
+  --animate-giraffe-bar: giraffe-bar 1.2s steps(1) infinite;
+
+  @keyframes tip-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+  /* полоска шеи горит четверть цикла; задержки 0/300/600/900 мс дают бегущий огонёк */
+  @keyframes giraffe-bar {
+    0% {
+      opacity: 1;
+    }
+    25%,
+    100% {
+      opacity: 0.2;
+    }
+  }
   --color-over-a: var(--color-crit);
   --color-over-b: #ffe2bf;
   --color-retry-a: var(--color-fail);
@@ -118,6 +142,9 @@
   --color-crit-fg: #ffb84d;
   --color-crit-soft: #5a3d10;
   --color-crit-bg: #2a2416;
+  --color-mascot: #ff8a3d;
+  --color-mascot-bg: #2e2216;
+  --color-mascot-border: #5a3d10;
   --color-over-b: #4a3a1c;
   --color-retry-b: #4a2422;
   --color-retry-fg: #ff6961;
@@ -147,6 +174,14 @@
       inset 0 0 0 1px var(--color-ring),
       inset 0 0 0 2px var(--color-background),
       0 0 0 3px color-mix(in srgb, var(--color-ring) 35%, transparent);
+  }
+}
+
+/* якорь активной подсказки онбординга */
+@layer base {
+  [data-tip-active] {
+    outline: 2px solid var(--color-mascot);
+    outline-offset: 2px;
   }
 }
 

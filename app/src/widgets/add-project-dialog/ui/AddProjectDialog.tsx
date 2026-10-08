@@ -8,6 +8,7 @@ import { closeAddProject, pickFolder, useAddProject, useAddProjectOpen } from '.
 import { HostSelect, TokenBlock } from '../../../features/manage-token'
 import { ProjectsPanel, resetSearch } from '../../../features/search-projects'
 import { useHostState } from '../../../entities/host'
+import { Giraffe } from '../../../shared/ui/giraffe'
 
 /** Одно поле на ссылку или путь, «Выбрать папку…», разворачиваемый поиск по хосту; токен запрашивается на месте. */
 export function AddProjectDialog() {
@@ -62,7 +63,8 @@ function AddProjectBody() {
           </Button>
         </div>
         {showError && (
-          <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
+          <p id={`${id}-error`} role="alert" className="flex items-start gap-2 text-sm text-destructive">
+            <Giraffe pose="oops" size={40} />
             {errorText(failure)}
           </p>
         )}

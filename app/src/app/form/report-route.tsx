@@ -7,6 +7,7 @@ import { showError } from '../../shared/lib/dialogs'
 import { Button } from '../../shared/ui/button'
 import { isReportId, useReportById } from '../../entities/report'
 import { ReportPage } from '../../pages/report'
+import { Giraffe } from '../../shared/ui/giraffe'
 
 /** Отчёт из памяти ядра; ядро узнаёт, что он на экране (⌘S). Вытесненный id — ошибка и домой, битый (`/report/abc`) — сразу домой без диалога. */
 export function ReportRoute() {
@@ -39,7 +40,14 @@ export function ReportRoute() {
   }, [error, navigate])
 
   if (!valid) return null
-  if (isPending || !data) return <p className="p-6 text-sm text-muted-foreground">{t('form.reportView.loading')}</p>
+  if (isPending || !data) {
+    return (
+      <p className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
+        <Giraffe pose="loading" size={72} />
+        {t('form.reportView.loading')}
+      </p>
+    )
+  }
   const title = `${data.meta.project} · ${data.meta.label ?? t('report.allPipelines')}`
   return (
     <>

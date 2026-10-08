@@ -3,6 +3,7 @@ import { useErrorText } from '../../../shared/i18n'
 import { BuildAggregateButton, LastField, StatusFilter, useBuildAggregate } from '../../../features/build-aggregate'
 import type { ProjectRef } from '../../../entities/project'
 import { Giraffe } from '../../../shared/ui/giraffe'
+import { Tip } from '../../../features/onboarding'
 
 export function AggregateBlock(target: ProjectRef) {
   const errorText = useErrorText()
@@ -19,7 +20,11 @@ export function AggregateBlock(target: ProjectRef) {
         </p>
       )}
       <div className="flex items-end gap-3">
-        <BuildAggregateButton busy={busy} progressLabel={progressLabel} onClick={start} />
+        <Tip id="project.screen">
+          <div className="inline-flex">
+            <BuildAggregateButton busy={busy} progressLabel={progressLabel} onClick={start} />
+          </div>
+        </Tip>
         {busy && <Giraffe pose="loading" size={72} progress={progress ?? undefined} />}
       </div>
       {failure && (

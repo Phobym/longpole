@@ -7,6 +7,7 @@ import { showError } from '../../shared/lib/dialogs'
 import { Button } from '../../shared/ui/button'
 import { isReportId, useReportById } from '../../entities/report'
 import { ReportPage } from '../../pages/report'
+import { markLeftReport } from '../../features/onboarding'
 import { Giraffe } from '../../shared/ui/giraffe'
 
 /** Отчёт из памяти ядра; ядро узнаёт, что он на экране (⌘S). Вытесненный id — ошибка и домой, битый (`/report/abc`) — сразу домой без диалога. */
@@ -22,7 +23,11 @@ export function ReportRoute() {
   useEffect(() => {
     if (!valid) return
     void setCurrentReport(reportId)
-    return () => void setCurrentReport(null)
+    return () => {
+      void setCurrentReport(null)
+      // уход с отчёта — событие для подсказки поля ссылки в шапке
+      markLeftReport()
+    }
   }, [reportId, valid])
 
   // Битый id (`/report/abc`): показывать нечего, сразу домой.

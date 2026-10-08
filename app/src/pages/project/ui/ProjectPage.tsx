@@ -7,10 +7,12 @@ import { BranchSelect } from '../../../features/select-branch'
 import { WorkflowSelect } from '../../../features/select-workflow'
 import { useOpenProject, useWorkflows, type ProjectRef } from '../../../entities/project'
 import { useUpdateSettings } from '../../../entities/settings'
+import { Tip, useOnboardingVisit } from '../../../features/onboarding'
 import { AggregateBlock } from '../../../widgets/aggregate-block'
 import { PipelinesList } from '../../../widgets/pipelines-list'
 
 export function ProjectPage(target: ProjectRef) {
+  useOnboardingVisit()
   const openProject = useOpenProject()
   const update = useUpdateSettings()
   const errorText = useErrorText()
@@ -32,7 +34,11 @@ export function ProjectPage(target: ProjectRef) {
       </h1>
       <BranchSelect {...current} onCommit={(branch) => void openProject({ ...current, branch: branch || undefined, name, replace: true })} />
       {workflows.length > 0 && current.workflow && (
-        <WorkflowSelect workflows={workflows} value={current.workflow} onChange={(workflow) => void openProject({ ...current, workflow, name, replace: true })} />
+        <Tip id="project.workflow">
+          <div>
+            <WorkflowSelect workflows={workflows} value={current.workflow} onChange={(workflow) => void openProject({ ...current, workflow, name, replace: true })} />
+          </div>
+        </Tip>
       )}
       {query.isError && (
         <p role="alert" className="text-sm text-destructive">

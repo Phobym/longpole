@@ -8,27 +8,25 @@ import { Button } from './button'
 type Props<T> = {
   query: UseInfiniteQueryResult<InfiniteData<Page<T>>>
   children: (item: T) => ReactNode
-  /** вместо «Ничего не найдено», когда список пуст */
-  empty?: ReactNode
+  /** картинка рядом с «Ничего не найдено», когда список пуст */
+  emptyIcon?: ReactNode
 }
 
-/** Список постраничного запроса: «Загрузка…», «Ничего не найдено» (или `empty`), ошибка над списком и «Показать ещё». */
-export function PagedList<T>({ query, children, empty }: Props<T>) {
+/** Список постраничного запроса: «Загрузка…», «Ничего не найдено» (с картинкой `emptyIcon`), ошибка над списком и «Показать ещё». Живой текст статуса всегда свой. */
+export function PagedList<T>({ query, children, emptyIcon }: Props<T>) {
   const { t } = useTranslation()
   const errorText = useErrorText()
   const items = query.data?.pages.flatMap((page) => page.items) ?? []
   const failure = apiError(query.error)
-  const nothing = !query.isPending && !query.isFetchingNextPage && !query.isError && items.length === 0
-  const status = query.isPending || query.isFetchingNextPage ? t('form.loading') : nothing ? t('form.nothing') : ''
+  const loading = query.isPending || query.isFetchingNextPage
+  const nothing = !loading && !query.isError && items.length === 0
+  const status = loading ? t('form.loading') : nothing ? t('form.nothing') : ''
   return (
     <div className="flex flex-col gap-2">
-      {nothing && empty ? (
-        empty
-      ) : (
-        <p aria-live="polite" className="text-sm text-muted-foreground empty:hidden">
-          {status}
-        </p>
-      )}
+      <p aria-live="polite" className="flex items-center gap-3 text-sm text-muted-foreground empty:hidden">
+        {nothing && emptyIcon}
+        {status}
+      </p>
       {query.isError && (
         <p role="alert" className="text-sm text-destructive">
           {failure && errorText(failure)}

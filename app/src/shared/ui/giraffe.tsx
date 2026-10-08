@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { cn } from '../lib/cn'
 
 export type GiraffePose = 'idle' | 'loading' | 'oops'
@@ -8,10 +9,15 @@ const NECK = [
   { x: 26, y: 67, width: 28, opacity: 0.7 },
   { x: 34, y: 56, width: 26, opacity: 0.85 },
   { x: 42, y: 45, width: 22, opacity: 1 },
-]
+] as const
 const EYE = '#1c2333'
 
 type Props = { pose?: GiraffePose; size?: number; progress?: { loaded: number; total: number }; className?: string }
+
+/** Прозрачность полоски вне цикла загрузки: доля загруженного или обычная шея. */
+function barOpacity(i: number, bar: (typeof NECK)[number], lit: number | null): number {
+  return lit !== null ? (i < lit ? 1 : 0.2) : bar.opacity
+}
 
 /** Маскот с иконки приложения. Декоративный: смысл несёт текст рядом. `loading` с `progress` зажигает полоски шеи по доле загруженного. */
 export function Giraffe({ pose = 'idle', size = 56, progress, className }: Props) {
@@ -20,6 +26,7 @@ export function Giraffe({ pose = 'idle', size = 56, progress, className }: Props
   return (
     <svg viewBox="14 8 72 82" width={size} height={Math.round((size * 82) / 72)} aria-hidden className={cn('shrink-0 text-mascot', className)}>
       <g fill="currentColor">
+        {/* при reduced-motion — обычная шея вместо погасших полосок */}
         {NECK.map((bar, i) => (
           <rect
             key={bar.y}
@@ -28,9 +35,9 @@ export function Giraffe({ pose = 'idle', size = 56, progress, className }: Props
             width={bar.width}
             height={9}
             rx={3}
-            opacity={lit !== null ? (i < lit ? 1 : 0.2) : cycling ? 0.2 : bar.opacity}
-            className={cycling ? 'animate-giraffe-bar motion-reduce:animate-none' : undefined}
-            style={cycling ? { animationDelay: `${i * 300}ms` } : undefined}
+            opacity={cycling ? undefined : barOpacity(i, bar, lit)}
+            className={cycling ? 'animate-giraffe-bar opacity-20 motion-reduce:animate-none motion-reduce:opacity-(--bar)' : undefined}
+            style={cycling ? ({ animationDelay: `${i * 300}ms`, '--bar': bar.opacity } as CSSProperties) : undefined}
           />
         ))}
         {/* `oops` опускает голову: поворот вокруг верха шеи */}

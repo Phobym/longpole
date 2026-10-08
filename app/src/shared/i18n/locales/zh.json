@@ -111,7 +111,10 @@
       "linuxHint": "在 Linux 上，令牌存储在 Secret Service（gnome-keyring、KWallet）中。如果没有，请使用 glab 或 GITLAB_TOKEN 和 GITLAB_HOST 变量。",
       "source": { "keychain": "钥匙串", "glab": "glab", "gh": "gh", "env": "环境变量" },
       "theme": "主题",
-      "themes": { "system": "跟随系统", "light": "浅色", "dark": "深色" }
+      "themes": { "system": "跟随系统", "light": "浅色", "dark": "深色" },
+      "tips": "提示",
+      "tipsShow": "显示长颈鹿提示",
+      "tipsReset": "重新显示"
     },
     "reportView": {
       "back": "← 返回",
@@ -208,6 +211,25 @@
       "retriesAgg": "值得关注重试情况 — <b>{{present}} 条中有 {{retried}} 条</b>。",
       "attempts_other": "<b>{{count}} 次失败尝试</b>",
       "lost": "，损失 {{time}}"
+    }
+  },
+  "onboarding": {
+    "ok": "知道了",
+    "never": "不再显示",
+    "add-project": { "input": { "title": "这里填什么", "text": "可以填<b>仓库、流水线或 MR 的链接</b>、ssh 地址，或用右侧按钮选择克隆所在的文件夹。" } },
+    "token": { "create": { "title": "需要令牌", "text": "链接会打开<b>已预设所需权限</b>的令牌创建页面。令牌保存在系统钥匙串中。" } },
+    "project": {
+      "screen": { "title": "单条流水线还是多条", "text": "点击流水线即可生成它的报告。<b>聚合</b>汇总该分支的 N 条流水线，并显示 p50 和 p90。" },
+      "workflow": { "title": "Workflow", "text": "在 GitHub 上，运行记录和聚合<b>按单个 workflow</b> 生成——在这里选择。" }
+    },
+    "header": { "link": { "title": "更快的方式", "text": "下次可以直接在这里粘贴<b>流水线、MR、run 或 PR 的链接</b>，无需打开项目即可生成报告。" } },
+    "report": {
+      "hotspots": { "title": "从哪里入手", "text": "这里只列出<b>关键路径</b>上的作业：加速其他作业不会缩短流水线。点击可跳转到该作业。" },
+      "critical": { "title": "橙色是关键路径", "text": "这些作业决定流水线的时长。<b>点击阶段</b>会重新计算到该阶段结束为止的路径。" },
+      "keys": { "title": "缩放和快捷键", "text": "<b>⌘/Ctrl + 滚轮</b>缩放，<b>[</b> 和 <b>]</b> 平移，<b>0</b> 显示整条流水线。其余见“?”。" },
+      "retries": { "title": "重试", "text": "红色斜线表示失败的尝试。标签 <b>↻2 −8m29s</b> 表示失败次数和因此损失的时间。" },
+      "aggregate": { "title": "如何阅读聚合", "text": "色条表示开始时间和时长的 <b>p50</b>，其后的线延伸到 <b>p90</b>。右侧标签表示含重试的运行占比。" },
+      "detail": { "title": "详情面板", "text": "顶部是<b>结论</b>：加速它能否缩短流水线。下方是 ↑/↓ 关联。按 Esc 取消选择。" }
     }
   }
 }

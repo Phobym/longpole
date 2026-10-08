@@ -1,4 +1,4 @@
-//! Настройки приложения: `settings.json` — язык, тема, последний открытый проект, типы хостов (GitLab или GitHub).
+//! Настройки приложения: `settings.json` — язык, тема, последний открытый проект, типы хостов (GitLab или GitHub), подсказки онбординга.
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -30,6 +30,8 @@ struct Stored {
     locale: Option<Locale>,
     theme: Option<Theme>,
     last_project: Option<ProjectRef>,
+    tips: Option<bool>,
+    seen_tips: Option<Vec<String>>,
     /// хост → тип; `github.com` не пишется — он известен
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     host_kinds: BTreeMap<String, Provider>,
@@ -42,6 +44,10 @@ pub struct AppSettings {
     pub locale: Locale,
     pub theme: Theme,
     pub last_project: Option<ProjectRef>,
+    /// показывать подсказки онбординга
+    pub tips: bool,
+    /// id подсказок, которые уже показаны
+    pub seen_tips: Vec<String>,
 }
 
 /// Частичное обновление: `None` — поле не трогать.
@@ -55,6 +61,11 @@ pub struct SettingsPatch {
     pub theme: Option<Theme>,
     #[ts(optional)]
     pub last_project: Option<ProjectRef>,
+    #[ts(optional)]
+    pub tips: Option<bool>,
+    /// заменяет список целиком
+    #[ts(optional)]
+    pub seen_tips: Option<Vec<String>>,
 }
 
 pub struct Settings {
@@ -76,6 +87,8 @@ impl Settings {
             locale: stored.locale.unwrap_or_else(Locale::system),
             theme: stored.theme.unwrap_or_default(),
             last_project: stored.last_project,
+            tips: stored.tips.unwrap_or(true),
+            seen_tips: stored.seen_tips.unwrap_or_default(),
         })
     }
 
@@ -95,6 +108,12 @@ impl Settings {
         }
         if patch.last_project.is_some() {
             stored.last_project = patch.last_project;
+        }
+        if patch.tips.is_some() {
+            stored.tips = patch.tips;
+        }
+        if patch.seen_tips.is_some() {
+            stored.seen_tips = patch.seen_tips;
         }
         json_file::write(&self.file, &stored)?;
         drop(_guard);

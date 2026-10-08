@@ -107,6 +107,8 @@ fn патч_меняет_только_переданное_и_переживае
             locale: Locale::system(),
             theme: Theme::Dark,
             last_project: Some(project.clone()),
+            tips: true,
+            seen_tips: vec![],
         }
     );
     again.forget_project(&project).unwrap();
@@ -184,4 +186,56 @@ fn тип_хоста_перезаписывается_а_github_com_не_мен�
         settings.host_kind("github.com").unwrap(),
         Some(Provider::Github)
     );
+}
+
+#[test]
+fn подсказки_по_умолчанию_включены_и_не_просмотрены() {
+    let (dir, settings) = settings();
+    std::fs::create_dir_all(dir.path().join("data")).unwrap();
+    std::fs::write(
+        dir.path().join("data").join("settings.json"),
+        "{\"locale\":\"en\"}",
+    )
+    .unwrap();
+    let got = settings.get().unwrap();
+    assert!(got.tips);
+    assert!(got.seen_tips.is_empty());
+}
+
+#[test]
+fn подсказки_сохраняются_и_читаются_заново() {
+    let (dir, settings) = settings();
+    settings
+        .update(SettingsPatch {
+            tips: Some(false),
+            seen_tips: Some(vec!["report.hotspots".into(), "add-project.input".into()]),
+            ..Default::default()
+        })
+        .unwrap();
+    let again = Settings::new(dir.path().join("data").join("settings.json"));
+    let got = again.get().unwrap();
+    assert!(!got.tips);
+    assert_eq!(got.seen_tips, vec!["report.hotspots", "add-project.input"]);
+}
+
+#[test]
+fn патч_без_подсказок_их_не_трогает() {
+    let (dir, settings) = settings();
+    settings
+        .update(SettingsPatch {
+            tips: Some(false),
+            seen_tips: Some(vec!["report.hotspots".into()]),
+            ..Default::default()
+        })
+        .unwrap();
+    settings
+        .update(SettingsPatch {
+            theme: Some(Theme::Dark),
+            ..Default::default()
+        })
+        .unwrap();
+    let again = Settings::new(dir.path().join("data").join("settings.json"));
+    let got = again.get().unwrap();
+    assert!(!got.tips);
+    assert_eq!(got.seen_tips, vec!["report.hotspots"]);
 }

@@ -29,6 +29,8 @@ export function useBuild() {
   return {
     start: mutation.mutate,
     busy: mutation.isPending,
+    /** сырой прогресс для жирафа загрузки; `null`, пока ядро его не прислало */
+    progress,
     /** «Загружаю N из M…» (или «Загружаю…», пока прогресса нет). */
     progressLabel: progress ? t('form.progress.step', progress) : t('form.progress.start'),
     error: apiError(mutation.error),

@@ -12,6 +12,7 @@ import { pickHost, useHostState } from '../../../entities/host'
 import { HistoryEntryItem, useHistory } from '../../../entities/history-entry'
 import { useOpenProject } from '../../../entities/project'
 import { SavedProjectItem, useRemoveProject, useSavedProjects } from '../../../entities/saved-project'
+import { Giraffe } from '../../../shared/ui/giraffe'
 
 function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
@@ -83,7 +84,12 @@ export function ProjectsSidebar() {
         </ul>
       </Section>
       <Section title={t('form.sidebar.recent')} action={entries.length > 0 && <ClearHistoryButton />}>
-        {entries.length === 0 && !historyError && <p className="text-sm text-muted-foreground">{t('form.history.empty')}</p>}
+        {entries.length === 0 && !historyError && (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Giraffe size={32} />
+            {t('form.history.empty')}
+          </p>
+        )}
         <ul className="flex flex-col gap-0.5">
           {entries.map((entry) => (
             <li key={entry.at} className="flex items-center gap-1">

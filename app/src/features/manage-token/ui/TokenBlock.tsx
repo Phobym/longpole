@@ -3,6 +3,7 @@ import { messageError } from '../../../shared/api'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { Input, labelClasses } from '../../../shared/ui/input'
+import { Giraffe } from '../../../shared/ui/giraffe'
 import { useHostProvider } from '../model/useHostProvider'
 import { useSaveToken } from '../model/useSaveToken'
 
@@ -44,7 +45,8 @@ export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => voi
       <Input id={id} type="password" autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false} aria-invalid={failure !== undefined} aria-describedby={failure ? `${id}-error` : undefined} value={token} onChange={(e) => setToken(e.target.value)} />
       <p className="text-xs text-muted-foreground">{t('form.token.stored')}</p>
       {failure && (
-        <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
+        <p id={`${id}-error`} role="alert" className="flex items-start gap-2 text-sm text-destructive">
+          <Giraffe pose="oops" size={40} />
           {errorText(failure)}
         </p>
       )}

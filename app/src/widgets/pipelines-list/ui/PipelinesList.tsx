@@ -1,6 +1,7 @@
 import { type Pipeline } from '../../../shared/api'
 import { useErrorText } from '../../../shared/i18n'
 import { PagedList } from '../../../shared/ui/paged-list'
+import { Giraffe } from '../../../shared/ui/giraffe'
 import { linkForm, useBuild } from '../../../entities/history-entry'
 import { PipelineRow, usePipelines } from '../../../entities/pipeline'
 import type { ProjectRef } from '../../../entities/project'
@@ -22,5 +23,9 @@ function BuildRow({ pipeline }: { pipeline: Pipeline }) {
 
 export function PipelinesList({ host, project, branch, workflow }: ProjectRef) {
   const query = usePipelines(host, project, branch, workflow)
-  return <PagedList query={query}>{(pipeline) => <BuildRow key={pipeline.id} pipeline={pipeline} />}</PagedList>
+  return (
+    <PagedList query={query} emptyIcon={<Giraffe size={72} />}>
+      {(pipeline) => <BuildRow key={pipeline.id} pipeline={pipeline} />}
+    </PagedList>
+  )
 }

@@ -15,6 +15,10 @@ pre-commit:
       root: app/
       glob: 'app/src/**/*.{ts,tsx,json}'
       run: npm run check:locales
+    test-onboarding:
+      root: app/
+      glob: 'app/src/features/onboarding/**/*.ts'
+      run: npm run test:onboarding
     cargo-fmt:
       root: app/
       glob: 'app/**/*.rs'

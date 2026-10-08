@@ -3,6 +3,7 @@ import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { settingsQuery } from '../../entities/settings'
+import { OnboardingSync } from '../../features/onboarding'
 import { getSettings } from '../../shared/api'
 import { browserLocale, initI18n } from '../../shared/i18n'
 import { applyTheme } from '../../shared/lib/theme'
@@ -27,6 +28,7 @@ async function main() {
   createRoot(root).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
+        <OnboardingSync />
         <RouterProvider router={router} />
       </QueryClientProvider>
     </StrictMode>,

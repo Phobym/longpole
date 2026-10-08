@@ -7,7 +7,9 @@ import { Input } from '../../../shared/ui/input'
 import { closeAddProject, pickFolder, useAddProject, useAddProjectOpen } from '../../../features/add-project'
 import { HostSelect, TokenBlock } from '../../../features/manage-token'
 import { ProjectsPanel, resetSearch } from '../../../features/search-projects'
+import { Tip } from '../../../features/onboarding'
 import { useHostState } from '../../../entities/host'
+import { Giraffe } from '../../../shared/ui/giraffe'
 
 /** Одно поле на ссылку или путь, «Выбрать папку…», разворачиваемый поиск по хосту; токен запрашивается на месте. */
 export function AddProjectDialog() {
@@ -56,19 +58,28 @@ function AddProjectBody() {
         }}
       >
         <div className="flex gap-2">
-          <Input id={id} autoFocus translate="no" placeholder={t('form.addProject.placeholder')} aria-invalid={showError} aria-describedby={showError ? `${id}-error` : undefined} value={input} onChange={(e) => setInput(e.target.value)} />
+          <Tip id="add-project.input" side="top">
+            <Input id={id} autoFocus translate="no" placeholder={t('form.addProject.placeholder')} aria-invalid={showError} aria-describedby={showError ? `${id}-error` : undefined} value={input} onChange={(e) => setInput(e.target.value)} />
+          </Tip>
           <Button type="button" variant="outline" className="shrink-0" disabled={busy} onClick={() => void pick()}>
             {t('form.addProject.pickFolder')}
           </Button>
         </div>
         {showError && (
-          <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
+          <p id={`${id}-error`} role="alert" className="flex items-start gap-2 text-sm text-destructive">
+            <Giraffe pose="oops" size={40} />
             {errorText(failure)}
           </p>
         )}
       </form>
       {/* своя форма токена — соседом, не внутри: вложенный submit всплыл бы и повторно отправил внешнюю */}
-      {needsToken && <TokenBlock host={needsToken} onSaved={() => add(lastInput ?? input)} />}
+      {needsToken && (
+        <Tip id="token.create">
+          <div>
+            <TokenBlock host={needsToken} onSaved={() => add(lastInput ?? input)} />
+          </div>
+        </Tip>
+      )}
       {/* кнопки вне формы и привязаны к ней через form=, чтобы блок токена стоял сразу под полем */}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" disabled={busy} onClick={closeAddProject}>

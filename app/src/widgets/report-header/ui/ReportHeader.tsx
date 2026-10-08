@@ -2,6 +2,7 @@ import { useEffect, useMemo, type ReactNode } from 'react'
 import { Trans } from 'react-i18next'
 import { isLeaf, useReportView } from '../../../entities/report'
 import { KeysHelp } from '../../../features/keys-help'
+import { Tip } from '../../../features/onboarding'
 import { BackToAggregate } from '../../../features/tree-switch'
 import { isAggNode, type ReportNode } from '../../../shared/api'
 import { useTranslation } from '../../../shared/i18n'
@@ -90,7 +91,11 @@ export function ReportHeader() {
       )}
       <div className="ml-auto flex items-center gap-2">
         {!embedded && <LanguageSwitch />}
-        <KeysHelp />
+        <Tip id="report.keys">
+          <span className="inline-flex">
+            <KeysHelp />
+          </span>
+        </Tip>
       </div>
     </header>
   )

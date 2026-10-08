@@ -113,7 +113,10 @@
       "linuxHint": "Su Linux il token è salvato in Secret Service (gnome-keyring, KWallet). In alternativa, usa glab o le variabili GITLAB_TOKEN e GITLAB_HOST.",
       "source": { "keychain": "portachiavi", "glab": "glab", "gh": "gh", "env": "variabili d'ambiente" },
       "theme": "Tema",
-      "themes": { "system": "Sistema", "light": "Chiaro", "dark": "Scuro" }
+      "themes": { "system": "Sistema", "light": "Chiaro", "dark": "Scuro" },
+      "tips": "Suggerimenti",
+      "tipsShow": "Mostra i suggerimenti della giraffa",
+      "tipsReset": "Mostra di nuovo"
     },
     "reportView": {
       "back": "← Indietro",
@@ -226,6 +229,25 @@
       "attempts_many": "<b>{{count}} tentativi falliti</b>",
       "attempts_other": "<b>{{count}} tentativi falliti</b>",
       "lost": ", {{time}} persi"
+    }
+  },
+  "onboarding": {
+    "ok": "Capito",
+    "never": "Non mostrare più",
+    "add-project": { "input": { "title": "Cosa inserire qui", "text": "Va bene un <b>link a un repository, pipeline o MR</b>, un indirizzo ssh o una cartella con un clone (pulsante a destra)." } },
+    "token": { "create": { "title": "Serve un token", "text": "Il link apre la pagina di creazione del token <b>con i permessi giusti</b>. Il token resta nel portachiavi di sistema." } },
+    "project": {
+      "screen": { "title": "Una pipeline o molte", "text": "Un clic su una pipeline ne crea il report. L'<b>aggregato</b> unisce N pipeline del branch e mostra p50 e p90." },
+      "workflow": { "title": "Workflow", "text": "Su GitHub, le esecuzioni e l'aggregato riguardano <b>un solo workflow</b>: sceglilo qui." }
+    },
+    "header": { "link": { "title": "Una scorciatoia", "text": "La prossima volta incolla qui un <b>link a pipeline, MR, run o PR</b>: il report si crea senza aprire il progetto." } },
+    "report": {
+      "hotspots": { "title": "Da dove iniziare", "text": "Qui ci sono solo i job del <b>percorso critico</b>: velocizzare gli altri non accorcia la pipeline. Un clic porta al job." },
+      "critical": { "title": "L'arancione è il percorso critico", "text": "Questi job determinano la durata della pipeline. <b>Un clic su uno stage</b> ricalcola il percorso fino alla sua fine." },
+      "keys": { "title": "Zoom e tasti", "text": "<b>⌘/Ctrl + rotellina</b> per lo zoom, <b>[</b> e <b>]</b> per scorrere, <b>0</b> mostra tutta la pipeline. Il resto è sotto «?»." },
+      "retries": { "title": "Nuovi tentativi", "text": "Il tratteggio rosso indica i tentativi falliti. L'etichetta <b>↻2 −8m29s</b> mostra quanti sono stati e il tempo perso." },
+      "aggregate": { "title": "Come leggere l'aggregato", "text": "La barra è l'inizio e la durata <b>p50</b>, la linea che segue arriva al <b>p90</b>. L'etichetta a destra è la quota di esecuzioni con nuovi tentativi." },
+      "detail": { "title": "Pannello dei dettagli", "text": "In alto c'è la <b>conclusione</b>: se accelerarlo accorcia la pipeline. Sotto, i collegamenti ↑/↓. Esc annulla la selezione." }
     }
   }
 }

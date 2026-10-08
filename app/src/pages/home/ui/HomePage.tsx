@@ -2,6 +2,7 @@ import { Navigate } from '@tanstack/react-router'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { Card } from '../../../shared/ui/card'
+import { Giraffe } from '../../../shared/ui/giraffe'
 import { openAddProject } from '../../../features/add-project'
 import { useSavedProjects } from '../../../entities/saved-project'
 import { useSettings } from '../../../entities/settings'
@@ -23,6 +24,7 @@ export function HomePage() {
   if (projects.length === 0) {
     return (
       <Card className="items-center py-16 text-center">
+        <Giraffe size={120} />
         <h1 className="text-xl font-semibold">{t('form.empty.title')}</h1>
         <p className="max-w-md text-sm text-muted-foreground">{t('form.empty.text')}</p>
         <Button type="button" onClick={openAddProject}>

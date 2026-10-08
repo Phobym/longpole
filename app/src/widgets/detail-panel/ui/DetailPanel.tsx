@@ -1,4 +1,5 @@
 import { isLeaf, useReportView } from '../../../entities/report'
+import { Tip } from '../../../features/onboarding'
 import { isAggNode } from '../../../shared/api'
 import { useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
@@ -23,7 +24,11 @@ export function DetailPanel() {
       <Button variant="ghost" className="absolute top-2.5 right-3 size-[26px] text-base text-muted-foreground" aria-label={t('report.panel.close')} onClick={() => dispatch({ type: 'close' })}>
         ×
       </Button>
-      <PanelHead node={node} />
+      <Tip id="report.detail">
+        <div>
+          <PanelHead node={node} />
+        </div>
+      </Tip>
       <Verdict node={node} />
       <Kpis node={node} />
       {agg && isLeaf(node) && <DurationStrip node={node} />}

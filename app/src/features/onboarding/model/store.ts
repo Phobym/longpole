@@ -24,7 +24,7 @@ export const setPersist = (fn: (patch: SettingsPatch) => void) => {
 /** Показанная подсказка сразу просмотрена: быстрое закрытие диалога не даёт повтора. */
 function repick() {
   const s = useStore.getState()
-  const id = pickTip({ order: TIPS, ready: s.ready, seen: s.seen, enabled: s.enabled, enterShown: s.enterShown, active: s.active })
+  const id = pickTip<TipId>({ order: TIPS, ready: s.ready, seen: s.seen, enabled: s.enabled, enterShown: s.enterShown, active: s.active })
   if (id === null) return
   const seen = [...s.seen, id]
   const enter = TIPS.find((tip) => tip.id === id)?.kind === 'enter'
@@ -32,11 +32,13 @@ function repick() {
   persist({ seenTips: seen })
 }
 
+/** Просмотренные только добавляются: устаревший ответ настроек не вернёт показанную подсказку. Сброс — `resetTips`. */
 export function hydrate(enabled: boolean, seen: readonly string[]) {
-  useStore.setState((s) => ({ enabled, seen, active: enabled ? s.active : null }))
+  useStore.setState((s) => ({ enabled, seen: [...new Set([...s.seen, ...seen])], active: enabled ? s.active : null }))
   repick()
 }
 
+// у каждой подсказки один якорь: `ready` — множество, не счётчик
 export function addReady(id: TipId) {
   useStore.setState((s) => (s.ready.includes(id) ? s : { ready: [...s.ready, id] }))
   repick()
@@ -63,9 +65,18 @@ export function disableTips() {
   persist({ tips: false })
 }
 
-/** Новый визит экрана: снова можно одну `enter`. */
+/** «Показать заново» в настройках: подсказки включены, просмотренных нет. */
+export function resetTips() {
+  useStore.setState({ enabled: true, seen: [] })
+  persist({ tips: true, seenTips: [] })
+  repick()
+}
+
+/** Новый визит экрана: снова можно одну `enter`. Эффект страницы идёт после эффектов якорей — enter-подсказка этого экрана могла уже открыться. */
 export function startVisit() {
-  useStore.setState({ enterShown: false })
+  const s = useStore.getState()
+  const shownHere = s.active !== null && s.ready.includes(s.active) && TIPS.find((tip) => tip.id === s.active)?.kind === 'enter'
+  useStore.setState({ enterShown: shownHere })
   repick()
 }
 

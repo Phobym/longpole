@@ -23,6 +23,14 @@ test('event выбирается после enter за визит и раньш�
   assert.equal(pickTip({ ...base, ready: ['first', 'event'] }), 'event')
 })
 
+test('event важнее enter, даже если стоит позже в реестре', () => {
+  const order: TipDef[] = [
+    { id: 'enter', kind: 'enter' },
+    { id: 'late-event', kind: 'event' },
+  ]
+  assert.equal(pickTip({ ...base, order, ready: ['enter', 'late-event'] }), 'late-event')
+})
+
 test('открытая подсказка блокирует выбор', () => {
   assert.equal(pickTip({ ...base, ready: ['first'], active: 'event' }), null)
 })

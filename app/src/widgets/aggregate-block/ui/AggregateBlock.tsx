@@ -26,8 +26,8 @@ export function AggregateBlock(target: ProjectRef) {
           </div>
         </Tip>
         {/* слот под жирафа занят всегда: строка не прыгает, когда он появляется */}
-        <div className="h-[82px] w-[72px] shrink-0" aria-hidden>
-          {busy && <Giraffe pose="loading" size={72} progress={progress ?? undefined} />}
+        <div className="h-[46px] w-[40px] shrink-0" aria-hidden>
+          {busy && <Giraffe pose="loading" size={40} progress={progress ?? undefined} />}
         </div>
       </div>
       {failure && (

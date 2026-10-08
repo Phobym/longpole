@@ -18,10 +18,12 @@ const useStore = create<State>(() => ({ enabled: false, seen: [], ready: [], act
 // запись в settings.json ставит `OnboardingSync`: стор лежит ниже react-query и не знает о нём
 let persist: (patch: SettingsPatch) => void = () => {}
 // записи идут по очереди: `seenTips` заменяет список целиком, и обогнавший старый патч вернул бы показанную подсказку
+// очередь на уровне модуля: переподписка `setPersist` после remount `OnboardingSync` не ломает порядок;
+// `catch` — сбойная запись логируется и не блокирует все следующие
+let queue: Promise<unknown> = Promise.resolve()
 export const setPersist = (fn: (patch: SettingsPatch) => Promise<unknown> | void) => {
-  let queue: Promise<unknown> = Promise.resolve()
   persist = (patch) => {
-    queue = queue.then(() => fn(patch))
+    queue = queue.then(() => fn(patch)).catch(console.error)
   }
 }
 

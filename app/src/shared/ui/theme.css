@@ -180,7 +180,10 @@
 /* якорь активной подсказки онбординга; вне слоёв, чтобы перебивать `focus-ring` из слоя utilities */
 [data-tip-active] {
   outline: 2px solid var(--color-mascot);
-  outline-offset: 2px;
+  /* внутрь: у строк водопада карточка стейджа с overflow-hidden обрезала бы внешнюю обводку */
+  outline-offset: -2px;
+  /* одно скругление у всех якорей и у пузыря: иначе обводка повторяет форму элемента — у строк и обёрток прямой угол */
+  border-radius: var(--radius-lg);
 }
 
 @layer base {

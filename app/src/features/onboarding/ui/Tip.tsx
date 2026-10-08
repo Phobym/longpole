@@ -35,9 +35,11 @@ export function Tip({ id, when = true, side = 'bottom', children }: Props) {
       <PopoverContent
         side={side}
         align="start"
-        collisionPadding={8}
+        // обводка якоря внутри элемента, поэтому зазор до пузыря — весь sideOffset
+        sideOffset={10}
+        collisionPadding={16}
         aria-labelledby={titleId}
-        className="w-[300px] border-mascot-border bg-mascot-bg p-3 data-[state=open]:animate-tip-in motion-reduce:animate-none"
+        className="w-[300px] rounded-lg border-mascot-border bg-mascot-bg p-3 data-[state=open]:animate-tip-in motion-reduce:animate-none"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.stopPropagation()}

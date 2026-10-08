@@ -7,6 +7,7 @@ import { Button } from '../../../shared/ui/button'
 import { Card } from '../../../shared/ui/card'
 import { labelClasses } from '../../../shared/ui/input'
 import { ThemeSwitch } from '../../../features/choose-theme'
+import { TipsSettings } from '../../../features/onboarding'
 import { RemoveTokenButton, TokenForm } from '../../../features/manage-token'
 import { hostsQuery } from '../../../entities/host'
 import { LanguageSwitch } from '../../../widgets/language-switch'
@@ -69,6 +70,11 @@ export function SettingsPage() {
       <section className="flex flex-col gap-2">
         <h2 className={labelClasses}>{t('form.settings.theme')}</h2>
         <ThemeSwitch />
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className={labelClasses}>{t('form.settings.tips')}</h2>
+        <TipsSettings />
       </section>
 
       <section className="flex flex-col gap-2">

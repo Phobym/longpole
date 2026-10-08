@@ -60,14 +60,18 @@ export function closeTip() {
   repick()
 }
 
-export function disableTips() {
-  useStore.setState({ enabled: false, active: null })
-  persist({ tips: false })
+/** Переключатель в настройках и «Больше не показывать»: стор — источник правды, в `settings.json` уходит через `persist`. */
+export function setTipsEnabled(enabled: boolean) {
+  useStore.setState(enabled ? { enabled } : { enabled, active: null })
+  persist({ tips: enabled })
+  repick()
 }
+
+export const disableTips = () => setTipsEnabled(false)
 
 /** «Показать заново» в настройках: подсказки включены, просмотренных нет. */
 export function resetTips() {
-  useStore.setState({ enabled: true, seen: [] })
+  useStore.setState({ enabled: true, seen: [], active: null })
   persist({ tips: true, seenTips: [] })
   repick()
 }
@@ -85,4 +89,5 @@ export function markLeftReport() {
 }
 
 export const useTipOpen = (id: TipId) => useStore((s) => s.active === id)
+export const useTipsEnabled = () => useStore((s) => s.enabled)
 export const useLeftReport = () => useStore((s) => s.leftReport)

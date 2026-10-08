@@ -112,7 +112,10 @@
       "linuxHint": "Unter Linux wird das Token im Secret Service (gnome-keyring, KWallet) gespeichert. Ohne diesen glab oder die Variablen GITLAB_TOKEN und GITLAB_HOST verwenden.",
       "source": { "keychain": "Schlüsselbund", "glab": "glab", "gh": "gh", "env": "Umgebungsvariablen" },
       "theme": "Design",
-      "themes": { "system": "System", "light": "Hell", "dark": "Dunkel" }
+      "themes": { "system": "System", "light": "Hell", "dark": "Dunkel" },
+      "tips": "Tipps",
+      "tipsShow": "Tipps der Giraffe anzeigen",
+      "tipsReset": "Erneut zeigen"
     },
     "reportView": {
       "back": "← Zurück",
@@ -217,6 +220,25 @@
       "attempts_one": "<b>{{count}} fehlgeschlagener Versuch</b>",
       "attempts_other": "<b>{{count}} fehlgeschlagene Versuche</b>",
       "lost": ", {{time}} verloren"
+    }
+  },
+  "onboarding": {
+    "ok": "Verstanden",
+    "never": "Nicht mehr anzeigen",
+    "add-project": { "input": { "title": "Was hier hineingehört", "text": "Ein <b>Link auf Repository, Pipeline oder MR</b>, eine ssh-Adresse oder ein Ordner mit einem Klon – Schaltfläche rechts." } },
+    "token": { "create": { "title": "Ein Token wird benötigt", "text": "Der Link öffnet die Token-Seite <b>mit den nötigen Rechten</b>. Das Token liegt im Schlüsselbund des Systems." } },
+    "project": {
+      "screen": { "title": "Eine Pipeline oder viele", "text": "Ein Klick auf eine Pipeline erstellt ihren Bericht. Das <b>Aggregat</b> fasst N Pipelines des Branches zusammen und zeigt p50 und p90." },
+      "workflow": { "title": "Workflow", "text": "Bei GitHub beziehen sich Läufe und Aggregat <b>auf einen Workflow</b> – wähle ihn hier." }
+    },
+    "header": { "link": { "title": "Abkürzung", "text": "Füge beim nächsten Mal hier einen <b>Link auf Pipeline, MR, Run oder PR</b> ein – der Bericht entsteht ohne Umweg über das Projekt." } },
+    "report": {
+      "hotspots": { "title": "Wo anfangen", "text": "Hier stehen nur Jobs des <b>kritischen Pfads</b>: Andere zu beschleunigen verkürzt die Pipeline nicht. Ein Klick springt zum Job." },
+      "critical": { "title": "Orange ist der kritische Pfad", "text": "Diese Jobs bestimmen die Pipeline-Dauer. <b>Klick auf eine Stage</b> berechnet den Pfad bis zu ihrem Ende neu." },
+      "keys": { "title": "Zoom und Tasten", "text": "<b>⌘/Strg + Mausrad</b> zoomt, <b>[</b> und <b>]</b> verschieben, <b>0</b> zeigt die ganze Pipeline. Der Rest steht unter „?“." },
+      "retries": { "title": "Wiederholungen", "text": "Rote Schraffur markiert fehlgeschlagene Versuche. Die Beschriftung <b>↻2 −8m29s</b> zeigt ihre Anzahl und die verlorene Zeit." },
+      "aggregate": { "title": "Das Aggregat lesen", "text": "Der Balken zeigt Start und Dauer im <b>p50</b>, die Linie danach reicht bis <b>p90</b>. Die Markierung rechts ist der Anteil der Läufe mit Wiederholungen." },
+      "detail": { "title": "Detailbereich", "text": "Oben steht das <b>Fazit</b>: ob eine Beschleunigung die Pipeline verkürzt. Darunter die Beziehungen ↑/↓. Esc hebt die Auswahl auf." }
     }
   }
 }

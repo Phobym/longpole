@@ -113,7 +113,10 @@
       "linuxHint": "Sous Linux, le token est stocké dans Secret Service (gnome-keyring, KWallet). À défaut, utilisez glab ou les variables GITLAB_TOKEN et GITLAB_HOST.",
       "source": { "keychain": "trousseau", "glab": "glab", "gh": "gh", "env": "variables d'environnement" },
       "theme": "Thème",
-      "themes": { "system": "Système", "light": "Clair", "dark": "Sombre" }
+      "themes": { "system": "Système", "light": "Clair", "dark": "Sombre" },
+      "tips": "Astuces",
+      "tipsShow": "Afficher les astuces de la girafe",
+      "tipsReset": "Réafficher"
     },
     "reportView": {
       "back": "← Retour",
@@ -226,6 +229,25 @@
       "attempts_many": "<b>{{count}} tentatives échouées</b>",
       "attempts_other": "<b>{{count}} tentatives échouées</b>",
       "lost": ", {{time}} perdu"
+    }
+  },
+  "onboarding": {
+    "ok": "Compris",
+    "never": "Ne plus afficher",
+    "add-project": { "input": { "title": "Que mettre ici", "text": "Un <b>lien vers un dépôt, un pipeline ou une MR</b>, une adresse ssh ou un dossier avec un clone — bouton à droite." } },
+    "token": { "create": { "title": "Un jeton est nécessaire", "text": "Le lien ouvre la page de création du jeton <b>avec les bons droits</b>. Le jeton est conservé dans le trousseau du système." } },
+    "project": {
+      "screen": { "title": "Un pipeline ou plusieurs", "text": "Un clic sur un pipeline construit son rapport. L'<b>agrégat</b> réunit N pipelines de la branche et montre p50 et p90." },
+      "workflow": { "title": "Workflow", "text": "Sur GitHub, les exécutions et l'agrégat portent <b>sur un seul workflow</b> : choisissez-le ici." }
+    },
+    "header": { "link": { "title": "Plus court", "text": "La prochaine fois, collez ici un <b>lien vers un pipeline, une MR, un run ou une PR</b> : le rapport se construit sans ouvrir le projet." } },
+    "report": {
+      "hotspots": { "title": "Par où commencer", "text": "Seuls les jobs du <b>chemin critique</b> figurent ici : accélérer les autres ne raccourcit pas le pipeline. Un clic mène au job." },
+      "critical": { "title": "L'orange, c'est le chemin critique", "text": "Ces jobs fixent la durée du pipeline. <b>Un clic sur une étape</b> recalcule le chemin jusqu'à sa fin." },
+      "keys": { "title": "Zoom et touches", "text": "<b>⌘/Ctrl + molette</b> zoome, <b>[</b> et <b>]</b> décalent, <b>0</b> montre tout le pipeline. Le reste est sous « ? »." },
+      "retries": { "title": "Relances", "text": "Les hachures rouges marquent les tentatives échouées. L'étiquette <b>↻2 −8m29s</b> indique leur nombre et le temps perdu." },
+      "aggregate": { "title": "Lire l'agrégat", "text": "La barre montre le début et la durée <b>p50</b>, la ligne qui suit va jusqu'au <b>p90</b>. L'étiquette à droite indique la part d'exécutions avec relances." },
+      "detail": { "title": "Panneau de détails", "text": "En haut, la <b>conclusion</b> : accélérer ce job raccourcit-il le pipeline ? Les liens ↑/↓ sont dessous. Échap annule la sélection." }
     }
   }
 }

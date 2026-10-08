@@ -113,7 +113,10 @@
       "linuxHint": "En Linux el token se guarda en Secret Service (gnome-keyring, KWallet). Si no está disponible, usa glab o las variables GITLAB_TOKEN y GITLAB_HOST.",
       "source": { "keychain": "llavero", "glab": "glab", "gh": "gh", "env": "variables de entorno" },
       "theme": "Tema",
-      "themes": { "system": "Sistema", "light": "Claro", "dark": "Oscuro" }
+      "themes": { "system": "Sistema", "light": "Claro", "dark": "Oscuro" },
+      "tips": "Consejos",
+      "tipsShow": "Mostrar los consejos de la jirafa",
+      "tipsReset": "Volver a mostrar"
     },
     "reportView": {
       "back": "← Atrás",
@@ -226,6 +229,25 @@
       "attempts_many": "<b>{{count}} intentos fallidos</b>",
       "attempts_other": "<b>{{count}} intentos fallidos</b>",
       "lost": ", {{time}} perdidos"
+    }
+  },
+  "onboarding": {
+    "ok": "Entendido",
+    "never": "No volver a mostrar",
+    "add-project": { "input": { "title": "Qué poner aquí", "text": "Sirve un <b>enlace a un repositorio, pipeline o MR</b>, una dirección ssh o una carpeta con un clon (botón a la derecha)." } },
+    "token": { "create": { "title": "Hace falta un token", "text": "El enlace abre la página de creación del token <b>con los permisos necesarios</b>. El token se guarda en el llavero del sistema." } },
+    "project": {
+      "screen": { "title": "Un pipeline o muchos", "text": "Al hacer clic en un pipeline se crea su informe. El <b>agregado</b> reúne N pipelines de la rama y muestra p50 y p90." },
+      "workflow": { "title": "Workflow", "text": "En GitHub, las ejecuciones y el agregado se construyen <b>para un solo workflow</b>: elígelo aquí." }
+    },
+    "header": { "link": { "title": "Un atajo", "text": "La próxima vez, pega aquí un <b>enlace a un pipeline, MR, run o PR</b>: el informe se crea sin abrir el proyecto." } },
+    "report": {
+      "hotspots": { "title": "Por dónde empezar", "text": "Aquí solo hay jobs de la <b>ruta crítica</b>: acelerar los demás no acorta el pipeline. Haz clic para ir al job." },
+      "critical": { "title": "Lo naranja es la ruta crítica", "text": "Estos jobs fijan la duración del pipeline. <b>Haz clic en una etapa</b> para recalcular la ruta hasta su final." },
+      "keys": { "title": "Zoom y teclas", "text": "<b>⌘/Ctrl + rueda</b> para el zoom, <b>[</b> y <b>]</b> para desplazar, <b>0</b> muestra todo el pipeline. El resto, en «?»." },
+      "retries": { "title": "Reintentos", "text": "El rayado rojo marca los intentos fallidos. La etiqueta <b>↻2 −8m29s</b> indica cuántos hubo y el tiempo perdido." },
+      "aggregate": { "title": "Cómo leer el agregado", "text": "La barra es el inicio y la duración <b>p50</b>; la línea que sigue llega al <b>p90</b>. La etiqueta de la derecha es la proporción de ejecuciones con reintentos." },
+      "detail": { "title": "Panel de detalles", "text": "Arriba está la <b>conclusión</b>: si acelerarlo acorta el pipeline. Debajo, los vínculos ↑/↓. Esc quita la selección." }
     }
   }
 }

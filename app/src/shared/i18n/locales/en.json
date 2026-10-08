@@ -112,7 +112,10 @@
       "linuxHint": "On Linux the token is stored in Secret Service (gnome-keyring, KWallet). Without it, use glab or the GITLAB_TOKEN and GITLAB_HOST variables.",
       "source": { "keychain": "keychain", "glab": "glab", "gh": "gh", "env": "environment variables" },
       "theme": "Theme",
-      "themes": { "system": "System", "light": "Light", "dark": "Dark" }
+      "themes": { "system": "System", "light": "Light", "dark": "Dark" },
+      "tips": "Tips",
+      "tipsShow": "Show giraffe tips",
+      "tipsReset": "Show again"
     },
     "reportView": {
       "back": "← Back",
@@ -217,6 +220,25 @@
       "attempts_one": "<b>{{count}} failed attempt</b>",
       "attempts_other": "<b>{{count}} failed attempts</b>",
       "lost": ", {{time}} lost"
+    }
+  },
+  "onboarding": {
+    "ok": "Got it",
+    "never": "Don't show tips",
+    "add-project": { "input": { "title": "What goes here", "text": "A <b>link to a repository, pipeline or MR</b>, an ssh address, or a folder with a clone — the button on the right." } },
+    "token": { "create": { "title": "A token is needed", "text": "The link opens the token page <b>with the right scopes</b> preset. The token is kept in the system keychain." } },
+    "project": {
+      "screen": { "title": "One pipeline or many", "text": "Click a pipeline to build its report. The <b>aggregate</b> combines N pipelines of the branch and shows p50 and p90." },
+      "workflow": { "title": "Workflow", "text": "On GitHub, runs and the aggregate are built <b>for one workflow</b> — pick it here." }
+    },
+    "header": { "link": { "title": "A shortcut", "text": "Next time, paste a <b>pipeline, MR, run or PR link</b> here — the report builds without opening the project." } },
+    "report": {
+      "hotspots": { "title": "Where to start", "text": "Only <b>critical path</b> jobs are listed: speeding up others won't shorten the pipeline. Click to jump to the job." },
+      "critical": { "title": "Orange is the critical path", "text": "These jobs set the pipeline length. <b>Click a stage</b> to recompute the path up to its end." },
+      "keys": { "title": "Zoom and keys", "text": "<b>⌘/Ctrl + wheel</b> zooms, <b>[</b> and <b>]</b> pan, <b>0</b> shows the whole pipeline. The rest is under “?”." },
+      "retries": { "title": "Retries", "text": "Red hatching marks failed attempts. The label <b>↻2 −8m29s</b> shows how many there were and the time lost on them." },
+      "aggregate": { "title": "Reading the aggregate", "text": "The bar is the <b>p50</b> start and duration, the line after it reaches <b>p90</b>. The label on the right is the share of runs with retries." },
+      "detail": { "title": "Details panel", "text": "At the top is the <b>verdict</b>: whether speeding this up shortens the pipeline. Links ↑/↓ are below. Esc clears the selection." }
     }
   }
 }

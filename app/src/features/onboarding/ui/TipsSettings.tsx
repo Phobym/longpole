@@ -7,10 +7,11 @@ import { resetTips, setTipsEnabled, useTipsEnabled } from '../model/store'
 export function TipsSettings() {
   const { t } = useTranslation()
   const id = useId()
+  const enabled = useTipsEnabled()
   return (
     <div className="flex flex-wrap items-center gap-3">
       <label htmlFor={id} className="flex items-center gap-2 text-sm">
-        <input id={id} type="checkbox" className="focus-ring" checked={useTipsEnabled()} onChange={(e) => setTipsEnabled(e.target.checked)} />
+        <input id={id} type="checkbox" className="focus-ring" checked={enabled} onChange={(e) => setTipsEnabled(e.target.checked)} />
         {t('form.settings.tipsShow')}
       </label>
       <Button type="button" variant="outline" size="sm" onClick={resetTips}>

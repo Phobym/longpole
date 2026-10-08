@@ -8,13 +8,13 @@ const ACCENT = { b: <b className="font-semibold text-crit-fg" /> }
 const action = 'cursor-pointer rounded-sm focus-ring hover:underline'
 
 /** Содержимое подсказки: жираф слева, заголовок, текст с выделениями, «Понятно» и «Больше не показывать». */
-export function TipBubble({ id }: { id: TipId }) {
+export function TipBubble({ id, titleId }: { id: TipId; titleId: string }) {
   const { t } = useTranslation()
   return (
     <div className="flex gap-3">
       <Giraffe size={56} />
       <div className="flex min-w-0 flex-col gap-1">
-        <p className="text-[13px] font-semibold">{t(`onboarding.${id}.title`)}</p>
+        <p id={titleId} className="text-[13px] font-semibold">{t(`onboarding.${id}.title`)}</p>
         <p className="text-[12.5px] leading-[1.4]">
           <Trans i18nKey={`onboarding.${id}.text`} components={ACCENT} />
         </p>

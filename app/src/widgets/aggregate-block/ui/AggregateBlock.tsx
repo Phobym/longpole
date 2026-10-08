@@ -21,7 +21,7 @@ export function AggregateBlock(target: ProjectRef) {
       )}
       <div className="flex items-end gap-3">
         <Tip id="project.screen">
-          <div className="inline-flex">
+          <div className="inline-flex self-start">
             <BuildAggregateButton busy={busy} progressLabel={progressLabel} onClick={start} />
           </div>
         </Tip>

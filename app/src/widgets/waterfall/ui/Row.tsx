@@ -1,4 +1,4 @@
-import { memo, useCallback, type KeyboardEvent, type MouseEvent } from 'react'
+import { memo, type KeyboardEvent, type MouseEvent } from 'react'
 import { DepTag, NodeLane, StabilityPill, type DepDir } from '../../../entities/node'
 import { GroupToggle } from '../../../features/group-toggle'
 import { rowAttrs } from '../../../features/node-selection'
@@ -27,28 +27,19 @@ type RowProps = {
   /** имя соседа, которого джоба ждала внутри стейджа */
   afterName: string | undefined
   gapMs: number | undefined
-  // Эти четыре обязаны быть стабильными, иначе memo бессмысленна.
-  register: (id: string, el: HTMLElement | null) => void
+  // Эти три обязаны быть стабильными, иначе memo бессмысленна.
   onClick: (e: MouseEvent<HTMLElement>, id: string) => void
   onKeyDown: (e: KeyboardEvent<HTMLElement>, node: ReportNode) => void
   onToggle: (id: string) => void
 }
 
 /** Строка водопада: имя, дорожка с полосками, метка стабильности. */
-export const Row = memo(function Row({ node, depth, view, selected, critical, tip, dep, depName, collapsed, excess, holderName, afterName, gapMs, register, onClick, onKeyDown, onToggle }: RowProps) {
+export const Row = memo(function Row({ node, depth, view, selected, critical, tip, dep, depName, collapsed, excess, holderName, afterName, gapMs, onClick, onKeyDown, onToggle }: RowProps) {
   const stage = node.kind === 'stage'
-  const ref = useCallback(
-    (el: HTMLElement | null) => {
-      register(node.id, el)
-      return () => register(node.id, null)
-    },
-    [register, node.id],
-  )
   return (
     <Tip id={tip} inset>
       <div
         {...rowAttrs}
-        ref={ref}
         data-id={node.id}
         data-selected={selected ? '' : undefined}
         aria-current={selected || undefined}

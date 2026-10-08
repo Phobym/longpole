@@ -6,14 +6,13 @@ import { anchorTip, useActiveTip, useSeenTips, type TipId } from '../../../featu
 import { useReportKeys, useViewDrag, useWheelZoom } from '../../../features/timeline-navigation'
 import { isAggNode, type ReportNode } from '../../../shared/api'
 import { Axis } from './Axis'
-import { LinksOverlay } from './LinksOverlay'
 import { Row } from './Row'
 import { StageCard } from './StageCard'
 
 // подсказки, что висят на строках водопада, в порядке реестра
 const ROW_TIPS = ['report.critical', 'report.retries', 'report.aggregate'] as const satisfies readonly TipId[]
 
-/** Ось и строки отчёта: стейджи карточками, жесты и клавиши, линии связей выбранного узла. */
+/** Ось и строки отчёта: стейджи карточками, жесты и клавиши. */
 export function Waterfall() {
   const { tree, state, crit, rel } = useReportView()
   const blocks = useMemo(() => cards(tree, state.collapsed), [tree, state.collapsed])
@@ -46,12 +45,6 @@ export function Waterfall() {
   }, [blocks, tree, crit, seen, active])
 
   const host = useRef<HTMLElement>(null)
-  const track = useRef<HTMLDivElement>(null)
-  const rows = useRef(new Map<string, HTMLElement>())
-  const register = useCallback((id: string, el: HTMLElement | null) => {
-    if (el) rows.current.set(id, el)
-    else rows.current.delete(id)
-  }, [])
 
   const { onMouseDown, justDragged } = useViewDrag()
   useWheelZoom(host)
@@ -67,7 +60,7 @@ export function Waterfall() {
   return (
     <>
       <div className="sticky top-0 z-[2] bg-background pt-1 pb-1.5">
-        <Axis view={state.view} trackRef={track} />
+        <Axis view={state.view} />
       </div>
       <main
         ref={host}
@@ -98,7 +91,6 @@ export function Waterfall() {
                 holderName={holderName}
                 afterName={node.after ? nodes[node.after]?.name : undefined}
                 gapMs={crit.gapBefore.get(node.id)}
-                register={register}
                 onClick={selection.onRowClick}
                 onKeyDown={onKeyDown}
                 onToggle={groups.toggle}
@@ -107,7 +99,6 @@ export function Waterfall() {
           })
           return <Fragment key={`${i}:${entries[0].node.id}`}>{card ? <StageCard cont={block.cont}>{content}</StageCard> : content}</Fragment>
         })}
-        <LinksOverlay host={host} track={track} rows={rows} />
       </main>
     </>
   )

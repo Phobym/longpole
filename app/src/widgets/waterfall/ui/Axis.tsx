@@ -1,4 +1,3 @@
-import type { Ref } from 'react'
 import { duration } from '../../../shared/lib/format'
 import { pos, tickStep, type View } from '../../../shared/lib/timeline'
 import { GRID } from './grid'
@@ -6,7 +5,7 @@ import { GRID } from './grid'
 const MAX_TICKS = 10
 
 /** Ось времени от создания пайплайна; шаг мельчает при приближении. */
-export function Axis({ view, trackRef }: { view: View; trackRef: Ref<HTMLDivElement> }) {
+export function Axis({ view }: { view: View }) {
   const [a, b] = view
   const step = tickStep(b - a, MAX_TICKS)
   const ticks = []
@@ -21,7 +20,7 @@ export function Axis({ view, trackRef }: { view: View; trackRef: Ref<HTMLDivElem
     <div className={GRID}>
       <div />
       <div className="relative h-4 overflow-hidden">
-        <div ref={trackRef} className="absolute inset-y-0 right-6 left-3">
+        <div className="absolute inset-y-0 right-6 left-3">
           {ticks}
         </div>
       </div>

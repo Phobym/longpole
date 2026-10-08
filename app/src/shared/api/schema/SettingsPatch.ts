@@ -6,4 +6,8 @@ import type { Theme } from "./Theme";
 /**
  * Частичное обновление: `None` — поле не трогать.
  */
-export type SettingsPatch = { locale?: Locale, theme?: Theme, lastProject?: ProjectRef, };
+export type SettingsPatch = { locale?: Locale, theme?: Theme, lastProject?: ProjectRef, tips?: boolean, 
+/**
+ * заменяет список целиком
+ */
+seenTips?: Array<string>, };

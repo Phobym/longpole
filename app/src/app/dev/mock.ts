@@ -9,7 +9,7 @@ const HOST = 'gitlab.example.com'
 const now = Date.now()
 const iso = (minutesAgo: number) => new Date(now - minutesAgo * 60_000).toISOString()
 
-let settings: AppSettings = { locale: 'ru', theme: 'system', lastProject: { host: HOST, path: 'g/p' } }
+let settings: AppSettings = { locale: 'ru', theme: 'system', lastProject: { host: HOST, path: 'g/p' }, tips: true, seenTips: [] }
 const hosts: HostInfo[] = [
   { host: HOST, source: 'keychain', provider: 'gitlab' },
   { host: 'gitlab.com', source: 'glab', provider: 'gitlab' },

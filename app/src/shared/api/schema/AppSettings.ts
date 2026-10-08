@@ -3,4 +3,12 @@ import type { Locale } from "./Locale";
 import type { ProjectRef } from "./ProjectRef";
 import type { Theme } from "./Theme";
 
-export type AppSettings = { locale: Locale, theme: Theme, lastProject: ProjectRef | null, };
+export type AppSettings = { locale: Locale, theme: Theme, lastProject: ProjectRef | null, 
+/**
+ * показывать подсказки онбординга
+ */
+tips: boolean, 
+/**
+ * id подсказок, которые уже показаны
+ */
+seenTips: Array<string>, };

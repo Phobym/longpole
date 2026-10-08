@@ -45,7 +45,7 @@ export const Row = memo(function Row({ node, depth, view, selected, critical, ti
     [register, node.id],
   )
   return (
-    <Tip id={tip}>
+    <Tip id={tip} inset>
       <div
         {...rowAttrs}
         ref={ref}

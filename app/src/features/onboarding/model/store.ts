@@ -88,6 +88,7 @@ export function markLeftReport() {
   useStore.setState({ leftReport: true })
 }
 
-export const useTipOpen = (id: TipId) => useStore((s) => s.active === id)
+export const useTipOpen = (id: TipId | null) => useStore((s) => id !== null && s.active === id)
+export const useSeenTips = () => useStore((s) => s.seen)
 export const useTipsEnabled = () => useStore((s) => s.enabled)
 export const useLeftReport = () => useStore((s) => s.leftReport)

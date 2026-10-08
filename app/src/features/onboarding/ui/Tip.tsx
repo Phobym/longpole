@@ -5,7 +5,8 @@ import type { TipId } from '../model/tips'
 import { TipBubble } from './TipBubble'
 
 type Props = {
-  id: TipId
+  /** `null` — здесь подсказки нет: не регистрируется и не открывается, дерево то же (для строк, где id считается на лету) */
+  id: TipId | null
   /** событие наступило; пока `false`, подсказка не регистрируется и не открывается — дерево то же, якорь не перемонтируется */
   when?: boolean
   /** один элемент, передающий ref и пропсы в DOM */
@@ -20,7 +21,7 @@ export function Tip({ id, when = true, children }: Props) {
   const titleId = useId()
   const open = useTipOpen(id) && when
   useEffect(() => {
-    if (!when) return
+    if (!when || id === null) return
     addReady(id)
     return () => removeReady(id)
   }, [id, when])
@@ -39,7 +40,7 @@ export function Tip({ id, when = true, children }: Props) {
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.stopPropagation()}
       >
-        <TipBubble id={id} titleId={titleId} />
+        {id !== null && <TipBubble id={id} titleId={titleId} />}
       </PopoverContent>
     </Popover>
   )

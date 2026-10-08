@@ -1,4 +1,5 @@
 import { ReportViewProvider, useReportView } from '../../../entities/report'
+import { useOnboardingVisit } from '../../../features/onboarding'
 import type { Report } from '../../../shared/api'
 import { cn } from '../../../shared/lib/cn'
 import { DetailPanel } from '../../../widgets/detail-panel'
@@ -22,6 +23,7 @@ function Layout() {
 }
 
 export function ReportPage({ report, embedded }: { report: Report; embedded?: boolean }) {
+  useOnboardingVisit()
   return (
     <ReportViewProvider report={report} embedded={embedded}>
       <Layout />

@@ -1,4 +1,4 @@
-export { markLeftReport, useLeftReport } from './model/store'
+export { markLeftReport, useLeftReport, useSeenTips } from './model/store'
 export type { TipId } from './model/tips'
 export { useOnboardingVisit } from './model/useOnboardingVisit'
 export { OnboardingSync } from './ui/OnboardingSync'

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { pickTip, type TipDef } from './pick.ts'
+import { anchorTip, pickTip, type TipDef } from './pick.ts'
 
 const ORDER: TipDef[] = [
   { id: 'event', kind: 'event' },
@@ -46,4 +46,20 @@ test('просмотренная не выбирается', () => {
 
 test('подсказки выключены — ничего', () => {
   assert.equal(pickTip({ ...base, ready: ['event', 'first'], enabled: false }), null)
+})
+
+test('якорь держит открытую подсказку, хотя она уже в seen', () => {
+  assert.equal(anchorTip(['a', 'b'], ['a'], 'a'), 'a')
+})
+
+test('после закрытия якорь переходит к следующей непросмотренной', () => {
+  assert.equal(anchorTip(['a', 'b'], ['a'], null), 'b')
+})
+
+test('всё просмотрено — подсказки нет', () => {
+  assert.equal(anchorTip(['a'], ['a'], null), null)
+})
+
+test('чужая открытая подсказка не мешает', () => {
+  assert.equal(anchorTip(['a', 'b'], [], 'z'), 'a')
 })

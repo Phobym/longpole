@@ -2,7 +2,7 @@ import { Fragment, useCallback, useMemo, useRef, type KeyboardEvent } from 'reac
 import { cards, isLeaf, useReportView } from '../../../entities/report'
 import { useGroupToggle } from '../../../features/group-toggle'
 import { useNodeSelection } from '../../../features/node-selection'
-import { useSeenTips, type TipId } from '../../../features/onboarding'
+import { anchorTip, useActiveTip, useSeenTips, type TipId } from '../../../features/onboarding'
 import { useReportKeys, useViewDrag, useWheelZoom } from '../../../features/timeline-navigation'
 import { isAggNode, type ReportNode } from '../../../shared/api'
 import { Axis } from './Axis'
@@ -17,6 +17,7 @@ export function Waterfall() {
 
   // Одна строка на подсказку: первая подходящая в порядке отрисовки. Якорь у строки один, поэтому если строка первая сразу для нескольких подсказок, они идут на ней друг за другом: на следующих визитах — по мере просмотра прежних.
   const seen = useSeenTips()
+  const active = useActiveTip()
   const rowTips = useMemo(() => {
     const agg = isAggNode(tree.nodes[tree.root])
     const first: Partial<Record<'report.critical' | 'report.retries' | 'report.aggregate', string>> = {}
@@ -27,13 +28,19 @@ export function Waterfall() {
         if (first['report.aggregate'] === undefined && agg && node.stability?.present) first['report.aggregate'] = node.id
       }
     }
-    const tips = new Map<string, TipId>()
+    // Кандидаты строки — в порядке реестра; открытая подсказка держится, хотя уже попала в seen.
+    const candidates = new Map<string, TipId[]>()
     for (const id of ['report.critical', 'report.retries', 'report.aggregate'] as const) {
       const row = first[id]
-      if (row !== undefined && !seen.includes(id) && !tips.has(row)) tips.set(row, id)
+      if (row !== undefined) candidates.set(row, [...(candidates.get(row) ?? []), id])
+    }
+    const tips = new Map<string, TipId>()
+    for (const [row, ids] of candidates) {
+      const tip = anchorTip(ids, seen, active)
+      if (tip !== null) tips.set(row, tip)
     }
     return tips
-  }, [blocks, tree, crit, seen])
+  }, [blocks, tree, crit, seen, active])
 
   const host = useRef<HTMLElement>(null)
   const track = useRef<HTMLDivElement>(null)

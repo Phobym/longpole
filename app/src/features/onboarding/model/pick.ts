@@ -28,3 +28,9 @@ export function pickTip<Id extends string>({ order, ready, seen, enabled, enterS
   if (enterShown) return null
   return candidates.find((tip) => tip.kind === 'enter')?.id ?? null
 }
+
+/** Подсказка якоря с несколькими кандидатами: открытая держится, пока открыта, иначе — первая непросмотренная по порядку. */
+export function anchorTip<Id extends string>(candidates: readonly Id[], seen: readonly string[], active: Id | null): Id | null {
+  if (active !== null && candidates.includes(active)) return active
+  return candidates.find((id) => !seen.includes(id)) ?? null
+}

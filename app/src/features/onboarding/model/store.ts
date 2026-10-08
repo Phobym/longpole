@@ -90,5 +90,6 @@ export function markLeftReport() {
 
 export const useTipOpen = (id: TipId | null) => useStore((s) => id !== null && s.active === id)
 export const useSeenTips = () => useStore((s) => s.seen)
+export const useActiveTip = () => useStore((s) => s.active)
 export const useTipsEnabled = () => useStore((s) => s.enabled)
 export const useLeftReport = () => useStore((s) => s.leftReport)

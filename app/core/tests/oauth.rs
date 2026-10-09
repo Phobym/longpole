@@ -242,6 +242,27 @@ async fn github_отказ_истёкший_код_и_выключенный_dev
     }
 }
 
+#[tokio::test]
+async fn github_не_https_verification_uri_отклоняется_до_показа_кода() {
+    // враждебный сервер не должен подсунуть `javascript:` в href окна
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/login/device/code"))
+        .respond_with(reply(
+            200,
+            json!({
+                "device_code": "dev", "user_code": "ABCD-1234",
+                "verification_uri": "javascript:alert(1)",
+                "interval": 0, "expires_in": 900
+            }),
+        ))
+        .mount(&server)
+        .await;
+    let (result, code) = github_login(&server).await;
+    assert_eq!(result.unwrap_err().code, ErrorCode::OauthFailed);
+    assert_eq!(code, None);
+}
+
 fn param(url: &Url, name: &str) -> String {
     url.query_pairs()
         .find(|(key, _)| key == name)

@@ -332,6 +332,10 @@ async fn github(
             });
         }
     };
+    // href в окне получит это значение как есть: `javascript:`/`data:` от враждебного сервера исполнились бы в webview
+    if !Url::parse(&code.verification_uri).is_ok_and(|u| u.scheme() == "https") {
+        return Err(failed(&host, "verification_uri is not https"));
+    }
     on_code(UserCode {
         user_code: code.user_code,
         verification_uri: code.verification_uri,

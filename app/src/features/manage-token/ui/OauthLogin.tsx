@@ -75,7 +75,7 @@ export function OauthLogin({ host, provider, onSaved }: { host: string; provider
         className="self-start"
         disabled={!host}
         onClick={async () => {
-          if (await login(cloud ? null : clientId)) onSaved?.()
+          if (await login(cloud ? null : clientId.trim() || null)) onSaved?.()
         }}
       >
         {t('form.oauth.login', { host: host || '…' })}

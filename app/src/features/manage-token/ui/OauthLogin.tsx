@@ -1,0 +1,91 @@
+import { useId, useState } from 'react'
+import { messageError, type Provider } from '../../../shared/api'
+import { useErrorText, useTranslation } from '../../../shared/i18n'
+import { Button } from '../../../shared/ui/button'
+import { Input, labelClasses } from '../../../shared/ui/input'
+import { Giraffe } from '../../../shared/ui/giraffe'
+import { CLOUD_HOSTS, GITHUB_APP_INSTALL, registerAppUrl } from '../model/oauth'
+import { useOauthLogin } from '../model/useOauthLogin'
+
+const linkClasses = 'text-link hover:underline'
+
+/** Вход через OAuth рядом с формой PAT. `provider` известен — показываем ссылку на регистрацию приложения. */
+export function OauthLogin({ host, provider, onSaved }: { host: string; provider?: Provider; onSaved?: () => void }) {
+  const { t } = useTranslation()
+  const errorText = useErrorText()
+  const id = useId()
+  const [clientId, setClientId] = useState('')
+  const { login, cancel, waiting, code, error } = useOauthLogin(host)
+  const failure = messageError(error)
+  const cloud = CLOUD_HOSTS.includes(host)
+
+  if (waiting) {
+    return (
+      <div role="status" className="flex flex-col gap-2">
+        {code ? (
+          <>
+            <p className="text-sm">{t('form.oauth.enterCode')}</p>
+            <p translate="no" className="font-mono text-2xl tracking-widest select-all">
+              {code.userCode}
+            </p>
+            <div className="flex items-center gap-3">
+              <Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(code.userCode)}>
+                {t('form.oauth.copy')}
+              </Button>
+              <a href={code.verificationUri} target="_blank" rel="noopener noreferrer" className={linkClasses}>
+                {t('form.oauth.open', { host })}
+              </a>
+            </div>
+            {host === 'github.com' && (
+              <a href={GITHUB_APP_INSTALL} target="_blank" rel="noopener noreferrer" className={`text-xs ${linkClasses}`}>
+                {t('form.oauth.installOrg')}
+              </a>
+            )}
+          </>
+        ) : (
+          <p className="text-sm">{t('form.oauth.finishInBrowser')}</p>
+        )}
+        <Button type="button" variant="ghost" className="self-start" onClick={cancel}>
+          {t('form.cancel')}
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {!cloud && host && (
+        <>
+          <label htmlFor={`${id}-client`} className={labelClasses}>
+            {t('form.oauth.clientId')}
+          </label>
+          <Input id={`${id}-client`} translate="no" autoCapitalize="off" autoCorrect="off" spellCheck={false} value={clientId} onChange={(e) => setClientId(e.target.value)} />
+          <p className="text-xs text-muted-foreground">
+            {t('form.oauth.clientIdHint', { host })}{' '}
+            {provider && (
+              <a href={registerAppUrl(host, provider)} target="_blank" rel="noopener noreferrer" className={linkClasses}>
+                {t('form.oauth.register')}
+              </a>
+            )}
+          </p>
+        </>
+      )}
+      <Button
+        type="button"
+        className="self-start"
+        disabled={!host}
+        onClick={async () => {
+          if (await login(cloud ? null : clientId)) onSaved?.()
+        }}
+      >
+        {t('form.oauth.login', { host: host || '…' })}
+      </Button>
+      {failure && (
+        <p role="alert" className="flex items-start gap-2 text-sm text-destructive">
+          <Giraffe pose="oops" size={40} />
+          {errorText(failure)}
+        </p>
+      )}
+    </div>
+  )
+}

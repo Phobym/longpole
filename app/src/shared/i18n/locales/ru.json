@@ -109,6 +109,7 @@
       "stored": "Хранится в системной связке ключей.",
       "scopeGithub": "Fine-grained token с правами Actions: read и Contents: read."
     },
+    "oauth": { "login": "Войти через {{host}}", "or": "или токен:", "clientId": "Client ID", "clientIdHint": "Приложения, зарегистрированного на {{host}}.", "register": "Зарегистрировать ↗", "enterCode": "Введи этот код в браузере:", "copy": "Скопировать", "open": "Открыть {{host}} ↗", "finishInBrowser": "Заверши вход в браузере.", "installOrg": "Репозитории организации видны после установки Longpole на неё ↗", "installShort": "Установить на организацию ↗" },
     "settings": {
       "title": "Настройки",
       "back": "← Назад",

@@ -108,6 +108,7 @@
       "stored": "Salvato nel portachiavi di sistema.",
       "scopeGithub": "Token fine-grained con i permessi Actions: read e Contents: read."
     },
+    "oauth": { "login": "Accedi con {{host}}", "or": "o un token:", "clientId": "Client ID", "clientIdHint": "Dell'app registrata su {{host}}.", "register": "Registra un'app ↗", "enterCode": "Inserisci questo codice nel browser:", "copy": "Copia", "open": "Apri {{host}} ↗", "finishInBrowser": "Completa l'accesso nel browser.", "installOrg": "I repository di un'organizzazione compaiono dopo aver installato Longpole su di essa ↗", "installShort": "Installa su un'organizzazione ↗" },
     "settings": {
       "title": "Impostazioni",
       "back": "← Indietro",

@@ -6,6 +6,7 @@ import { Input, labelClasses } from '../../../shared/ui/input'
 import { Giraffe } from '../../../shared/ui/giraffe'
 import { useHostProvider } from '../model/useHostProvider'
 import { useSaveToken } from '../model/useSaveToken'
+import { OauthLogin } from './OauthLogin'
 
 /** Токен для известного хоста прямо там, где он понадобился; после сохранения `onSaved` повторяет действие. */
 export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => void }) {
@@ -39,6 +40,8 @@ export function TokenBlock({ host, onSaved }: { host: string; onSaved: () => voi
           {t('form.token.create', { host })}
         </a>
       </p>
+      <OauthLogin host={host} provider={provider} onSaved={onSaved} />
+      <p className="text-xs text-muted-foreground">{t('form.oauth.or')}</p>
       <label htmlFor={id} className={labelClasses}>
         {t('form.host.token')}
       </label>

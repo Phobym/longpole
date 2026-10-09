@@ -79,6 +79,11 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
   hosts: () => hosts,
   set_token: () => null,
   remove_token: () => null,
+  oauth_login: async () => {
+    await delay(1500)
+    return true
+  },
+  oauth_cancel: () => null,
   saved_projects: () => saved,
   add_project: async ({ input }) => {
     await delay(400)

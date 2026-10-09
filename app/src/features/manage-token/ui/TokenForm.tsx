@@ -1,9 +1,11 @@
 import { useId, useState } from 'react'
 import { messageError } from '../../../shared/api'
+import { normalizeHost } from '../../../entities/host'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { Input, labelClasses } from '../../../shared/ui/input'
 import { useSaveToken } from '../model/useSaveToken'
+import { OauthLogin } from './OauthLogin'
 
 /** Хост и токен; `defaultHost` — выбранный хост без токена. Токен после сохранения прочитать нельзя нигде. */
 export function TokenForm({ defaultHost, onSaved }: { defaultHost: string; onSaved?: () => void }) {
@@ -26,6 +28,8 @@ export function TokenForm({ defaultHost, onSaved }: { defaultHost: string; onSav
         {t('form.host.label')}
       </label>
       <Input id={`${id}-host`} aria-invalid={failure !== undefined} aria-describedby={failure ? `${id}-error` : undefined} translate="no" placeholder={t('form.host.placeholder')} value={host} onChange={(e) => setHost(e.target.value)} />
+      <OauthLogin host={normalizeHost(host)} onSaved={onSaved} />
+      <p className="text-xs text-muted-foreground">{t('form.oauth.or')}</p>
       <label htmlFor={`${id}-token`} className={labelClasses}>
         {t('form.host.token')}
       </label>

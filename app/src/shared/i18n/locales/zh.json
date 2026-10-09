@@ -106,6 +106,7 @@
       "stored": "存储在系统钥匙串中。",
       "scopeGithub": "具有 Actions: read 和 Contents: read 权限的 Fine-grained token。"
     },
+    "oauth": { "login": "通过 {{host}} 登录", "or": "或使用令牌：", "clientId": "Client ID", "clientIdHint": "在 {{host}} 上注册的应用。", "register": "注册应用 ↗", "enterCode": "在浏览器中输入此代码：", "copy": "复制", "open": "打开 {{host}} ↗", "finishInBrowser": "请在浏览器中完成登录。", "installOrg": "在组织上安装 Longpole 后即可看到该组织的仓库 ↗", "installShort": "安装到组织 ↗" },
     "settings": {
       "title": "设置",
       "back": "← 返回",

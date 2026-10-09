@@ -108,6 +108,7 @@
       "stored": "Stocké dans le trousseau du système.",
       "scopeGithub": "Token à granularité fine avec les permissions Actions : read et Contents : read."
     },
+    "oauth": { "login": "Se connecter avec {{host}}", "or": "ou un jeton :", "clientId": "Client ID", "clientIdHint": "De l'application enregistrée sur {{host}}.", "register": "Enregistrer une application ↗", "enterCode": "Saisissez ce code dans le navigateur :", "copy": "Copier", "open": "Ouvrir {{host}} ↗", "finishInBrowser": "Terminez la connexion dans le navigateur.", "installOrg": "Les dépôts d'une organisation apparaissent une fois Longpole installé dessus ↗", "installShort": "Installer sur une organisation ↗" },
     "settings": {
       "title": "Réglages",
       "back": "← Retour",

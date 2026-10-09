@@ -1,5 +1,5 @@
 export {
-  addProject, branches, build, clearHistory, findReport, getSettings, history, hosts, hostProvider, pipelines, projects, removeHistory,
+  addProject, branches, build, clearHistory, findReport, getSettings, history, hosts, hostProvider, oauthCancel, oauthLogin, pipelines, projects, removeHistory,
   removeProject, removeToken, report, savedProjects, setCurrentReport, setSettings, setToken, workflows,
   type ApiError, type Result,
 } from './api'
@@ -31,6 +31,7 @@ export type { SingleNode } from './schema/SingleNode'
 export type { Stability } from './schema/Stability'
 export type { Theme } from './schema/Theme'
 export type { TokenSource } from './schema/TokenSource'
+export type { UserCode } from './schema/UserCode'
 export type { Tree } from './schema/Tree'
 export type { Workflow } from './schema/Workflow'
 

@@ -24,6 +24,8 @@ pub const LOGIN_TIMEOUT: Duration = Duration::from_secs(600);
 /// Токен обновляется заранее, чтобы не истечь посреди сборки отчёта.
 const REFRESH_MARGIN: i64 = 300;
 const TIMEOUT: Duration = Duration::from_secs(30);
+/// Сколько ждать строку запроса на loopback-порту, прежде чем бросить соединение.
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(2);
 const GITLAB_COM: &str = "gitlab.com";
 
 /// client_id приложений Longpole на github.com и gitlab.com; не секрет. Пустая строка — приложение
@@ -413,12 +415,26 @@ const DONE: &str = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\
 
 /// Ждёт редирект браузера с нашим `state`: код или ошибку. Прочие запросы (чужой `state`, favicon)
 /// получают 400, ожидание продолжается.
-// ponytail: строка запроса читается одним `read` — браузер шлёт её первым пакетом; дочитывать, если встретится иначе
 async fn callback(listener: &TcpListener, host: &str, state: &str) -> Result<String, Error> {
     loop {
         let (mut stream, _) = listener.accept().await.map_err(|e| failed(host, e))?;
         let mut buf = vec![0; 8192];
-        let read = stream.read(&mut buf).await.unwrap_or(0);
+        let mut read = 0;
+        // Соединения обслуживаются по одному: молчащее (префетч браузера, чужой процесс) не должно
+        // держать `accept`, иначе настоящий редирект не будет прочитан. Строка запроса может
+        // прийти несколькими сегментами, поэтому читаем до `\r\n`.
+        let received = tokio::time::timeout(REQUEST_TIMEOUT, async {
+            while read < buf.len() && !buf[..read].windows(2).any(|pair| pair == b"\r\n") {
+                match stream.read(&mut buf[read..]).await {
+                    Ok(0) | Err(_) => break,
+                    Ok(n) => read += n,
+                }
+            }
+        })
+        .await;
+        if received.is_err() {
+            continue;
+        }
         let request = String::from_utf8_lossy(&buf[..read]);
         let target = request
             .lines()

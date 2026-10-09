@@ -341,3 +341,34 @@ async fn gitlab_отказ_в_браузере() {
         .unwrap_err();
     assert_eq!(error.code, ErrorCode::OauthDenied);
 }
+
+#[tokio::test]
+async fn gitlab_молчащее_соединение_не_блокирует_вход() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/oauth/token"))
+        .respond_with(reply(
+            200,
+            json!({"access_token": "gl_a", "refresh_token": "gl_r", "expires_in": 7200}),
+        ))
+        .mount(&server)
+        .await;
+    // Браузер-префетч: соединение открыто и молчит, пока приходит настоящий редирект.
+    let silent = |authorize: &str| {
+        let url = Url::parse(authorize).unwrap();
+        let (redirect, state) = (param(&url, "redirect_uri"), param(&url, "state"));
+        tokio::spawn(async move {
+            let port = Url::parse(&redirect).unwrap().port().unwrap();
+            let _idle = tokio::net::TcpStream::connect(("127.0.0.1", port))
+                .await
+                .unwrap();
+            let done = reqwest::get(format!("{redirect}?code=c&state={state}"))
+                .await
+                .unwrap();
+            assert_eq!(done.status(), 200);
+        });
+        Ok(())
+    };
+    let credential = gitlab_login(&server, silent).await.unwrap();
+    assert_eq!(credential.access, "gl_a");
+}

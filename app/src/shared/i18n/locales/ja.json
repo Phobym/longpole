@@ -113,7 +113,7 @@
       "noHosts": "ホストはまだありません",
       "addHost": "ホストを追加",
       "linuxHint": "Linux ではトークンは Secret Service (gnome-keyring、KWallet) に保存されます。利用できない場合は、glab または環境変数 GITLAB_TOKEN と GITLAB_HOST を使用してください。",
-      "source": { "keychain": "キーチェーン", "glab": "glab", "gh": "gh", "env": "環境変数" },
+      "source": { "keychain": "キーチェーン", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "環境変数" },
       "theme": "テーマ",
       "themes": { "system": "システム", "light": "ライト", "dark": "ダーク" },
       "tips": "ヒント",

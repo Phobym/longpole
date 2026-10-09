@@ -113,7 +113,7 @@
       "noHosts": "暂无主机",
       "addHost": "添加主机",
       "linuxHint": "在 Linux 上，令牌存储在 Secret Service（gnome-keyring、KWallet）中。如果没有，请使用 glab 或 GITLAB_TOKEN 和 GITLAB_HOST 变量。",
-      "source": { "keychain": "钥匙串", "glab": "glab", "gh": "gh", "env": "环境变量" },
+      "source": { "keychain": "钥匙串", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "环境变量" },
       "theme": "主题",
       "themes": { "system": "跟随系统", "light": "浅色", "dark": "深色" },
       "tips": "提示",

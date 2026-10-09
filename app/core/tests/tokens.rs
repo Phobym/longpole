@@ -3,18 +3,23 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::time::Duration;
 
 use keyring_core::api::CredentialStoreApi;
 use keyring_core::mock::{Cred, Store};
 use keyring_core::{CredentialStore, Entry, Error as KeyringError};
 use longpole_core::error::{Error, ErrorCode};
 use longpole_core::hosts::normalize_host;
+use longpole_core::oauth::Credential;
 use longpole_core::source::Provider;
 use longpole_core::tokens::{
     Gh, Glab, HostInfo, SERVICE, TokenSource, TokenStore, find_github_token, find_token,
     github_hosts, list_hosts,
 };
+use serde_json::json;
 use tempfile::TempDir;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 struct Fixture {
     dir: TempDir,
@@ -573,4 +578,113 @@ fn зависший_gh_обрывается_по_таймауту() {
     let started = std::time::Instant::now();
     assert_eq!(gh.value(&["auth", "status"]), None);
     assert!(started.elapsed() < std::time::Duration::from_secs(15));
+}
+
+const OAUTH_HOST: &str = "gitlab.example.com";
+
+fn oauth(token_url: String, expires_at: i64) -> Credential {
+    Credential {
+        access: "old".into(),
+        refresh: Some("r1".into()),
+        expires_at: Some(expires_at),
+        client_id: "app".into(),
+        token_url,
+        redirect_uri: Some("http://127.0.0.1:5000/callback".into()),
+    }
+}
+
+fn stored(f: &Fixture) -> Option<Credential> {
+    Credential::parse(&f.entry(OAUTH_HOST).get_password().ok()?)
+}
+
+/// `get` обновляет токен через `block_on` — как в приложении, из пула блокирующих задач.
+async fn get_blocking(f: &Arc<Fixture>) -> Result<Option<String>, Error> {
+    let f = f.clone();
+    tokio::task::spawn_blocking(move || f.tokens.get(OAUTH_HOST))
+        .await
+        .unwrap()
+}
+
+#[test]
+fn свежая_запись_oauth_отдаёт_access_без_запроса_и_помечена_в_списке() {
+    let f = fixture();
+    f.tokens
+        .set_oauth(
+            OAUTH_HOST,
+            &oauth("http://127.0.0.1:9/never".into(), i64::MAX),
+        )
+        .unwrap();
+    assert_eq!(f.tokens.get(OAUTH_HOST).unwrap().as_deref(), Some("old"));
+    assert!(f.tokens.is_oauth(OAUTH_HOST));
+    let hosts = list_hosts(&f.tokens, &|_| None, &|_| None).unwrap();
+    assert_eq!(hosts.len(), 1);
+    assert_eq!(hosts[0].source, TokenSource::Oauth);
+    f.tokens.set(OAUTH_HOST, "glpat-x").unwrap();
+    assert!(!f.tokens.is_oauth(OAUTH_HOST), "PAT поверх OAuth");
+    assert_eq!(
+        f.tokens.get(OAUTH_HOST).unwrap().as_deref(),
+        Some("glpat-x")
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn истекающий_токен_обновляется_одним_запросом_на_два_параллельных_get() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/oauth/token"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(
+                    json!({"access_token": "new", "refresh_token": "r2", "expires_in": 7200}),
+                )
+                // второй `get` успевает упереться в замок
+                .set_delay(Duration::from_millis(200)),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+    let f = Arc::new(fixture());
+    f.tokens
+        .set_oauth(
+            OAUTH_HOST,
+            &oauth(format!("{}/oauth/token", server.uri()), 0),
+        )
+        .unwrap();
+    let (a, b) = tokio::join!(get_blocking(&f), get_blocking(&f));
+    assert_eq!(a.unwrap().as_deref(), Some("new"));
+    assert_eq!(b.unwrap().as_deref(), Some("new"));
+    assert_eq!(stored(&f).unwrap().refresh.as_deref(), Some("r2"));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn отозванный_refresh_удаляет_запись_а_сбой_сервера_её_оставляет() {
+    let revoked = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(400).set_body_json(json!({"error": "invalid_grant"})))
+        .mount(&revoked)
+        .await;
+    let f = Arc::new(fixture());
+    f.tokens
+        .set_oauth(
+            OAUTH_HOST,
+            &oauth(format!("{}/oauth/token", revoked.uri()), 0),
+        )
+        .unwrap();
+    assert_eq!(get_blocking(&f).await.unwrap(), None);
+    assert!(f.tokens.hosts().unwrap().is_empty());
+    assert_eq!(stored(&f), None);
+
+    let down = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(503))
+        .mount(&down)
+        .await;
+    f.tokens
+        .set_oauth(OAUTH_HOST, &oauth(format!("{}/oauth/token", down.uri()), 0))
+        .unwrap();
+    assert_eq!(
+        get_blocking(&f).await.unwrap_err().code,
+        ErrorCode::HttpStatus
+    );
+    assert_eq!(stored(&f).unwrap().access, "old");
 }

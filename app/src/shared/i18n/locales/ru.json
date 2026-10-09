@@ -25,6 +25,10 @@
     "reportExpired": "Отчёт больше не в памяти, построй заново",
     "rateLimited": "{{host}}: лимит запросов исчерпан, повтори после {{reset}}",
     "workflowRequired": "Выбери workflow: агрегат GitHub строится по одному workflow",
+    "oauthDenied": "Вход в {{host}} отклонён",
+    "oauthExpired": "Время входа в {{host}} истекло, начни заново",
+    "oauthFailed": "Не удалось войти в {{host}}: {{detail}}",
+    "oauthClientId": "Укажи Client ID приложения, зарегистрированного на {{host}}",
     "ipc": "Не удалось выполнить команду: {{detail}}"
   },
   "form": {

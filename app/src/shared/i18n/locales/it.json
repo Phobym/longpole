@@ -25,6 +25,10 @@
     "reportExpired": "Il report non è più in memoria, crealo di nuovo",
     "rateLimited": "{{host}}: limite di richieste superato, riprova dopo {{reset}}",
     "workflowRequired": "Scegli un workflow: un aggregato GitHub copre un solo workflow",
+    "oauthDenied": "Accesso a {{host}} rifiutato",
+    "oauthExpired": "L'accesso a {{host}} è scaduto, ricomincia",
+    "oauthFailed": "Impossibile accedere a {{host}}: {{detail}}",
+    "oauthClientId": "Indica il Client ID dell'app registrata su {{host}}",
     "ipc": "Impossibile eseguire il comando: {{detail}}"
   },
   "form": {

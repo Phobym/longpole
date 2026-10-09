@@ -55,6 +55,14 @@ pub enum ErrorCode {
     RateLimited,
     /// агрегат GitHub без workflow
     WorkflowRequired,
+    /// пользователь отклонил вход OAuth: `host`
+    OauthDenied,
+    /// истёк код входа OAuth или время ожидания: `host`
+    OauthExpired,
+    /// вход OAuth не удался: `host`, `detail` — ответ сервера или текст ошибки
+    OauthFailed,
+    /// для входа на хост нужен client_id приложения: `host`
+    OauthClientId,
 }
 
 /// Ошибка ядра: код и параметры, без готового текста.

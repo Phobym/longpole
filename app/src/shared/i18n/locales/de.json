@@ -25,6 +25,10 @@
     "reportExpired": "Der Bericht ist nicht mehr im Speicher, bitte erneut erstellen",
     "rateLimited": "{{host}}: Ratenlimit überschritten, erneuter Versuch nach {{reset}}",
     "workflowRequired": "Einen Workflow auswählen: Ein GitHub-Aggregat umfasst einen Workflow",
+    "oauthDenied": "Anmeldung bei {{host}} abgelehnt",
+    "oauthExpired": "Anmeldung bei {{host}} abgelaufen, bitte neu beginnen",
+    "oauthFailed": "Anmeldung bei {{host}} fehlgeschlagen: {{detail}}",
+    "oauthClientId": "Client ID der auf {{host}} registrierten App angeben",
     "ipc": "Der Befehl konnte nicht ausgeführt werden: {{detail}}"
   },
   "form": {

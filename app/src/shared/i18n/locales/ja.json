@@ -25,6 +25,10 @@
     "reportExpired": "レポートはメモリに残っていません。もう一度作成してください",
     "rateLimited": "{{host}}: リクエスト制限を超えました。{{reset}} 以降に再試行してください",
     "workflowRequired": "workflow を選択してください: GitHub の集計は 1 つの workflow が対象です",
+    "oauthDenied": "{{host}} へのサインインが拒否されました",
+    "oauthExpired": "{{host}} へのサインインの有効期限が切れました。やり直してください",
+    "oauthFailed": "{{host}} にサインインできませんでした: {{detail}}",
+    "oauthClientId": "{{host}} に登録したアプリの Client ID を入力してください",
     "ipc": "コマンドを実行できませんでした: {{detail}}"
   },
   "form": {

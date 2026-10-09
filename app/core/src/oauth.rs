@@ -28,10 +28,10 @@ const TIMEOUT: Duration = Duration::from_secs(30);
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(2);
 const GITLAB_COM: &str = "gitlab.com";
 
-/// client_id приложений Longpole на github.com и gitlab.com; не секрет. Пустая строка — приложение
-/// не зарегистрировано, и вход на облако требует client_id, как self-hosted.
+/// client_id приложений Longpole на github.com и gitlab.com; не секрет.
 pub const GITHUB_CLIENT_ID: &str = "Iv23lifiqqdwgSITJE6S";
-pub const GITLAB_CLIENT_ID: &str = "";
+pub const GITLAB_CLIENT_ID: &str =
+    "b33b075148a476ab1c0a3461b6f8e9d862440c857d726aa411f208e30188dc04";
 
 /// Запись OAuth в связке ключей; PAT лежит там же простой строкой.
 /// `refresh` и `expires_at` — `None`, если сервер выдал бессрочный токен.

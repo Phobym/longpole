@@ -74,6 +74,10 @@ fn client_id_введённый_обрезается_пустой_и_с_проб
         client_id("github.com", None).unwrap(),
         "Iv23lifiqqdwgSITJE6S"
     );
+    assert_eq!(
+        client_id("gitlab.com", None).unwrap(),
+        "b33b075148a476ab1c0a3461b6f8e9d862440c857d726aa411f208e30188dc04"
+    );
 }
 
 #[tokio::test]

@@ -3,6 +3,7 @@ name = "longpole"
 version = "0.0.0"
 authors = ["longpole <noreply@longpole.invalid>"]
 edition = "2024"
+license = "MIT"
 publish = false
 
 [build-dependencies]

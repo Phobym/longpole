@@ -21,7 +21,7 @@
 Запись в связке ключей по-прежнему одна на хост (`SERVICE`, account — хост). Значение — одно из двух:
 
 - строка — PAT, как сейчас; старые записи читаются без миграции;
-- JSON `{"kind":"oauth","access":…,"refresh":…,"expires_at":<unix-секунды>,"client_id":…}`.
+- JSON `{"kind":"oauth","access":…,"refresh":…,"expires_at":<unix-секунды>,"client_id":…,"token_url":…,"redirect_uri":…}`. `token_url` — куда идёт refresh (так обновлению не нужно знать провайдера и хост); `redirect_uri` — только у GitLab, он сверяет его и при refresh. `refresh` и `expires_at` — `null`, если сервер выдал бессрочный токен.
 
 Признак OAuth — значение разбирается как JSON с `kind == "oauth"`. PAT JSON-объектом не бывает. `hosts.json` не меняется.
 
@@ -47,21 +47,20 @@
 Функции без состояния на `reqwest`. Базовый URL эндпоинтов — параметр, как `with_api_url` у клиентов, чтобы тесты подставляли wiremock.
 
 - `github_device_start(base, client_id) -> DeviceCode { device_code, user_code, verification_uri, interval, expires_in }` — `POST /login/device/code`.
-- `github_device_poll(base, client_id, &DeviceCode, cancel) -> Credential` — опрос `POST /login/oauth/access_token` с `grant_type=urn:ietf:params:oauth:grant-type:device_code`. `authorization_pending` — ждать `interval`; `slow_down` — интервал +5 с; `access_denied` → `OauthDenied`; `expired_token` → `OauthExpired`.
-- `gitlab_pkce(base, client_id, open, cancel) -> Credential` — 32 случайных байта verifier и 16 байт state (`getrandom`), challenge S256 (`sha2` + `base64` URL-safe без паддинга). Слушатель `TcpListener` на `127.0.0.1:0`; `open` получает `/oauth/authorize?client_id&redirect_uri&response_type=code&state&scope=read_api&code_challenge&code_challenge_method=S256`. Запрос с чужим `state` получает 400, слушатель ждёт дальше. Запрос с верным `state` получает HTML «Можно вернуться в Longpole», слушатель закрывается, затем `POST /oauth/token` с `grant_type=authorization_code`, `code`, `redirect_uri`, `code_verifier`, `client_id`.
+- `github_device_poll(base, client_id, &DeviceCode) -> Credential` — опрос `POST /login/oauth/access_token` с `grant_type=urn:ietf:params:oauth:grant-type:device_code`. `authorization_pending` — ждать `interval`; `slow_down` — интервал +5 с; `access_denied` → `OauthDenied`; `expired_token` → `OauthExpired`.
+- `gitlab_pkce(base, client_id, open) -> Credential` — 32 случайных байта verifier и 16 байт state (`getrandom`), challenge S256 (`sha2` + `base64` URL-safe без паддинга). Слушатель `TcpListener` на `127.0.0.1:0`; `open` получает `/oauth/authorize?client_id&redirect_uri&response_type=code&state&scope=read_api&code_challenge&code_challenge_method=S256`. Запрос с чужим `state` получает 400, слушатель ждёт дальше. Запрос с верным `state` получает HTML-страницу с ✓, слушатель закрывается, затем `POST /oauth/token` с `grant_type=authorization_code`, `code`, `redirect_uri`, `code_verifier`, `client_id`.
 - `refresh(provider, base, &Credential) -> Credential` — GitHub: `POST /login/oauth/access_token` с `client_id`, `grant_type=refresh_token`, `refresh_token`; GitLab: `POST /oauth/token` с тем же и `redirect_uri`.
 
 GitHub base — `https://<host>` (для GHES тот же хост). `expires_at` = сейчас + `expires_in`.
 
-`cancel` — флаг отмены, проверяется между опросами и при ожидании слушателя. Общий таймаут любого flow — 10 минут.
+Публичная точка — `login(provider, base, client_id, open, on_code)`: GitHub вызывает `on_code(UserCode)`, GitLab — `open(url)`. Отмена и общий таймаут 10 минут — снаружи, в команде: `tokio::select!` бросает future flow, слушатель закрывается вместе с ним.
 
 ## 5. Команды Tauri
 
-- `oauth_start(host, client_id: Option<String>) -> OauthStart`. client_id: аргумент или константа для github.com/gitlab.com; для прочих хостов без аргумента — `OauthFailed` с `detail`. Пустая строка или строка с пробелами — `OauthFailed`. GitHub: возвращает `{ kind: "device", user_code, verification_uri }`. GitLab: запускает `gitlab_pkce` с `open` через `tauri-plugin-opener` и возвращает `{ kind: "browser" }`.
-- `oauth_finish(host) -> ()` — ждёт завершения начатого flow и записывает `Credential` в связку ключей (`TokenStore::set_oauth`), добавляет хост в `hosts.json`.
-- `oauth_cancel(host)` — выставляет `cancel`.
+- `oauth_login(host, client_id: Option<String>, on_code: Channel<UserCode>) -> bool`. client_id: аргумент или константа для github.com/gitlab.com; иначе, а также для пустой строки или строки с пробелами — `OauthClientId`. GitHub присылает `{ userCode, verificationUri }` в `on_code`; GitLab открывает браузер через `tauri-plugin-opener`. `true` — запись сохранена (`TokenStore::set_oauth`), `false` — вход отменён.
+- `oauth_cancel(host)` — отменяет начатый вход. Повторный `oauth_login` на тот же хост отменяет предыдущий.
 
-Начатый flow хранится в `AppState` по хосту; повторный `oauth_start` отменяет предыдущий.
+Отмена — `oneshot` на хост в `AppState`: сброс отправителя будит приёмник в `select!`.
 
 `TokenSource` получает вариант `Oauth`; `list_hosts` отдаёт его для OAuth-записей.
 
@@ -73,7 +72,7 @@ GitHub base — `https://<host>` (для GHES тот же хост). `expires_at
 - GitHub: после нажатия — крупный `user_code`, кнопка «Скопировать», ссылка на `verification_uri` (системный браузер), «Отмена».
 - GitLab: «Завершите вход в браузере», «Отмена».
 - Успех — `onSaved()`, как после сохранения PAT. Отмена — возврат в исходное состояние без сообщения. Ошибка — текст под блоком с жирафом, как у PAT.
-- Ошибка доступа к репозиторию github.com для OAuth-записи с нашим client_id дополняется ссылкой «Установить Longpole на организацию» — `https://github.com/apps/<slug>/installations/new`; без установки GitHub App на org репозитории org не видны. На GHES slug приложения нам неизвестен — ссылки нет, установку описывает README.
+- Ссылка «Установить Longpole на организацию» — `https://github.com/apps/<slug>/installations/new` — на шаге с кодом для github.com и в настройках у OAuth-хоста github.com: без установки GitHub App на org репозитории org не видны. В текст ошибки доступа её не добавляем — для этого пришлось бы протаскивать источник токена через ошибки клиента. На GHES slug приложения нам неизвестен — ссылки нет, установку описывает README.
 - Настройки: у хоста с `source: oauth` подпись «Вход через OAuth» и кнопка «Удалить».
 
 Новые строки — во все локали `app/src/shared/i18n/locales/*.json`.
@@ -85,6 +84,7 @@ GitHub base — `https://<host>` (для GHES тот же хост). `expires_at
 - `oauthDenied` — пользователь отклонил вход (`access_denied`).
 - `oauthExpired` — истёк device-код или 10-минутный таймаут.
 - `oauthFailed` — прочее: неверный client_id, Device Flow не включён в приложении, ответ не разобрался, ошибка обмена кода. Текст ответа сервера — в `detail`.
+- `oauthClientId` — для хоста нужен client_id, а он не введён или содержит пробелы.
 
 Токены, refresh token, `code`, `verifier` не попадают в логи и `detail`.
 
@@ -92,7 +92,7 @@ GitHub base — `https://<host>` (для GHES тот же хост). `expires_at
 
 `core/tests/oauth.rs` на wiremock:
 
-- Device Flow: `authorization_pending` → `slow_down` (интервал вырос) → токен; `access_denied` → `oauthDenied`; `expired_token` → `oauthExpired`; отмена прерывает опрос.
+- Device Flow: `authorization_pending` → `slow_down` → токен; `access_denied` → `oauthDenied`; `expired_token` → `oauthExpired`; `device_flow_disabled` → `oauthFailed`.
 - PKCE: тест подменяет `open` — сам шлёт GET на `redirect_uri`; обмен идёт с верным `code_verifier` (сверка S256 с `code_challenge` из URL); чужой `state` → 400, flow ждёт дальше.
 - Refresh: истекающая запись обновляется и перезаписывается; два параллельных `get` — ровно один запрос refresh (`expect(1)`); `invalid_grant` удаляет запись и хост; сетевой сбой оставляет запись.
 

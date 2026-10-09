@@ -30,7 +30,7 @@ const GITLAB_COM: &str = "gitlab.com";
 
 /// client_id приложений Longpole на github.com и gitlab.com; не секрет. Пустая строка — приложение
 /// не зарегистрировано, и вход на облако требует client_id, как self-hosted.
-pub const GITHUB_CLIENT_ID: &str = "";
+pub const GITHUB_CLIENT_ID: &str = "Iv23lifiqqdwgSITJE6S";
 pub const GITLAB_CLIENT_ID: &str = "";
 
 /// Запись OAuth в связке ключей; PAT лежит там же простой строкой.

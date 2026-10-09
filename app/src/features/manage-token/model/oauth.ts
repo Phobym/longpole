@@ -4,7 +4,7 @@ import type { Provider } from '../../../shared/api'
 export const CLOUD_HOSTS = ['github.com', 'gitlab.com']
 
 /** Без установки GitHub App на организацию её репозитории не видны. */
-export const GITHUB_APP_INSTALL = 'https://github.com/apps/longpole/installations/new'
+export const GITHUB_APP_INSTALL = 'https://github.com/apps/longpole-app/installations/new'
 
 /** Страница регистрации приложения на self-hosted: там пользователь берёт client_id. */
 export const registerAppUrl = (host: string, provider: Provider) =>

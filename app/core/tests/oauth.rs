@@ -70,6 +70,10 @@ fn client_id_введённый_обрезается_пустой_и_с_проб
             "{given:?}"
         );
     }
+    assert_eq!(
+        client_id("github.com", None).unwrap(),
+        "Iv23lifiqqdwgSITJE6S"
+    );
 }
 
 #[tokio::test]

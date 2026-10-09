@@ -6,6 +6,8 @@ const COMMANDS: &[&str] = &[
     "hosts",
     "set_token",
     "remove_token",
+    "oauth_login",
+    "oauth_cancel",
     "history",
     "remove_history",
     "clear_history",

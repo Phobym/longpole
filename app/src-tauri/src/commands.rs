@@ -7,6 +7,7 @@ use longpole_core::browse::{Page, Pipeline, Project, Workflow};
 use longpole_core::error::{CmdError, Error, ErrorCode, Field};
 use longpole_core::history::{HistoryEntry, HistoryLabel, NewEntry};
 use longpole_core::hosts::normalize_host;
+use longpole_core::oauth::{self, UserCode};
 use longpole_core::projects::SavedProject;
 use longpole_core::render::render;
 use longpole_core::report::{BuildEnv, Progress, build_report};
@@ -22,6 +23,7 @@ use longpole_core::tokens::{
 use longpole_core::{github, gitlab};
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, State, Webview};
+use tauri_plugin_opener::OpenerExt;
 use time::OffsetDateTime;
 
 use crate::menu;
@@ -119,6 +121,49 @@ pub async fn set_token(
 pub async fn remove_token(webview: Webview, state: State<'_, AppState>, host: String) -> Cmd<()> {
     ensure_form(&webview)?;
     Ok(state.tokens.remove(&host)?)
+}
+
+/// Вход через OAuth; `false` — отменён (`oauth_cancel` или новый вход на тот же хост).
+/// GitHub присылает код для пользователя в `on_code`, GitLab открывает браузер сам.
+#[tauri::command]
+pub async fn oauth_login(
+    app: AppHandle,
+    webview: Webview,
+    host: String,
+    client_id: Option<String>,
+    on_code: Channel<UserCode>,
+) -> Cmd<bool> {
+    ensure_form(&webview)?;
+    let host = normalize_host(&host)?;
+    let client_id = oauth::client_id(&host, client_id.as_deref())?;
+    let state = app.state::<AppState>();
+    let provider = resolve_provider(&host, &state.settings).await?;
+    let cancelled = state.start_login(&host);
+    let opener = app.clone();
+    let open = move |url: &str| {
+        opener
+            .opener()
+            .open_url(url, None::<&str>)
+            .map_err(|e| oauth::failed(&oauth::host_of(url), e))
+    };
+    let base = format!("https://{host}");
+    let flow = oauth::login(provider, &base, &client_id, open, |code| {
+        let _ = on_code.send(code);
+    });
+    let credential = tokio::select! {
+        result = tokio::time::timeout(oauth::LOGIN_TIMEOUT, flow) => result
+            .map_err(|_| Error::new(ErrorCode::OauthExpired).with("host", &host))??,
+        _ = cancelled => return Ok(false),
+    };
+    state.tokens.set_oauth(&host, &credential)?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn oauth_cancel(webview: Webview, state: State<'_, AppState>, host: String) -> Cmd<()> {
+    ensure_form(&webview)?;
+    state.cancel_login(&normalize_host(&host)?);
+    Ok(())
 }
 
 #[tauri::command]

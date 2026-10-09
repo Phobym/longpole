@@ -2339,6 +2339,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
  "time",
+ "tokio",
 ]
 
 [[package]]

@@ -4,14 +4,20 @@
 use std::fmt;
 use std::time::Duration;
 
+use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use reqwest::header::{ACCEPT, CONTENT_TYPE};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use time::OffsetDateTime;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpListener;
+use ts_rs::TS;
 use url::Url;
 use url::form_urlencoded::Serializer;
 
 use crate::error::{Error, ErrorCode, network_error};
-use crate::source::GITHUB_COM;
+use crate::source::{GITHUB_COM, Provider};
 
 /// Общий предел ожидания входа: столько живёт device-код GitHub.
 pub const LOGIN_TIMEOUT: Duration = Duration::from_secs(600);
@@ -265,4 +271,179 @@ async fn request_token(
 ) -> Result<Result<Tokens, OauthError>, Error> {
     let (status, body) = post_form(host, url, params).await?;
     parse_reply(host, status, &body)
+}
+
+/// Код, который пользователь вводит на странице GitHub.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct UserCode {
+    pub user_code: String,
+    pub verification_uri: String,
+}
+
+/// Вход на хост `base` (`https://<host>`): GitHub — Device Flow, код уходит в `on_code`;
+/// GitLab — PKCE, `open` открывает адрес авторизации в браузере.
+pub async fn login(
+    provider: Provider,
+    base: &str,
+    client_id: &str,
+    open: impl FnOnce(&str) -> Result<(), Error>,
+    on_code: impl FnOnce(UserCode),
+) -> Result<Credential, Error> {
+    let base = base.trim_end_matches('/');
+    match provider {
+        Provider::Github => github(base, client_id, on_code).await,
+        Provider::Gitlab => gitlab(base, client_id, open).await,
+    }
+}
+
+const DEVICE_GRANT: &str = "urn:ietf:params:oauth:grant-type:device_code";
+
+#[derive(Deserialize)]
+struct DeviceCode {
+    device_code: String,
+    user_code: String,
+    verification_uri: String,
+    interval: u64,
+}
+
+/// Device Flow (RFC 8628): секрет не нужен; срок кода сервер сообщит ошибкой `expired_token`.
+async fn github(
+    base: &str,
+    client_id: &str,
+    on_code: impl FnOnce(UserCode),
+) -> Result<Credential, Error> {
+    let host = host_of(base);
+    let (status, body) = post_form(
+        &host,
+        &format!("{base}/login/device/code"),
+        &[("client_id", client_id)],
+    )
+    .await?;
+    let code = match serde_json::from_slice::<DeviceCode>(&body) {
+        Ok(code) if (200..300).contains(&status) => code,
+        _ => {
+            return Err(match parse_reply(&host, status, &body)? {
+                Err(e) => oauth_error(&host, e),
+                Ok(_) => failed(&host, "unexpected device code response"),
+            });
+        }
+    };
+    on_code(UserCode {
+        user_code: code.user_code,
+        verification_uri: code.verification_uri,
+    });
+    let token_url = format!("{base}/login/oauth/access_token");
+    let params = [
+        ("client_id", client_id),
+        ("device_code", code.device_code.as_str()),
+        ("grant_type", DEVICE_GRANT),
+    ];
+    let mut interval = code.interval;
+    loop {
+        tokio::time::sleep(Duration::from_secs(interval)).await;
+        match request_token(&host, &token_url, &params).await? {
+            Ok(tokens) => return Ok(tokens.into_credential(client_id, &token_url, None)),
+            Err(e) if e.code == "authorization_pending" => {}
+            // RFC 8628 § 3.5: при `slow_down` интервал растёт на 5 с, GitHub присылает новый сам
+            Err(e) if e.code == "slow_down" => interval = e.interval.unwrap_or(interval + 5),
+            Err(e) => return Err(oauth_error(&host, e)),
+        }
+    }
+}
+
+/// PKCE (RFC 7636) через loopback: GitLab сверяет redirect без порта только для IP-литерала,
+/// поэтому `127.0.0.1`, а не `localhost`.
+async fn gitlab(
+    base: &str,
+    client_id: &str,
+    open: impl FnOnce(&str) -> Result<(), Error>,
+) -> Result<Credential, Error> {
+    let host = host_of(base);
+    let verifier = random_token(&host, 32)?;
+    let state = random_token(&host, 16)?;
+    let challenge = URL_SAFE_NO_PAD.encode(Sha256::digest(verifier.as_bytes()));
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .map_err(|e| failed(&host, e))?;
+    let port = listener.local_addr().map_err(|e| failed(&host, e))?.port();
+    let redirect_uri = format!("http://127.0.0.1:{port}/callback");
+    let authorize = Url::parse_with_params(
+        &format!("{base}/oauth/authorize"),
+        [
+            ("client_id", client_id),
+            ("redirect_uri", redirect_uri.as_str()),
+            ("response_type", "code"),
+            ("state", state.as_str()),
+            ("scope", "read_api"),
+            ("code_challenge", challenge.as_str()),
+            ("code_challenge_method", "S256"),
+        ],
+    )
+    .map_err(|e| failed(&host, e))?;
+    open(authorize.as_str())?;
+    let code = callback(&listener, &host, &state).await?;
+    drop(listener);
+    let token_url = format!("{base}/oauth/token");
+    let params = [
+        ("client_id", client_id),
+        ("code", code.as_str()),
+        ("grant_type", "authorization_code"),
+        ("redirect_uri", redirect_uri.as_str()),
+        ("code_verifier", verifier.as_str()),
+    ];
+    match request_token(&host, &token_url, &params).await? {
+        Ok(tokens) => Ok(tokens.into_credential(client_id, &token_url, Some(redirect_uri))),
+        Err(e) => Err(oauth_error(&host, e)),
+    }
+}
+
+/// `bytes` случайных байт в base64url: 32 байта дают verifier из 43 символов (RFC 7636 § 4.1).
+fn random_token(host: &str, bytes: usize) -> Result<String, Error> {
+    let mut buf = vec![0; bytes];
+    getrandom::fill(&mut buf).map_err(|e| failed(host, e))?;
+    Ok(URL_SAFE_NO_PAD.encode(buf))
+}
+
+const BAD_REQUEST: &[u8] =
+    b"HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+const DONE: &str = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n\
+<!doctype html><title>Longpole</title><p style=\"font:3rem system-ui;text-align:center\">✓</p>";
+
+/// Ждёт редирект браузера с нашим `state`: код или ошибку. Прочие запросы (чужой `state`, favicon)
+/// получают 400, ожидание продолжается.
+// ponytail: строка запроса читается одним `read` — браузер шлёт её первым пакетом; дочитывать, если встретится иначе
+async fn callback(listener: &TcpListener, host: &str, state: &str) -> Result<String, Error> {
+    loop {
+        let (mut stream, _) = listener.accept().await.map_err(|e| failed(host, e))?;
+        let mut buf = vec![0; 8192];
+        let read = stream.read(&mut buf).await.unwrap_or(0);
+        let request = String::from_utf8_lossy(&buf[..read]);
+        let target = request
+            .lines()
+            .next()
+            .and_then(|line| line.split(' ').nth(1))
+            .and_then(|target| Url::parse(&format!("http://127.0.0.1{target}")).ok());
+        let get = |name: &str| {
+            target.as_ref().and_then(|url| {
+                url.query_pairs()
+                    .find(|(key, _)| key == name)
+                    .map(|(_, value)| value.into_owned())
+            })
+        };
+        if get("state").as_deref() != Some(state) {
+            let _ = stream.write_all(BAD_REQUEST).await;
+            continue;
+        }
+        let _ = stream.write_all(DONE.as_bytes()).await;
+        if let Some(code) = get("code") {
+            return Ok(code);
+        }
+        let error = get("error").unwrap_or_default();
+        return Err(oauth_error(
+            host,
+            OauthError::new(error, get("error_description")),
+        ));
+    }
 }

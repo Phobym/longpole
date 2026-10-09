@@ -1,34 +1,53 @@
 name: release
 
 on:
+  # Каждый мерж в main — релиз; версию считает .github/scripts/next-version.sh.
   push:
-    tags: ['v*']
+    branches: [main]
+    paths-ignore: ['docs/**', '**.md']
   # Артефакты без релиза — для приёмки (S10).
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# Два прогона одного тега не должны гонять создание черновика релиза.
+# Прогоны идут по очереди: следующий видит тег предыдущего. Ожидать может только один —
+# при серии мержей промежуточные отменяются, но их коммиты попадают в следующий релиз.
 concurrency:
   group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  version:
+  prepare:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_id: ${{ steps.release.outputs.id }}
     steps:
       - uses: actions/checkout@v7
-      - name: Тег совпадает с версией app/package.json
-        if: github.ref_type == 'tag'
+        with:
+          fetch-depth: 0
+      - id: version
+        run: echo "version=$(.github/scripts/next-version.sh)" >> "$GITHUB_OUTPUT"
+      # Тег ставим сразу: черновик релиза тег не создаёт, и упавшая сборка иначе
+      # отдала бы ту же версию следующему прогону.
+      - id: release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.version }}
         run: |
-          version="$(node -p "require('./app/package.json').version")"
-          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
-            echo "::error::тег ${GITHUB_REF_NAME} ≠ версии v${version} в app/package.json"
-            exit 1
-          fi
+          git tag "$TAG" "$GITHUB_SHA"
+          git push origin "$TAG"
+          id="$(gh api -X POST "repos/${GITHUB_REPOSITORY}/releases" \
+            -f tag_name="$TAG" -f name="Longpole $TAG" \
+            -F draft=true -F generate_release_notes=true --jq .id)"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
 
   build:
-    needs: version
+    needs: prepare
     permissions:
       contents: write
     strategy:
@@ -84,6 +103,9 @@ jobs:
 
       - run: npm ci
         working-directory: app
+      # Версия приложения = версия релиза; в репозиторий не коммитится.
+      - run: npm version "${{ needs.prepare.outputs.version }}" --no-git-tag-version --allow-same-version
+        working-directory: app
 
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -91,13 +113,11 @@ jobs:
         with:
           projectPath: app
           args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
-          # На dispatch tagName пуст — tauri-action только собирает, релиз не создаёт.
-          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
-          releaseName: Longpole ${{ github.ref_name }}
-          releaseDraft: true
+          # На dispatch releaseId пуст — tauri-action только собирает, никуда не загружает.
+          releaseId: ${{ needs.prepare.outputs.release_id }}
 
       - uses: actions/upload-artifact@v4
-        if: github.ref_type != 'tag'
+        if: github.event_name == 'workflow_dispatch'
         with:
           name: longpole-${{ matrix.target }}
           path: |
@@ -106,3 +126,17 @@ jobs:
             app/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
             app/target/${{ matrix.target }}/release/bundle/deb/*.deb
           if-no-files-found: error
+
+  # Публикуем, только когда собрались все платформы; иначе релиз остаётся черновиком.
+  publish:
+    needs: [prepare, build]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api -X PATCH "repos/${GITHUB_REPOSITORY}/releases/${{ needs.prepare.outputs.release_id }}" \
+            -F draft=false -f make_latest=true --silent

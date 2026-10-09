@@ -688,3 +688,40 @@ async fn отозванный_refresh_удаляет_запись_а_сбой_с
     );
     assert_eq!(stored(&f).unwrap().access, "old");
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn удаление_во_время_обновления_не_воскрешается_обновлением() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/oauth/token"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(
+                    json!({"access_token": "new", "refresh_token": "r2", "expires_in": 7200}),
+                )
+                .set_delay(Duration::from_millis(300)),
+        )
+        .mount(&server)
+        .await;
+    let f = Arc::new(fixture());
+    f.tokens
+        .set_oauth(
+            OAUTH_HOST,
+            &oauth(format!("{}/oauth/token", server.uri()), 0),
+        )
+        .unwrap();
+    let refreshing = tokio::spawn({
+        let f = f.clone();
+        async move { get_blocking(&f).await }
+    });
+    // `get` успевает взять замок и уйти в сеть
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    let removing = {
+        let f = f.clone();
+        tokio::task::spawn_blocking(move || f.tokens.remove(OAUTH_HOST))
+    };
+    refreshing.await.unwrap().unwrap();
+    removing.await.unwrap().unwrap();
+    assert_eq!(stored(&f), None);
+    assert!(f.tokens.hosts().unwrap().is_empty());
+}

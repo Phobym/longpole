@@ -416,6 +416,8 @@ const BAD_REQUEST: &[u8] =
     b"HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
 const DONE: &str = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n\
 <!doctype html><title>Longpole</title><p style=\"font:3rem system-ui;text-align:center\">✓</p>";
+const DENIED: &str = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n\
+<!doctype html><title>Longpole</title><p style=\"font:3rem system-ui;text-align:center\">✕</p>";
 
 /// Ждёт редирект браузера с нашим `state`: код или ошибку. Прочие запросы (чужой `state`, favicon)
 /// получают 400, ожидание продолжается.
@@ -456,14 +458,16 @@ async fn callback(listener: &TcpListener, host: &str, state: &str) -> Result<Str
             let _ = stream.write_all(BAD_REQUEST).await;
             continue;
         }
+        // ✓ только если пришёл код: при `error=…` (access_denied) вход не удался, браузер не должен говорить обратное
+        let Some(code) = get("code") else {
+            let _ = stream.write_all(DENIED.as_bytes()).await;
+            let error = get("error").unwrap_or_default();
+            return Err(oauth_error(
+                host,
+                OauthError::new(error, get("error_description")),
+            ));
+        };
         let _ = stream.write_all(DONE.as_bytes()).await;
-        if let Some(code) = get("code") {
-            return Ok(code);
-        }
-        let error = get("error").unwrap_or_default();
-        return Err(oauth_error(
-            host,
-            OauthError::new(error, get("error_description")),
-        ));
+        return Ok(code);
     }
 }

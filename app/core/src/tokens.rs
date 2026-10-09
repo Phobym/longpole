@@ -94,15 +94,17 @@ impl TokenStore {
     /// Токен хоста; недоступное хранилище и битая запись — как «токена нет», чтобы работали `glab` и env.
     /// Запись OAuth за 5 минут до срока обновляется через `block_on`: вызывать из пула блокирующих задач tokio.
     pub fn get(&self, host: &str) -> Result<Option<String>, Error> {
-        if let Stored::Ready(token) = self.stored(host)? {
+        // ключ замка — нормализованный хост, как у писателей
+        let host = normalize_host(host)?;
+        if let Stored::Ready(token) = self.stored(&host)? {
             return Ok(token);
         }
-        let lock = self.refresh_lock(host);
+        let lock = self.refresh_lock(&host);
         let _guard = lock.lock().unwrap_or_else(PoisonError::into_inner);
         // пока ждали замок, запись мог обновить другой поток
-        match self.stored(host)? {
+        match self.stored(&host)? {
             Stored::Ready(token) => Ok(token),
-            Stored::Stale(credential) => self.refresh(host, &credential),
+            Stored::Stale(credential) => self.refresh(&host, &credential),
         }
     }
 
@@ -116,33 +118,52 @@ impl TokenStore {
     }
 
     pub fn set_oauth(&self, host: &str, credential: &Credential) -> Result<(), Error> {
-        let value = serde_json::to_string(credential)
-            .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))?;
-        self.write(host, &value)
+        self.write(host, &Self::to_json(credential)?)
     }
 
+    /// Ждёт замок хоста: идущее обновление не должно потом вернуть удалённую запись.
     pub fn remove(&self, host: &str) -> Result<(), Error> {
         let host = normalize_host(host)?;
-        if let Some(entry) = self.entry(&host)? {
-            match entry.delete_credential() {
-                Ok(()) | Err(KeyringError::NoEntry) => {}
-                Err(e) => return Err(key_error(e)),
-            }
-        }
-        self.hosts.remove(&host)
+        let lock = self.refresh_lock(&host);
+        let _guard = lock.lock().unwrap_or_else(PoisonError::into_inner);
+        self.delete(&host)
     }
 
+    fn to_json(credential: &Credential) -> Result<String, Error> {
+        serde_json::to_string(credential)
+            .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))
+    }
+
+    /// Запись под замком хоста, чтобы обновление не затёрло новый вход или токен.
     /// Порядок проверок прежний: хост, хранилище, пустое значение.
     fn write(&self, host: &str, value: &str) -> Result<(), Error> {
         let host = normalize_host(host)?;
-        let Some(entry) = self.entry(&host)? else {
+        let lock = self.refresh_lock(&host);
+        let _guard = lock.lock().unwrap_or_else(PoisonError::into_inner);
+        self.put(&host, value)
+    }
+
+    /// Запись без замка — для `refresh`, который уже держит его внутри `get`.
+    fn put(&self, host: &str, value: &str) -> Result<(), Error> {
+        let Some(entry) = self.entry(host)? else {
             return Err(Error::new(ErrorCode::KeychainUnavailable));
         };
         if value.is_empty() {
             return Err(Error::new(ErrorCode::EmptyToken));
         }
         entry.set_password(value).map_err(key_error)?;
-        self.hosts.add(&host)
+        self.hosts.add(host)
+    }
+
+    /// Удаление без замка, см. `put`.
+    fn delete(&self, host: &str) -> Result<(), Error> {
+        if let Some(entry) = self.entry(host)? {
+            match entry.delete_credential() {
+                Ok(()) | Err(KeyringError::NoEntry) => {}
+                Err(e) => return Err(key_error(e)),
+            }
+        }
+        self.hosts.remove(host)
     }
 
     /// Значение записи как есть: PAT или JSON OAuth.
@@ -181,12 +202,12 @@ impl TokenStore {
             .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))?;
         match runtime.block_on(oauth::refresh(credential)) {
             Ok(renewed) => {
-                self.set_oauth(host, &renewed)?;
+                self.put(host, &Self::to_json(&renewed)?)?;
                 Ok(Some(renewed.access))
             }
             // отозван или истёк: дальше ищем в `glab`/`gh` и env, в конце — блок входа
             Err(RefreshError::Revoked) => {
-                self.remove(host)?;
+                self.delete(host)?;
                 Ok(None)
             }
             Err(RefreshError::Failed(e)) => Err(e),

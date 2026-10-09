@@ -357,10 +357,24 @@ async fn gitlab_pkce_чужой_state_получает_400_а_обмен_идё�
 #[tokio::test]
 async fn gitlab_отказ_в_браузере() {
     let server = MockServer::start().await;
-    let error = gitlab_login(&server, browser("error=access_denied"))
-        .await
-        .unwrap_err();
+    // страницу отказа читаем из открывателя: в `browser` ответ уходит в задачу, чьи проверки теряются
+    let (page_tx, page) = tokio::sync::oneshot::channel();
+    let open = |authorize: &str| {
+        let url = Url::parse(authorize).unwrap();
+        let (redirect, state) = (param(&url, "redirect_uri"), param(&url, "state"));
+        tokio::spawn(async move {
+            let done = reqwest::get(format!("{redirect}?error=access_denied&state={state}"))
+                .await
+                .unwrap();
+            let _ = page_tx.send((done.status(), done.text().await.unwrap()));
+        });
+        Ok(())
+    };
+    let error = gitlab_login(&server, open).await.unwrap_err();
     assert_eq!(error.code, ErrorCode::OauthDenied);
+    let (status, body) = page.await.unwrap();
+    assert_eq!(status, 200);
+    assert!(body.contains('✕') && !body.contains('✓'), "{body}");
 }
 
 #[tokio::test]

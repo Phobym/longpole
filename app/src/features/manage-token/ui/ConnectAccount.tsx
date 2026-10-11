@@ -16,9 +16,11 @@ export function ConnectAccount({ onConnected }: { onConnected?: () => void }) {
   const { t } = useTranslation()
   const errorText = useErrorText()
   const [server, setServer] = useState(false)
+  const [last, setLast] = useState<'github' | 'gitlab' | null>(null)
   const github = useOauthLogin('github.com')
   const gitlab = useOauthLogin('gitlab.com')
-  const failure = messageError(github.error ?? gitlab.error)
+  // ошибка — только у последнего начатого входа: у каждого useOauthLogin своя
+  const failure = messageError(last === 'github' ? github.error : last === 'gitlab' ? gitlab.error : null)
 
   if (server) {
     return (
@@ -33,24 +35,26 @@ export function ConnectAccount({ onConnected }: { onConnected?: () => void }) {
   if (github.waiting) return <OauthWaiting host="github.com" code={github.code} onCancel={github.cancel} className="items-center text-center" />
   if (gitlab.waiting) return <OauthWaiting host="gitlab.com" code={gitlab.code} onCancel={gitlab.cancel} className="items-center text-center" />
 
-  const start = async (login: typeof github.login) => {
+  const start = async (provider: 'github' | 'gitlab') => {
+    setLast(provider)
+    const login = provider === 'github' ? github.login : gitlab.login
     if (await login(null)) onConnected?.()
   }
   return (
     <div className="flex w-full flex-col gap-2">
       {/* белый на тёмном — 15:1; на оранжевом GitLab было бы ≈2,9:1, поэтому GitLab — outline с оранжевым логотипом */}
-      <Button type="button" className="h-8 from-[#24292f] to-[#1d1d1f] text-white dark:from-[#f5f5f7] dark:to-[#e5e5ea] dark:text-[#1d1d1f]" onClick={() => void start(github.login)}>
+      <Button type="button" className="h-8 from-[#24292f] to-[#1d1d1f] text-white dark:from-[#f5f5f7] dark:to-[#e5e5ea] dark:text-[#1d1d1f]" onClick={() => void start('github')}>
         <ProviderIcon provider="github" />
         {t('form.connect.github')}
       </Button>
-      <Button type="button" variant="outline" className="h-8" onClick={() => void start(gitlab.login)}>
+      <Button type="button" variant="outline" className="h-8" onClick={() => void start('gitlab')}>
         <ProviderIcon provider="gitlab" className="text-[#e24329]" />
         {t('form.connect.gitlab')}
       </Button>
       <Button type="button" variant="outline" className="h-8" onClick={() => setServer(true)}>
         {t('form.connect.server')}
       </Button>
-      <p className="text-xs text-muted-foreground">🔒 {t('form.connect.trust')}</p>
+      <p className="text-xs text-muted-foreground"><span aria-hidden>🔒</span> {t('form.connect.trust')}</p>
       <button type="button" className="text-xs text-link hover:underline" onClick={() => setServer(true)}>
         {t('form.connect.manual')}
       </button>

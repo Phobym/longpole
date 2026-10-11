@@ -18,7 +18,8 @@ export function OauthWaiting({ host, code, onCancel, className }: { host: string
             {code.userCode}
           </p>
           {/* ссылка, а не кнопка: копируем по клику, а переход уходит в системный браузер через on_navigation */}
-          <a href={code.verificationUri} target="_blank" rel="noopener noreferrer" className={buttonVariants()} onClick={() => void navigator.clipboard.writeText(code.userCode)}>
+          {/* webview может запретить буфер обмена — код остаётся на экране для ручного ввода */}
+          <a href={code.verificationUri} target="_blank" rel="noopener noreferrer" className={buttonVariants()} onClick={() => navigator.clipboard.writeText(code.userCode).catch(() => {})}>
             {t('form.connect.copyOpen', { host })}
           </a>
           {host === 'github.com' && (

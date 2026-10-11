@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint:fsd": "steiger ./src",
     "check:locales": "node scripts/check-locales.mjs",
-    "test:onboarding": "node --test src/features/onboarding/model/pick.test.ts",
+    "test": "node --test 'src/**/*.test.ts'",
     "tauri": "tauri",
     "prepare": "lefthook install"
   },

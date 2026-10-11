@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../../../shared/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '../../../shared/ui/dialog'
 import { closeConnect, ConnectAccount, useConnectOpen } from '../../../features/manage-token'
+import { resetSearch } from '../../../features/search-projects'
 import { useHostState } from '../../../entities/host'
 import { PickProject } from './PickProject'
 
@@ -12,7 +13,8 @@ export function ConnectDialog() {
   return (
     <Dialog open={open} onOpenChange={(next) => !next && closeConnect()}>
       {/* тело внутри DialogContent: Radix размонтирует его при закрытии, и следующее открытие начинается с кнопок входа */}
-      <DialogContent className="max-w-md">
+      {/* описания нет: строка доверия уже внутри ConnectAccount */}
+      <DialogContent className="max-w-md" aria-describedby={undefined}>
         <ConnectBody />
       </DialogContent>
     </Dialog>
@@ -27,8 +29,7 @@ function ConnectBody() {
   return (
     <>
       <DialogTitle>{t('form.connect.title')}</DialogTitle>
-      <DialogDescription>{t('form.connect.trust')}</DialogDescription>
-      {connected && tokenHost ? <PickProject host={tokenHost} onAdded={closeConnect} /> : <ConnectAccount onConnected={() => setConnected(true)} />}
+      {connected && tokenHost ? <PickProject host={tokenHost} onAdded={closeConnect} /> : <ConnectAccount onConnected={() => { resetSearch(); setConnected(true) }} />}
       <Button type="button" variant="ghost" className="self-end" onClick={closeConnect}>
         {t('form.cancel')}
       </Button>

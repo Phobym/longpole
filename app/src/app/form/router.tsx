@@ -7,6 +7,7 @@ import { ProjectPage } from '../../pages/project'
 import { SettingsPage } from '../../pages/settings'
 import { ReportRoute } from './report-route'
 import { AddProjectDialog } from '../../widgets/add-project-dialog'
+import { ConnectDialog } from '../../widgets/connect-account'
 import { AppHeader } from '../../widgets/app-header'
 import { ProjectsSidebar } from '../../widgets/projects-sidebar'
 
@@ -45,6 +46,7 @@ function Layout() {
       <main className="h-screen overflow-y-auto">
         <Outlet />
         <AddProjectDialog />
+        <ConnectDialog />
       </main>
     )
   }
@@ -59,6 +61,7 @@ function Layout() {
             <Outlet />
           </div>
           <AddProjectDialog />
+          <ConnectDialog />
         </main>
       </div>
     </div>

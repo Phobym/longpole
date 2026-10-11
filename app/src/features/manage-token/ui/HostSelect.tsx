@@ -2,12 +2,12 @@ import { useId, type ReactNode } from 'react'
 import { useTranslation } from '../../../shared/i18n'
 import { labelClasses } from '../../../shared/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/ui/select'
-import { pickAddHost, pickHost, useHostState } from '../../../entities/host'
+import { pickHost, useHostState } from '../../../entities/host'
 
-// Radix Select не принимает пустое значение у пункта, поэтому «+ Добавить хост…» — служебная строка.
+// Radix Select не принимает пустое значение у пункта, поэтому «+ Другой аккаунт…» — служебная строка.
 const ADD_HOST = '__add__'
 
-export function HostSelect({ onChange, children }: { onChange: () => void; children?: ReactNode }) {
+export function HostSelect({ onChange, onAddAccount, children }: { onChange: () => void; onAddAccount: () => void; children?: ReactNode }) {
   const { t } = useTranslation()
   const id = useId()
   const { host, saved, tokenHost } = useHostState()
@@ -18,15 +18,16 @@ export function HostSelect({ onChange, children }: { onChange: () => void; child
       </label>
       <div className="flex gap-2">
         <Select
-          value={host ?? ADD_HOST}
+          value={host ?? ''}
           onValueChange={(value) => {
-            if (value === ADD_HOST) pickAddHost()
-            else pickHost(value)
+            // выбор хоста не меняется: вход открывается поверх, а после него pickHost выберет новый хост
+            if (value === ADD_HOST) return onAddAccount()
+            pickHost(value)
             onChange()
           }}
         >
           <SelectTrigger id={id} translate="no">
-            <SelectValue />
+            <SelectValue placeholder={t('form.host.label')} />
           </SelectTrigger>
           <SelectContent>
             {saved.map((h) => (

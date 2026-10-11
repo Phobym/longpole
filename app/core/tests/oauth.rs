@@ -382,7 +382,7 @@ async fn gitlab_отказ_в_браузере() {
     assert_eq!(error.code, ErrorCode::OauthDenied);
     let (status, body) = page.await.unwrap();
     assert_eq!(status, 200);
-    assert!(body.contains('✕') && !body.contains('✓'), "{body}");
+    assert!(body.contains(r#"data-state="fail""#), "{body}");
 }
 
 #[tokio::test]

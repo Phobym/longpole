@@ -414,10 +414,19 @@ fn random_token(host: &str, bytes: usize) -> Result<String, Error> {
 
 const BAD_REQUEST: &[u8] =
     b"HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-const DONE: &str = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n\
-<!doctype html><title>Longpole</title><p style=\"font:3rem system-ui;text-align:center\">✓</p>";
-const DENIED: &str = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n\
-<!doctype html><title>Longpole</title><p style=\"font:3rem system-ui;text-align:center\">✕</p>";
+/// Страница, которую браузер видит после редиректа; `__STATE__` — `ok` или `fail`.
+const PAGE: &str = include_str!("oauth_page.html");
+
+/// Ответ браузеру со страницей результата входа.
+fn page(state: &str) -> Vec<u8> {
+    let body = PAGE.replace("__STATE__", state);
+    format!(
+        "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\n\
+         Cache-Control: no-store\r\nConnection: close\r\n\r\n{body}",
+        body.len()
+    )
+    .into_bytes()
+}
 
 /// Ждёт редирект браузера с нашим `state`: код или ошибку. Прочие запросы (чужой `state`, favicon)
 /// получают 400, ожидание продолжается.
@@ -458,16 +467,17 @@ async fn callback(listener: &TcpListener, host: &str, state: &str) -> Result<Str
             let _ = stream.write_all(BAD_REQUEST).await;
             continue;
         }
-        // ✓ только если пришёл код: при `error=…` (access_denied) вход не удался, браузер не должен говорить обратное
+        // «вход выполнен» только если пришёл код: при `error=…` (access_denied) вход не удался,
+        // браузер не должен говорить обратное
         let Some(code) = get("code") else {
-            let _ = stream.write_all(DENIED.as_bytes()).await;
+            let _ = stream.write_all(&page("fail")).await;
             let error = get("error").unwrap_or_default();
             return Err(oauth_error(
                 host,
                 OauthError::new(error, get("error_description")),
             ));
         };
-        let _ = stream.write_all(DONE.as_bytes()).await;
+        let _ = stream.write_all(&page("ok")).await;
         return Ok(code);
     }
 }

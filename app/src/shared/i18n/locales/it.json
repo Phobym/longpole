@@ -117,8 +117,6 @@
       "clientIdHint": "Dell'app registrata su {{host}}.",
       "register": "Registra un'app ↗",
       "enterCode": "Inserisci questo codice nel browser:",
-      "copy": "Copia",
-      "open": "Apri {{host}} ↗",
       "finishInBrowser": "Completa l'accesso nel browser.",
       "installOrg": "I repository di un'organizzazione compaiono dopo aver installato Longpole su di essa ↗",
       "installShort": "Installa su un'organizzazione ↗"

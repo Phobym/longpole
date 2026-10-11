@@ -4,8 +4,9 @@ import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { Input, labelClasses } from '../../../shared/ui/input'
 import { Giraffe } from '../../../shared/ui/giraffe'
-import { CLOUD_HOSTS, GITHUB_APP_INSTALL, registerAppUrl } from '../model/oauth'
+import { CLOUD_HOSTS, registerAppUrl } from '../model/oauth'
 import { useOauthLogin } from '../model/useOauthLogin'
+import { OauthWaiting } from './OauthWaiting'
 
 const linkClasses = 'text-link hover:underline'
 
@@ -19,38 +20,7 @@ export function OauthLogin({ host, provider, onSaved }: { host: string; provider
   const failure = messageError(error)
   const cloud = CLOUD_HOSTS.includes(host)
 
-  if (waiting) {
-    return (
-      <div role="status" className="flex flex-col gap-2">
-        {code ? (
-          <>
-            <p className="text-sm">{t('form.oauth.enterCode')}</p>
-            <p translate="no" className="font-mono text-2xl tracking-widest select-all">
-              {code.userCode}
-            </p>
-            <div className="flex items-center gap-3">
-              <Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(code.userCode)}>
-                {t('form.oauth.copy')}
-              </Button>
-              <a href={code.verificationUri} target="_blank" rel="noopener noreferrer" className={linkClasses}>
-                {t('form.oauth.open', { host })}
-              </a>
-            </div>
-            {host === 'github.com' && (
-              <a href={GITHUB_APP_INSTALL} target="_blank" rel="noopener noreferrer" className={`text-xs ${linkClasses}`}>
-                {t('form.oauth.installOrg')}
-              </a>
-            )}
-          </>
-        ) : (
-          <p className="text-sm">{t('form.oauth.finishInBrowser')}</p>
-        )}
-        <Button type="button" variant="ghost" className="self-start" onClick={cancel}>
-          {t('form.cancel')}
-        </Button>
-      </div>
-    )
-  }
+  if (waiting) return <OauthWaiting host={host} code={code} onCancel={cancel} />
 
   return (
     <div className="flex flex-col gap-2">

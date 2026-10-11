@@ -115,8 +115,6 @@
       "clientIdHint": "{{host}} に登録したアプリのもの。",
       "register": "アプリを登録 ↗",
       "enterCode": "ブラウザでこのコードを入力してください:",
-      "copy": "コピー",
-      "open": "{{host}} を開く ↗",
       "finishInBrowser": "ブラウザでサインインを完了してください。",
       "installOrg": "組織のリポジトリは、その組織に Longpole をインストールすると表示されます ↗",
       "installShort": "組織にインストール ↗"

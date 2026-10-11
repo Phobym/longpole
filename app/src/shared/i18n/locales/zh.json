@@ -115,8 +115,6 @@
       "clientIdHint": "在 {{host}} 上注册的应用。",
       "register": "注册应用 ↗",
       "enterCode": "在浏览器中输入此代码：",
-      "copy": "复制",
-      "open": "打开 {{host}} ↗",
       "finishInBrowser": "请在浏览器中完成登录。",
       "installOrg": "在组织上安装 Longpole 后即可看到该组织的仓库 ↗",
       "installShort": "安装到组织 ↗"

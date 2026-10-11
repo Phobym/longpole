@@ -89,11 +89,6 @@
       "accounts": "Konten",
       "connect": "Verbinden"
     },
-    "empty": {
-      "title": "Erstes Projekt hinzufügen",
-      "text": "Einen Link zu einem GitLab- oder GitHub-Repository einfügen oder einen Ordner mit einem Klon auswählen.",
-      "add": "+ Projekt hinzufügen"
-    },
     "addProject": {
       "title": "Projekt hinzufügen",
       "placeholder": "https://gitlab.example.com/group/project, https://github.com/owner/repo oder ein Ordnerpfad",

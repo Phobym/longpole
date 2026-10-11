@@ -90,11 +90,6 @@
       "accounts": "Comptes",
       "connect": "Connecter"
     },
-    "empty": {
-      "title": "Ajoutez votre premier projet",
-      "text": "Collez un lien de dépôt GitLab ou GitHub, ou choisissez un dossier contenant un clone.",
-      "add": "+ Ajouter un projet"
-    },
     "addProject": {
       "title": "Ajouter un projet",
       "placeholder": "https://gitlab.example.com/group/project, https://github.com/owner/repo ou un chemin de dossier",

@@ -88,11 +88,6 @@
       "accounts": "アカウント",
       "connect": "接続"
     },
-    "empty": {
-      "title": "最初のプロジェクトを追加",
-      "text": "GitLab または GitHub のリポジトリのリンクを貼り付けるか、クローンのあるフォルダを選択してください。",
-      "add": "+ プロジェクトを追加"
-    },
     "addProject": {
       "title": "プロジェクトを追加",
       "placeholder": "https://gitlab.example.com/group/project、https://github.com/owner/repo、またはフォルダのパス",

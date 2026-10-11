@@ -88,11 +88,6 @@
       "accounts": "账户",
       "connect": "连接"
     },
-    "empty": {
-      "title": "添加你的第一个项目",
-      "text": "粘贴 GitLab 或 GitHub 仓库链接，或选择一个克隆所在的文件夹。",
-      "add": "+ 添加项目"
-    },
     "addProject": {
       "title": "添加项目",
       "placeholder": "https://gitlab.example.com/group/project、https://github.com/owner/repo 或文件夹路径",

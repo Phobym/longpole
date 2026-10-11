@@ -91,11 +91,6 @@
       "accounts": "Аккаунты",
       "connect": "Подключить"
     },
-    "empty": {
-      "title": "Добавь первый проект",
-      "text": "Вставь ссылку на репозиторий GitLab или GitHub или выбери папку с клоном.",
-      "add": "+ Добавить проект"
-    },
     "addProject": {
       "title": "Добавить проект",
       "placeholder": "https://gitlab.example.com/group/project, https://github.com/owner/repo или путь к папке",

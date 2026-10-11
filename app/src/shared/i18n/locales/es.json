@@ -90,11 +90,6 @@
       "accounts": "Cuentas",
       "connect": "Conectar"
     },
-    "empty": {
-      "title": "Añade tu primer proyecto",
-      "text": "Pega un enlace a un repositorio de GitLab o GitHub o elige una carpeta con un clon.",
-      "add": "+ Añadir proyecto"
-    },
     "addProject": {
       "title": "Añadir proyecto",
       "placeholder": "https://gitlab.example.com/group/project, https://github.com/owner/repo o la ruta de una carpeta",

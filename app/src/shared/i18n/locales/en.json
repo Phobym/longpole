@@ -89,11 +89,6 @@
       "accounts": "Accounts",
       "connect": "Connect"
     },
-    "empty": {
-      "title": "Add your first project",
-      "text": "Paste a GitLab or GitHub repository link or pick a folder with a clone.",
-      "add": "+ Add project"
-    },
     "addProject": {
       "title": "Add project",
       "placeholder": "https://gitlab.example.com/group/project, https://github.com/owner/repo or a folder path",

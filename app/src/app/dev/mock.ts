@@ -3,19 +3,21 @@
  * чтобы форму можно было смотреть и верстать без Rust. Подключается только в dev и только когда настоящего моста нет;
  * в сборку не попадает (`import.meta.env.DEV`).
  */
-import { fixtures, type AppSettings, type HistoryEntry, type HostInfo, type Pipeline, type Project, type SavedProject, type SettingsPatch } from '../../shared/api'
+import { fixtures, type AppSettings, type HistoryEntry, type HostInfo, type Pipeline, type Project, type SavedProject, type SettingsPatch, type UserCode } from '../../shared/api'
 
 const HOST = 'gitlab.example.com'
 const now = Date.now()
 const iso = (minutesAgo: number) => new Date(now - minutesAgo * 60_000).toISOString()
+// `http://localhost:5173/?welcome#/` — первый запуск: ни хостов, ни проектов
+const welcome = new URLSearchParams(location.search).has('welcome')
 
 let settings: AppSettings = { locale: 'ru', theme: 'system', lastProject: { host: HOST, path: 'g/p' }, tips: true, seenTips: [] }
-const hosts: HostInfo[] = [
+const hosts: HostInfo[] = welcome ? [] : [
   { host: HOST, source: 'keychain', provider: 'gitlab' },
   { host: 'gitlab.com', source: 'glab', provider: 'gitlab' },
   { host: 'github.com', source: 'gh', provider: 'github' },
 ]
-let saved: SavedProject[] = [
+let saved: SavedProject[] = welcome ? [] : [
   { host: HOST, path: 'g/p', name: 'group / project', addedAt: iso(60 * 24 * 3) },
   { host: HOST, path: 'platform/web-app', name: 'platform / web-app', addedAt: iso(60 * 24) },
   { host: 'gitlab.com', path: 'acme/billing-service', name: 'acme / billing-service', addedAt: iso(30) },
@@ -72,6 +74,8 @@ const projects: Project[] = [
 ]
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
+// «Отмена» во время входа: oauth_login возвращает false, как настоящий
+let cancelLogin: (() => void) | null = null
 
 const commands: Record<string, (args: Record<string, unknown>) => Promise<unknown> | unknown> = {
   get_settings: () => settings,
@@ -79,11 +83,15 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
   hosts: () => hosts,
   set_token: () => null,
   remove_token: () => null,
-  oauth_login: async () => {
-    await delay(1500)
+  oauth_login: async ({ host, onCode }) => {
+    // Channel из @tauri-apps/api: геттер onmessage отдаёт обработчик, переданный в oauthLogin
+    if (host === 'github.com') (onCode as { onmessage: (c: UserCode) => void }).onmessage({ userCode: 'WDJB-MJHT', verificationUri: 'https://github.com/login/device' })
+    const cancelled = await Promise.race([delay(host === 'github.com' ? 4000 : 1500).then(() => false), new Promise<boolean>((r) => (cancelLogin = () => r(true)))])
+    if (cancelled) return false
+    if (!hosts.some((h) => h.host === host)) hosts.push({ host: String(host), source: 'oauth', provider: host === 'github.com' ? 'github' : 'gitlab' })
     return true
   },
-  oauth_cancel: () => null,
+  oauth_cancel: () => cancelLogin?.() ?? null,
   saved_projects: () => saved,
   add_project: async ({ input }) => {
     await delay(400)

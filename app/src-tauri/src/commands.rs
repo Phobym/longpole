@@ -29,7 +29,7 @@ use time::OffsetDateTime;
 use crate::menu;
 use crate::reports::TEMPLATE;
 use crate::state::{AppState, ReportEntry};
-use crate::windows::FORM;
+use crate::windows::{FORM, show_form};
 
 type Cmd<T> = Result<T, CmdError>;
 
@@ -163,12 +163,19 @@ pub async fn oauth_login(
         result = attempt => result?,
         _ = cancelled => return Ok(false),
     };
+    let store = app.clone();
     // замок хоста может держать обновление по сети, см. `set_token`
     tauri::async_runtime::spawn_blocking(move || {
-        app.state::<AppState>().tokens.set_oauth(&host, &credential)
+        store
+            .state::<AppState>()
+            .tokens
+            .set_oauth(&host, &credential)
     })
     .await
     .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))??;
+    // вход завершён в браузере — возвращаем пользователя в приложение; токен уже сохранён,
+    // поэтому сбой окна вход не отменяет
+    let _ = show_form(&app);
     Ok(true)
 }
 

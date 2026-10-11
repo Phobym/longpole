@@ -1,3 +1,4 @@
+export { GITHUB_APP_INSTALL } from './model/oauth'
 export { HostSelect } from './ui/HostSelect'
 export { RemoveTokenButton } from './ui/RemoveTokenButton'
 export { TokenBlock } from './ui/TokenBlock'

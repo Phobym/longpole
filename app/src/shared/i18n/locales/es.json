@@ -25,6 +25,10 @@
     "reportExpired": "El informe ya no está en memoria, vuelve a generarlo",
     "rateLimited": "{{host}}: se superó el límite de solicitudes, vuelve a intentarlo después de {{reset}}",
     "workflowRequired": "Elige un workflow: un agregado de GitHub abarca un solo workflow",
+    "oauthDenied": "Se rechazó el inicio de sesión en {{host}}",
+    "oauthExpired": "El inicio de sesión en {{host}} caducó; vuelve a empezar",
+    "oauthFailed": "No se pudo iniciar sesión en {{host}}: {{detail}}",
+    "oauthClientId": "Indica el Client ID de la aplicación registrada en {{host}}",
     "ipc": "No se pudo ejecutar el comando: {{detail}}"
   },
   "form": {
@@ -104,6 +108,7 @@
       "stored": "Se guarda en el llavero del sistema.",
       "scopeGithub": "Token de acceso granular con los permisos Actions: read y Contents: read."
     },
+    "oauth": { "login": "Iniciar sesión con {{host}}", "or": "o un token:", "clientId": "Client ID", "clientIdHint": "De la aplicación registrada en {{host}}.", "register": "Registrar una aplicación ↗", "enterCode": "Introduce este código en el navegador:", "copy": "Copiar", "open": "Abrir {{host}} ↗", "finishInBrowser": "Termina de iniciar sesión en el navegador.", "installOrg": "Los repositorios de una organización aparecen tras instalar Longpole en ella ↗", "installShort": "Instalar en una organización ↗" },
     "settings": {
       "title": "Ajustes",
       "back": "← Atrás",
@@ -111,7 +116,7 @@
       "noHosts": "Aún no hay hosts",
       "addHost": "Añadir host",
       "linuxHint": "En Linux el token se guarda en Secret Service (gnome-keyring, KWallet). Si no está disponible, usa glab o las variables GITLAB_TOKEN y GITLAB_HOST.",
-      "source": { "keychain": "llavero", "glab": "glab", "gh": "gh", "env": "variables de entorno" },
+      "source": { "keychain": "llavero", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "variables de entorno" },
       "theme": "Tema",
       "themes": { "system": "Sistema", "light": "Claro", "dark": "Oscuro" },
       "tips": "Consejos",

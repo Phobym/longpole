@@ -14,6 +14,7 @@ import type { Report } from './schema/Report'
 import type { Request } from './schema/Request'
 import type { SavedProject } from './schema/SavedProject'
 import type { SettingsPatch } from './schema/SettingsPatch'
+import type { UserCode } from './schema/UserCode'
 import type { Workflow } from './schema/Workflow'
 
 /** Отказ самого `invoke` (нет команды, запрет ACL, нет моста) — не ответ ядра, кода в `ErrorCode` у него нет. */
@@ -38,6 +39,12 @@ async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<Res
 export const hosts = () => call<HostInfo[]>('hosts')
 export const setToken = (host: string, token: string) => call<null>('set_token', { host, token })
 export const removeToken = (host: string) => call<null>('remove_token', { host })
+/** Вход через OAuth; `false` — отменён. GitHub присылает в `onCode` код для ввода в браузере. */
+export const oauthLogin = (host: string, clientId: string | null, onCode: (code: UserCode) => void) => {
+  const channel = new Channel<UserCode>(onCode)
+  return call<boolean>('oauth_login', { host, clientId, onCode: channel })
+}
+export const oauthCancel = (host: string) => call<null>('oauth_cancel', { host })
 export const history = () => call<HistoryEntry[]>('history')
 export const removeHistory = (at: string) => call<HistoryEntry[]>('remove_history', { at })
 export const clearHistory = () => call<null>('clear_history')

@@ -8,7 +8,7 @@ import { Card } from '../../../shared/ui/card'
 import { labelClasses } from '../../../shared/ui/input'
 import { ThemeSwitch } from '../../../features/choose-theme'
 import { TipsSettings } from '../../../features/onboarding'
-import { RemoveTokenButton, TokenForm } from '../../../features/manage-token'
+import { GITHUB_APP_INSTALL, RemoveTokenButton, TokenForm } from '../../../features/manage-token'
 import { hostsQuery } from '../../../entities/host'
 import { LanguageSwitch } from '../../../widgets/language-switch'
 
@@ -48,7 +48,12 @@ export function SettingsPage() {
                 </span>
               )}
               <span className="text-[11px] text-muted-foreground">{t(`form.settings.source.${h.source}`)}</span>
-              {h.source === 'keychain' && <RemoveTokenButton host={h.host} />}
+              {h.source === 'oauth' && h.host === 'github.com' && (
+                <a href={GITHUB_APP_INSTALL} target="_blank" rel="noopener noreferrer" className="text-[11px] text-link hover:underline">
+                  {t('form.oauth.installShort')}
+                </a>
+              )}
+              {(h.source === 'keychain' || h.source === 'oauth') && <RemoveTokenButton host={h.host} />}
             </li>
           ))}
         </ul>

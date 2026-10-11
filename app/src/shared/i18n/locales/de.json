@@ -25,6 +25,10 @@
     "reportExpired": "Der Bericht ist nicht mehr im Speicher, bitte erneut erstellen",
     "rateLimited": "{{host}}: Ratenlimit überschritten, erneuter Versuch nach {{reset}}",
     "workflowRequired": "Einen Workflow auswählen: Ein GitHub-Aggregat umfasst einen Workflow",
+    "oauthDenied": "Anmeldung bei {{host}} abgelehnt",
+    "oauthExpired": "Anmeldung bei {{host}} abgelaufen, bitte neu beginnen",
+    "oauthFailed": "Anmeldung bei {{host}} fehlgeschlagen: {{detail}}",
+    "oauthClientId": "Client ID der auf {{host}} registrierten App angeben",
     "ipc": "Der Befehl konnte nicht ausgeführt werden: {{detail}}"
   },
   "form": {
@@ -103,6 +107,7 @@
       "stored": "Wird im System-Schlüsselbund gespeichert.",
       "scopeGithub": "Fine-grained Token mit den Berechtigungen Actions: read und Contents: read."
     },
+    "oauth": { "login": "Mit {{host}} anmelden", "or": "oder ein Token:", "clientId": "Client ID", "clientIdHint": "Der auf {{host}} registrierten App.", "register": "App registrieren ↗", "enterCode": "Diesen Code im Browser eingeben:", "copy": "Kopieren", "open": "{{host}} öffnen ↗", "finishInBrowser": "Anmeldung im Browser abschließen.", "installOrg": "Repositorys einer Organisation erscheinen, sobald Longpole dort installiert ist ↗", "installShort": "In einer Organisation installieren ↗" },
     "settings": {
       "title": "Einstellungen",
       "back": "← Zurück",
@@ -110,7 +115,7 @@
       "noHosts": "Noch keine Hosts",
       "addHost": "Host hinzufügen",
       "linuxHint": "Unter Linux wird das Token im Secret Service (gnome-keyring, KWallet) gespeichert. Ohne diesen glab oder die Variablen GITLAB_TOKEN und GITLAB_HOST verwenden.",
-      "source": { "keychain": "Schlüsselbund", "glab": "glab", "gh": "gh", "env": "Umgebungsvariablen" },
+      "source": { "keychain": "Schlüsselbund", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "Umgebungsvariablen" },
       "theme": "Design",
       "themes": { "system": "System", "light": "Hell", "dark": "Dunkel" },
       "tips": "Tipps",

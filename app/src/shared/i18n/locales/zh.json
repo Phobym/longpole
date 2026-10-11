@@ -25,6 +25,10 @@
     "reportExpired": "报告已不在内存中，请重新生成",
     "rateLimited": "{{host}}：已超出请求频率限制，请在 {{reset}} 后重试",
     "workflowRequired": "请选择 workflow：GitHub 聚合只针对一个 workflow",
+    "oauthDenied": "已拒绝登录 {{host}}",
+    "oauthExpired": "登录 {{host}} 已超时，请重新开始",
+    "oauthFailed": "无法登录 {{host}}：{{detail}}",
+    "oauthClientId": "请输入在 {{host}} 上注册的应用的 Client ID",
     "ipc": "无法执行命令：{{detail}}"
   },
   "form": {
@@ -102,6 +106,7 @@
       "stored": "存储在系统钥匙串中。",
       "scopeGithub": "具有 Actions: read 和 Contents: read 权限的 Fine-grained token。"
     },
+    "oauth": { "login": "通过 {{host}} 登录", "or": "或使用令牌：", "clientId": "Client ID", "clientIdHint": "在 {{host}} 上注册的应用。", "register": "注册应用 ↗", "enterCode": "在浏览器中输入此代码：", "copy": "复制", "open": "打开 {{host}} ↗", "finishInBrowser": "请在浏览器中完成登录。", "installOrg": "在组织上安装 Longpole 后即可看到该组织的仓库 ↗", "installShort": "安装到组织 ↗" },
     "settings": {
       "title": "设置",
       "back": "← 返回",
@@ -109,7 +114,7 @@
       "noHosts": "暂无主机",
       "addHost": "添加主机",
       "linuxHint": "在 Linux 上，令牌存储在 Secret Service（gnome-keyring、KWallet）中。如果没有，请使用 glab 或 GITLAB_TOKEN 和 GITLAB_HOST 变量。",
-      "source": { "keychain": "钥匙串", "glab": "glab", "gh": "gh", "env": "环境变量" },
+      "source": { "keychain": "钥匙串", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "环境变量" },
       "theme": "主题",
       "themes": { "system": "跟随系统", "light": "浅色", "dark": "深色" },
       "tips": "提示",

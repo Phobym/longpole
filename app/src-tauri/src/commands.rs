@@ -7,6 +7,7 @@ use longpole_core::browse::{Page, Pipeline, Project, Workflow};
 use longpole_core::error::{CmdError, Error, ErrorCode, Field};
 use longpole_core::history::{HistoryEntry, HistoryLabel, NewEntry};
 use longpole_core::hosts::normalize_host;
+use longpole_core::oauth::{self, UserCode};
 use longpole_core::projects::SavedProject;
 use longpole_core::render::render;
 use longpole_core::report::{BuildEnv, Progress, build_report};
@@ -22,12 +23,13 @@ use longpole_core::tokens::{
 use longpole_core::{github, gitlab};
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, State, Webview};
+use tauri_plugin_opener::OpenerExt;
 use time::OffsetDateTime;
 
 use crate::menu;
 use crate::reports::TEMPLATE;
 use crate::state::{AppState, ReportEntry};
-use crate::windows::FORM;
+use crate::windows::{FORM, show_form};
 
 type Cmd<T> = Result<T, CmdError>;
 
@@ -104,21 +106,84 @@ pub async fn hosts(app: AppHandle, webview: Webview) -> Cmd<Vec<HostInfo>> {
     .map_err(Into::<CmdError>::into)
 }
 
+/// `set` и `remove` ждут замок хоста, а его может держать обновление токена по сети (до 30 с) —
+/// поэтому в пуле блокирующих задач.
 #[tauri::command]
-pub async fn set_token(
-    webview: Webview,
-    state: State<'_, AppState>,
-    host: String,
-    token: String,
-) -> Cmd<()> {
+pub async fn set_token(app: AppHandle, webview: Webview, host: String, token: String) -> Cmd<()> {
     ensure_form(&webview)?;
-    Ok(state.tokens.set(&host, &token)?)
+    tauri::async_runtime::spawn_blocking(move || app.state::<AppState>().tokens.set(&host, &token))
+        .await
+        .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))?
+        .map_err(Into::<CmdError>::into)
 }
 
 #[tauri::command]
-pub async fn remove_token(webview: Webview, state: State<'_, AppState>, host: String) -> Cmd<()> {
+pub async fn remove_token(app: AppHandle, webview: Webview, host: String) -> Cmd<()> {
     ensure_form(&webview)?;
-    Ok(state.tokens.remove(&host)?)
+    tauri::async_runtime::spawn_blocking(move || app.state::<AppState>().tokens.remove(&host))
+        .await
+        .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))?
+        .map_err(Into::<CmdError>::into)
+}
+
+/// Вход через OAuth; `false` — отменён (`oauth_cancel` или новый вход на тот же хост).
+/// GitHub присылает код для пользователя в `on_code`, GitLab открывает браузер сам.
+#[tauri::command]
+pub async fn oauth_login(
+    app: AppHandle,
+    webview: Webview,
+    host: String,
+    client_id: Option<String>,
+    on_code: Channel<UserCode>,
+) -> Cmd<bool> {
+    ensure_form(&webview)?;
+    let host = normalize_host(&host)?;
+    let client_id = oauth::client_id(&host, client_id.as_deref())?;
+    let state = app.state::<AppState>();
+    // отмена регистрируется до пробы хоста: иначе `oauth_cancel` во время пробы терялся бы, и браузер всё равно открылся
+    let cancelled = state.start_login(&host);
+    let attempt = async {
+        let provider = resolve_provider(&host, &state.settings).await?;
+        let opener = app.clone();
+        let open = move |url: &str| {
+            opener
+                .opener()
+                .open_url(url, None::<&str>)
+                .map_err(|e| oauth::failed(&oauth::host_of(url), e))
+        };
+        let base = format!("https://{host}");
+        let flow = oauth::login(provider, &base, &client_id, open, |code| {
+            let _ = on_code.send(code);
+        });
+        tokio::time::timeout(oauth::LOGIN_TIMEOUT, flow)
+            .await
+            .map_err(|_| Error::new(ErrorCode::OauthExpired).with("host", &host))?
+    };
+    let credential = tokio::select! {
+        result = attempt => result?,
+        _ = cancelled => return Ok(false),
+    };
+    let store = app.clone();
+    // замок хоста может держать обновление по сети, см. `set_token`
+    tauri::async_runtime::spawn_blocking(move || {
+        store
+            .state::<AppState>()
+            .tokens
+            .set_oauth(&host, &credential)
+    })
+    .await
+    .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))??;
+    // вход завершён в браузере — возвращаем пользователя в приложение; токен уже сохранён,
+    // поэтому сбой окна вход не отменяет
+    let _ = show_form(&app);
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn oauth_cancel(webview: Webview, state: State<'_, AppState>, host: String) -> Cmd<()> {
+    ensure_form(&webview)?;
+    state.cancel_login(&normalize_host(&host)?);
+    Ok(())
 }
 
 #[tauri::command]

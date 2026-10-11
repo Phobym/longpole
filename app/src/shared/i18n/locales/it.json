@@ -25,6 +25,10 @@
     "reportExpired": "Il report non è più in memoria, crealo di nuovo",
     "rateLimited": "{{host}}: limite di richieste superato, riprova dopo {{reset}}",
     "workflowRequired": "Scegli un workflow: un aggregato GitHub copre un solo workflow",
+    "oauthDenied": "Accesso a {{host}} rifiutato",
+    "oauthExpired": "L'accesso a {{host}} è scaduto, ricomincia",
+    "oauthFailed": "Impossibile accedere a {{host}}: {{detail}}",
+    "oauthClientId": "Indica il Client ID dell'app registrata su {{host}}",
     "ipc": "Impossibile eseguire il comando: {{detail}}"
   },
   "form": {
@@ -104,6 +108,7 @@
       "stored": "Salvato nel portachiavi di sistema.",
       "scopeGithub": "Token fine-grained con i permessi Actions: read e Contents: read."
     },
+    "oauth": { "login": "Accedi con {{host}}", "or": "o un token:", "clientId": "Client ID", "clientIdHint": "Dell'app registrata su {{host}}.", "register": "Registra un'app ↗", "enterCode": "Inserisci questo codice nel browser:", "copy": "Copia", "open": "Apri {{host}} ↗", "finishInBrowser": "Completa l'accesso nel browser.", "installOrg": "I repository di un'organizzazione compaiono dopo aver installato Longpole su di essa ↗", "installShort": "Installa su un'organizzazione ↗" },
     "settings": {
       "title": "Impostazioni",
       "back": "← Indietro",
@@ -111,7 +116,7 @@
       "noHosts": "Ancora nessun host",
       "addHost": "Aggiungi host",
       "linuxHint": "Su Linux il token è salvato in Secret Service (gnome-keyring, KWallet). In alternativa, usa glab o le variabili GITLAB_TOKEN e GITLAB_HOST.",
-      "source": { "keychain": "portachiavi", "glab": "glab", "gh": "gh", "env": "variabili d'ambiente" },
+      "source": { "keychain": "portachiavi", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "variabili d'ambiente" },
       "theme": "Tema",
       "themes": { "system": "Sistema", "light": "Chiaro", "dark": "Scuro" },
       "tips": "Suggerimenti",

@@ -12,6 +12,7 @@ pub mod insights;
 mod iso;
 mod json_file;
 pub mod model;
+pub mod oauth;
 pub mod projects;
 pub mod render;
 pub mod report;

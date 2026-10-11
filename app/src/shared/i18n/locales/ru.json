@@ -25,6 +25,10 @@
     "reportExpired": "Отчёт больше не в памяти, построй заново",
     "rateLimited": "{{host}}: лимит запросов исчерпан, повтори после {{reset}}",
     "workflowRequired": "Выбери workflow: агрегат GitHub строится по одному workflow",
+    "oauthDenied": "Вход в {{host}} отклонён",
+    "oauthExpired": "Время входа в {{host}} истекло, начни заново",
+    "oauthFailed": "Не удалось войти в {{host}}: {{detail}}",
+    "oauthClientId": "Укажи Client ID приложения, зарегистрированного на {{host}}",
     "ipc": "Не удалось выполнить команду: {{detail}}"
   },
   "form": {
@@ -105,6 +109,7 @@
       "stored": "Хранится в системной связке ключей.",
       "scopeGithub": "Fine-grained token с правами Actions: read и Contents: read."
     },
+    "oauth": { "login": "Войти через {{host}}", "or": "или токен:", "clientId": "Client ID", "clientIdHint": "Приложения, зарегистрированного на {{host}}.", "register": "Зарегистрировать ↗", "enterCode": "Введи этот код в браузере:", "copy": "Скопировать", "open": "Открыть {{host}} ↗", "finishInBrowser": "Заверши вход в браузере.", "installOrg": "Репозитории организации видны после установки Longpole на неё ↗", "installShort": "Установить на организацию ↗" },
     "settings": {
       "title": "Настройки",
       "back": "← Назад",
@@ -112,7 +117,7 @@
       "noHosts": "Пока нет ни одного хоста",
       "addHost": "Добавить хост",
       "linuxHint": "На Linux токен хранится в Secret Service (gnome-keyring, KWallet). Без него используй glab или переменные GITLAB_TOKEN и GITLAB_HOST.",
-      "source": { "keychain": "связка ключей", "glab": "glab", "gh": "gh", "env": "переменные окружения" },
+      "source": { "keychain": "связка ключей", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "переменные окружения" },
       "theme": "Тема",
       "themes": { "system": "Системная", "light": "Светлая", "dark": "Тёмная" },
       "tips": "Подсказки",

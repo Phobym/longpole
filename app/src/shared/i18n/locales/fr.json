@@ -25,6 +25,10 @@
     "reportExpired": "Le rapport n'est plus en mémoire, générez-le à nouveau",
     "rateLimited": "{{host}} : limite de requêtes dépassée, réessayez après {{reset}}",
     "workflowRequired": "Choisissez un workflow : un agrégat GitHub porte sur un seul workflow",
+    "oauthDenied": "Connexion à {{host}} refusée",
+    "oauthExpired": "La connexion à {{host}} a expiré, recommencez",
+    "oauthFailed": "Impossible de se connecter à {{host}} : {{detail}}",
+    "oauthClientId": "Indiquez le Client ID de l'application enregistrée sur {{host}}",
     "ipc": "Impossible d'exécuter la commande : {{detail}}"
   },
   "form": {
@@ -104,6 +108,7 @@
       "stored": "Stocké dans le trousseau du système.",
       "scopeGithub": "Token à granularité fine avec les permissions Actions : read et Contents : read."
     },
+    "oauth": { "login": "Se connecter avec {{host}}", "or": "ou un jeton :", "clientId": "Client ID", "clientIdHint": "De l'application enregistrée sur {{host}}.", "register": "Enregistrer une application ↗", "enterCode": "Saisissez ce code dans le navigateur :", "copy": "Copier", "open": "Ouvrir {{host}} ↗", "finishInBrowser": "Terminez la connexion dans le navigateur.", "installOrg": "Les dépôts d'une organisation apparaissent une fois Longpole installé dessus ↗", "installShort": "Installer sur une organisation ↗" },
     "settings": {
       "title": "Réglages",
       "back": "← Retour",
@@ -111,7 +116,7 @@
       "noHosts": "Aucun hôte pour l'instant",
       "addHost": "Ajouter un hôte",
       "linuxHint": "Sous Linux, le token est stocké dans Secret Service (gnome-keyring, KWallet). À défaut, utilisez glab ou les variables GITLAB_TOKEN et GITLAB_HOST.",
-      "source": { "keychain": "trousseau", "glab": "glab", "gh": "gh", "env": "variables d'environnement" },
+      "source": { "keychain": "trousseau", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "variables d'environnement" },
       "theme": "Thème",
       "themes": { "system": "Système", "light": "Clair", "dark": "Sombre" },
       "tips": "Astuces",

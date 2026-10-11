@@ -11,6 +11,7 @@ use longpole_core::request::Request;
 use longpole_core::schema::Locale;
 use longpole_core::settings::Settings;
 use longpole_core::tokens::{TokenStore, platform_store};
+use tokio::sync::oneshot;
 
 const ZOOM_MIN: f64 = 0.25;
 const ZOOM_MAX: f64 = 5.0;
@@ -32,6 +33,8 @@ pub struct AppState {
     pub history: History,
     pub settings: Settings,
     pub projects: Projects,
+    /// хост → начатый вход OAuth; сброс отправителя отменяет вход
+    logins: Mutex<HashMap<String, oneshot::Sender<()>>>,
     /// от старого к новому; id растут
     reports: Mutex<VecDeque<(u32, ReportEntry)>>,
     /// отчёт на экране формы: ему адресовано ⌘S
@@ -48,6 +51,7 @@ impl AppState {
             history: History::new(data_dir.join("history.json")),
             settings: Settings::new(data_dir.join("settings.json")),
             projects: Projects::new(data_dir.join("projects.json")),
+            logins: Mutex::default(),
             reports: Mutex::default(),
             current_report: Mutex::default(),
             zoom: Mutex::default(),
@@ -111,6 +115,18 @@ impl AppState {
     /// Язык интерфейса; не читается файл настроек — системный.
     pub fn locale(&self) -> Locale {
         self.settings.locale().unwrap_or_else(|_| Locale::system())
+    }
+
+    /// Новый вход на хост; начатый раньше отменяется. Приёмник срабатывает при отмене.
+    pub fn start_login(&self, host: &str) -> oneshot::Receiver<()> {
+        let (cancel, cancelled) = oneshot::channel();
+        // прежний отправитель сбрасывается — его вход получает отмену
+        lock(&self.logins).insert(host.into(), cancel);
+        cancelled
+    }
+
+    pub fn cancel_login(&self, host: &str) {
+        lock(&self.logins).remove(host);
     }
 }
 

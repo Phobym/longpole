@@ -24,6 +24,8 @@ fn main() {
             commands::hosts,
             commands::set_token,
             commands::remove_token,
+            commands::oauth_login,
+            commands::oauth_cancel,
             commands::history,
             commands::remove_history,
             commands::clear_history,
@@ -121,7 +123,7 @@ mod tests {
             .filter_map(|permission| permission.strip_prefix("allow-"))
             .map(|name| name.replace('-', "_"))
             .collect();
-        assert_eq!(in_build.len(), 20);
+        assert_eq!(in_build.len(), 22);
         assert_eq!(in_build, in_handler);
         assert_eq!(in_build, in_capability);
     }

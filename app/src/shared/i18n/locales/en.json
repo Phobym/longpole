@@ -25,6 +25,10 @@
     "reportExpired": "The report is no longer in memory, build it again",
     "rateLimited": "{{host}}: rate limit exceeded, retry after {{reset}}",
     "workflowRequired": "Choose a workflow: a GitHub aggregate covers one workflow",
+    "oauthDenied": "Sign-in to {{host}} was declined",
+    "oauthExpired": "Sign-in to {{host}} timed out, start again",
+    "oauthFailed": "Could not sign in to {{host}}: {{detail}}",
+    "oauthClientId": "Enter the Client ID of the app registered on {{host}}",
     "ipc": "Could not run the command: {{detail}}"
   },
   "form": {
@@ -103,6 +107,7 @@
       "stored": "Stored in the system keychain.",
       "scopeGithub": "Fine-grained token with Actions: read and Contents: read permissions."
     },
+    "oauth": { "login": "Sign in with {{host}}", "or": "or a token:", "clientId": "Client ID", "clientIdHint": "Of the app registered on {{host}}.", "register": "Register an app ↗", "enterCode": "Enter this code in the browser:", "copy": "Copy", "open": "Open {{host}} ↗", "finishInBrowser": "Finish signing in in the browser.", "installOrg": "Organization repositories appear once Longpole is installed on the organization ↗", "installShort": "Install on an organization ↗" },
     "settings": {
       "title": "Settings",
       "back": "← Back",
@@ -110,7 +115,7 @@
       "noHosts": "No hosts yet",
       "addHost": "Add host",
       "linuxHint": "On Linux the token is stored in Secret Service (gnome-keyring, KWallet). Without it, use glab or the GITLAB_TOKEN and GITLAB_HOST variables.",
-      "source": { "keychain": "keychain", "glab": "glab", "gh": "gh", "env": "environment variables" },
+      "source": { "keychain": "keychain", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "environment variables" },
       "theme": "Theme",
       "themes": { "system": "System", "light": "Light", "dark": "Dark" },
       "tips": "Tips",

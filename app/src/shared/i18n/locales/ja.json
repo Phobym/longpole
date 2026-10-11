@@ -25,6 +25,10 @@
     "reportExpired": "レポートはメモリに残っていません。もう一度作成してください",
     "rateLimited": "{{host}}: リクエスト制限を超えました。{{reset}} 以降に再試行してください",
     "workflowRequired": "workflow を選択してください: GitHub の集計は 1 つの workflow が対象です",
+    "oauthDenied": "{{host}} へのサインインが拒否されました",
+    "oauthExpired": "{{host}} へのサインインの有効期限が切れました。やり直してください",
+    "oauthFailed": "{{host}} にサインインできませんでした: {{detail}}",
+    "oauthClientId": "{{host}} に登録したアプリの Client ID を入力してください",
     "ipc": "コマンドを実行できませんでした: {{detail}}"
   },
   "form": {
@@ -102,6 +106,7 @@
       "stored": "システムのキーチェーンに保存されます。",
       "scopeGithub": "Actions: read と Contents: read の権限を持つ Fine-grained token。"
     },
+    "oauth": { "login": "{{host}} でサインイン", "or": "またはトークン:", "clientId": "Client ID", "clientIdHint": "{{host}} に登録したアプリのもの。", "register": "アプリを登録 ↗", "enterCode": "ブラウザでこのコードを入力してください:", "copy": "コピー", "open": "{{host}} を開く ↗", "finishInBrowser": "ブラウザでサインインを完了してください。", "installOrg": "組織のリポジトリは、その組織に Longpole をインストールすると表示されます ↗", "installShort": "組織にインストール ↗" },
     "settings": {
       "title": "設定",
       "back": "← 戻る",
@@ -109,7 +114,7 @@
       "noHosts": "ホストはまだありません",
       "addHost": "ホストを追加",
       "linuxHint": "Linux ではトークンは Secret Service (gnome-keyring、KWallet) に保存されます。利用できない場合は、glab または環境変数 GITLAB_TOKEN と GITLAB_HOST を使用してください。",
-      "source": { "keychain": "キーチェーン", "glab": "glab", "gh": "gh", "env": "環境変数" },
+      "source": { "keychain": "キーチェーン", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "環境変数" },
       "theme": "テーマ",
       "themes": { "system": "システム", "light": "ライト", "dark": "ダーク" },
       "tips": "ヒント",

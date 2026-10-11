@@ -1,12 +1,14 @@
 name: release
 
 on:
-  # Каждый мерж в main — релиз; версию считает .github/scripts/next-version.sh.
-  push:
-    branches: [main]
-    paths-ignore: ['docs/**', '**.md']
-  # Артефакты без релиза — для приёмки (S10).
+  # Релиз — вручную из main; версию считает .github/scripts/next-version.sh.
+  # Без publish (или не из main) — только артефакты для приёмки (S10).
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Опубликовать релиз (иначе только артефакты)
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -34,7 +36,7 @@ jobs:
       # Тег ставим сразу: черновик релиза тег не создаёт, и упавшая сборка иначе
       # отдала бы ту же версию следующему прогону.
       - id: release
-        if: github.event_name == 'push'
+        if: inputs.publish && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: v${{ steps.version.outputs.version }}
@@ -113,11 +115,11 @@ jobs:
         with:
           projectPath: app
           args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
-          # На dispatch releaseId пуст — tauri-action только собирает, никуда не загружает.
+          # Без релиза releaseId пуст — tauri-action только собирает, никуда не загружает.
           releaseId: ${{ needs.prepare.outputs.release_id }}
 
       - uses: actions/upload-artifact@v4
-        if: github.event_name == 'workflow_dispatch'
+        if: ${{ !(inputs.publish && github.ref == 'refs/heads/main') }}
         with:
           name: longpole-${{ matrix.target }}
           path: |
@@ -130,7 +132,7 @@ jobs:
   # Публикуем, только когда собрались все платформы; иначе релиз остаётся черновиком.
   publish:
     needs: [prepare, build]
-    if: github.event_name == 'push'
+    if: inputs.publish && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:
       contents: write

@@ -1,0 +1,11 @@
+# Ссылка «Посмотреть в Longpole» на отчёт по пайплайну. Нужна instance-level переменная LONGPOLE_URL.
+# Числовой id проекта вместо пути: после переименования проекта ссылка по старому пути не откроется.
+longpole:
+  stage: .pre
+  image: alpine
+  script:
+    - echo "Посмотреть в Longpole: $LONGPOLE_URL/$CI_SERVER_HOST/$CI_PROJECT_ID/-/pipelines/$CI_PIPELINE_ID"
+  environment:
+    name: longpole
+    url: $LONGPOLE_URL/$CI_SERVER_HOST/$CI_PROJECT_ID/-/pipelines/$CI_PIPELINE_ID
+    action: access

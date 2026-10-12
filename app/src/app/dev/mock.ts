@@ -142,7 +142,7 @@ if (!w.__TAURI_INTERNALS__) {
     unregisterCallback: () => undefined,
     invoke: async (cmd: string, args: Record<string, unknown> = {}) => {
       const handler = commands[cmd]
-      if (!handler) throw { kind: 'message', code: 'ipc', params: { detail: `mock: нет команды ${cmd}` } }
+      if (!handler) throw { kind: 'message', code: 'transport', params: { detail: `mock: нет команды ${cmd}` } }
       return handler(args)
     },
   }

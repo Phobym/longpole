@@ -29,7 +29,7 @@
     "oauthExpired": "La connexion à {{host}} a expiré, recommencez",
     "oauthFailed": "Impossible de se connecter à {{host}} : {{detail}}",
     "oauthClientId": "Indiquez le Client ID de l'application enregistrée sur {{host}}",
-    "ipc": "Impossible d'exécuter la commande : {{detail}}"
+    "transport": "Impossible d'exécuter la commande : {{detail}}"
   },
   "form": {
     "cancel": "Annuler",

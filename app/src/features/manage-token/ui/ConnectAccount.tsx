@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { messageError } from '../../../shared/api'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
@@ -12,13 +12,16 @@ import { TokenForm } from './TokenForm'
  * Вход с первого экрана и из «Подключить аккаунт» (спека, § 5): github.com и gitlab.com в один клик,
  * свой сервер и токен вручную — через `TokenForm`, где есть и OAuth с Client ID, и PAT.
  */
-export function ConnectAccount({ onConnected }: { onConnected?: () => void }) {
+export function ConnectAccount({ onConnected, onWaitingChange }: { onConnected?: () => void; onWaitingChange?: (waiting: boolean) => void }) {
   const { t } = useTranslation()
   const errorText = useErrorText()
   const [server, setServer] = useState(false)
   const [last, setLast] = useState<'github' | 'gitlab' | null>(null)
   const github = useOauthLogin('github.com')
   const gitlab = useOauthLogin('gitlab.com')
+  // родитель прячет своё оформление, пока `OauthWaiting` занимает место
+  const waiting = github.waiting || gitlab.waiting
+  useEffect(() => onWaitingChange?.(waiting), [waiting, onWaitingChange])
   // ошибка — только у последнего начатого входа: у каждого useOauthLogin своя
   const failure = messageError(last === 'github' ? github.error : last === 'gitlab' ? gitlab.error : null)
 

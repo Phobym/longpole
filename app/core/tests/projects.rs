@@ -1,4 +1,5 @@
 //! «Мои проекты»: `projects.json` на tempdir.
+#![cfg(feature = "desktop")]
 
 use longpole_core::error::ErrorCode;
 use longpole_core::projects::{Projects, SavedProject};

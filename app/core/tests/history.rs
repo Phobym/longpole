@@ -1,4 +1,5 @@
 //! История запросов: `desktop/history.test` на tempdir.
+#![cfg(feature = "desktop")]
 
 use longpole_core::error::ErrorCode;
 use longpole_core::history::{History, HistoryEntry, HistoryLabel, NewEntry};

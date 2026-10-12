@@ -20,7 +20,6 @@ use longpole_core::source::{AnySource, Provider, Source, resolve_provider};
 use longpole_core::tokens::{
     Gh, Glab, HostInfo, find_github_token, find_token, github_hosts, list_hosts,
 };
-use longpole_core::{github, gitlab};
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, State, Webview};
 use tauri_plugin_opener::OpenerExt;
@@ -58,22 +57,21 @@ async fn source_for(app: &AppHandle, host: &str) -> Result<AnySource, Error> {
     tauri::async_runtime::spawn_blocking(move || {
         let tokens = &app.state::<AppState>().tokens;
         let env = |name: &str| std::env::var(name).ok();
-        match provider {
+        let token = match provider {
             Provider::Gitlab => {
                 let glab = Glab::find();
-                let token = find_token(&host, tokens, &env, &|args| {
+                find_token(&host, tokens, &env, &|args| {
                     glab.as_ref().and_then(|glab| glab.value(args))
-                })?;
-                Ok(AnySource::Gitlab(gitlab::Client::new(&host, &token)?))
+                })?
             }
             Provider::Github => {
                 let gh = Gh::find();
-                let token = find_github_token(&host, tokens, &env, &|args| {
+                find_github_token(&host, tokens, &env, &|args| {
                     gh.as_ref().and_then(|gh| gh.value(args))
-                })?;
-                Ok(AnySource::Github(github::Client::new(&host, &token)?))
+                })?
             }
-        }
+        };
+        AnySource::new(provider, &host, &token)
     })
     .await
     .map_err(|e| Error::new(ErrorCode::Storage).with("detail", e))?

@@ -1,4 +1,5 @@
 //! `settings.json` с языком интерфейса и выбор языка по системной локали.
+#![cfg(feature = "desktop")]
 
 use longpole_core::error::ErrorCode;
 use longpole_core::request::ProjectRef;

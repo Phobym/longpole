@@ -1,4 +1,5 @@
 //! Вход через OAuth на wiremock (спека `2026-10-09-oauth-design.md`): запись, client_id, refresh.
+#![cfg(feature = "desktop")]
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

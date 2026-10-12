@@ -11,6 +11,7 @@ use crate::error::Error;
 use crate::github;
 use crate::gitlab::{self, Gql, Listed, PipelineFilter};
 use crate::model::RawPipeline;
+#[cfg(feature = "desktop")]
 use crate::settings::Settings;
 
 /// Хост GitHub, тип которого известен без пробы и кэша.
@@ -25,11 +26,13 @@ pub enum Provider {
 }
 
 /// Тип хоста (спека, § 3): кэш, иначе проба `/api/v3/meta` с записью в кэш. Сбой сети или 5xx/429/407 — ошибка, кэш не пишется.
+#[cfg(feature = "desktop")]
 pub async fn resolve_provider(host: &str, settings: &Settings) -> Result<Provider, Error> {
     resolve_provider_at(host, settings, &format!("https://{host}")).await
 }
 
 /// `base_url` — адрес хоста; тесты подставляют wiremock.
+#[cfg(feature = "desktop")]
 pub async fn resolve_provider_at(
     host: &str,
     settings: &Settings,
@@ -165,6 +168,16 @@ impl<G: Gql> Source for G {
 pub enum AnySource {
     Gitlab(gitlab::Client),
     Github(github::Client),
+}
+
+impl AnySource {
+    /// Клиент хоста по готовому токену: где его взять, решает оболочка.
+    pub fn new(provider: Provider, host: &str, token: &str) -> Result<Self, Error> {
+        Ok(match provider {
+            Provider::Gitlab => Self::Gitlab(gitlab::Client::new(host, token)?),
+            Provider::Github => Self::Github(github::Client::new(host, token)?),
+        })
+    }
 }
 
 impl Source for AnySource {

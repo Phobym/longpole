@@ -18,7 +18,7 @@ use longpole_core::browse::{Page, Pipeline, Project, Workflow};
 use longpole_core::error::{CmdError, Error, ErrorCode, Field};
 use longpole_core::history::{HistoryLabel, NewEntry};
 use longpole_core::projects::SavedProject;
-use longpole_core::report::{BuildEnv, Progress, build_report, default_file_name};
+use longpole_core::report::{BuildEnv, Progress, build_report, default_file_name, single_suffix};
 use longpole_core::request::{Form, FormMode, Parsed, Request, parse_form, parse_remote};
 use longpole_core::schema::{Locale, Report};
 use longpole_core::source::{AnySource, Provider, Source, project_path};
@@ -363,12 +363,8 @@ impl AppState {
         let built = async {
             match single_pipeline(&source, &request).await? {
                 Some((project, pipeline)) => {
-                    // как `resolve` в ядре: имя то же, что у Desktop, и у отчёта из кэша
-                    let suffix = match &request {
-                        Request::Mr { mr_iid, .. } => format!("mr{mr_iid}"),
-                        _ => pipeline.clone(),
-                    };
-                    let file_name = default_file_name(&project, &suffix);
+                    let file_name =
+                        default_file_name(&project, &single_suffix(&request, &pipeline));
                     let (report, key, cached) = self
                         .cached_report(&source, project, pipeline, env, fresh, on_progress)
                         .await?;

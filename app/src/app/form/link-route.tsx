@@ -17,10 +17,11 @@ export function ReportLinkRoute() {
   const pathname = useLocation({ select: (l) => l.pathname })
   const link = reportLink(pathname)
   const queryClient = useQueryClient()
+  const queryKey = ['reportLink', link?.url]
   const [progress, setProgress] = useState<BuildProgress | null>(null)
   // запрос, а не мутация: двойной эффект StrictMode и возврат «Назад» не строят отчёт заново
   const { data, error } = useQuery({
-    queryKey: ['reportLink', link?.url],
+    queryKey,
     queryFn: async () => {
       setProgress(null)
       const id = await unwrap(build(linkForm(link!.url), setProgress))
@@ -34,9 +35,9 @@ export function ReportLinkRoute() {
   if (!link) return <LinkFailure error={{ kind: 'message', code: 'invalidLink', params: {} }} />
   const failure = apiError(error)
   // сброс, а не refetch: у refetch ошибка висит до ответа, а нужны «В очереди…» и прогресс
-  if (failure) return <LinkFailure error={failure} onRetry={() => void queryClient.resetQueries({ queryKey: ['reportLink', link.url] })} />
+  if (failure) return <LinkFailure error={failure} onRetry={() => void queryClient.resetQueries({ queryKey })} />
   if (!data) return <ReportLoading text={progressText(t, progress)} />
-  const onRebuilt = (next: Report) => queryClient.setQueryData(['reportLink', link.url], { id: data.id, report: next })
+  const onRebuilt = (next: Report) => queryClient.setQueryData(queryKey, { id: data.id, report: next })
   return <ReportScreen id={data.id} report={data.report} onRebuilt={onRebuilt} />
 }
 

@@ -6,6 +6,7 @@ use std::num::NonZeroUsize;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
 
+use longpole_core::error::{Error, ErrorCode};
 use tokio::sync::{Semaphore, SemaphorePermit};
 
 /// Построений одного пользователя хоста одновременно, включая ждущие в очереди.
@@ -17,7 +18,7 @@ pub(crate) type User = (String, u64);
 pub(crate) struct Limits {
     slots: Semaphore,
     users: Arc<Mutex<HashMap<User, usize>>>,
-    pub(crate) timeout: Duration,
+    timeout: Duration,
 }
 
 impl Limits {
@@ -50,6 +51,16 @@ impl Limits {
         }
         on_queued();
         self.slots.acquire().await.expect("семафор не закрывается")
+    }
+
+    /// `build_timeout`: отмена бросает сборку целиком — в кэш она ничего не кладёт.
+    pub(crate) async fn within_timeout<T>(
+        &self,
+        work: impl Future<Output = Result<T, Error>>,
+    ) -> Result<T, Error> {
+        tokio::time::timeout(self.timeout, work)
+            .await
+            .unwrap_or_else(|_| Err(Error::new(ErrorCode::BuildTimeout)))
     }
 }
 

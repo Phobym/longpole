@@ -342,7 +342,8 @@ impl AppState {
         env: BuildEnv,
         tx: mpsc::UnboundedSender<Value>,
     ) {
-        // ponytail: слот держит и выдача из кэша; отдельная очередь для попаданий, если они начнут ждать долго
+        // ponytail: слот держит и выдача из кэша, и ждущий single-flight того же ключа (его таймаут идёт и в
+        // ожидании); отдельная очередь для попаданий, если они начнут ждать долго
         let _slot = self
             .0
             .builds
@@ -372,10 +373,7 @@ impl AppState {
                 }
             }
         };
-        // отмена по таймауту бросает сборку целиком: в кэш она ничего не кладёт
-        let built = tokio::time::timeout(self.0.builds.timeout, built)
-            .await
-            .unwrap_or_else(|_| Err(Error::new(ErrorCode::BuildTimeout)));
+        let built = self.0.builds.within_timeout(built).await;
         let ms = started.elapsed().as_millis() as u64;
         match &built {
             Ok((_, project, pipeline, cached)) => {

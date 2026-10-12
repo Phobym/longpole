@@ -20,7 +20,7 @@ use longpole_core::projects::SavedProject;
 use longpole_core::report::{BuildEnv, build_report};
 use longpole_core::request::{Form, FormMode, Parsed, Request, parse_form, parse_remote};
 use longpole_core::schema::{Locale, Report};
-use longpole_core::source::{AnySource, Provider, Source};
+use longpole_core::source::{AnySource, Provider, Source, project_path};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use time::OffsetDateTime;
@@ -142,7 +142,8 @@ pub(crate) async fn branches(
 ) -> Response {
     state
         .run(jar, &args.host, async |source| -> Cmd<Vec<String>> {
-            Ok(source.list_branches(&args.project, &args.search).await?)
+            let project = project_path(&source, &args.project).await?;
+            Ok(source.list_branches(&project, &args.search).await?)
         })
         .await
 }
@@ -163,9 +164,10 @@ pub(crate) async fn pipelines(
 ) -> Response {
     state
         .run(jar, &args.host, async |source| -> Cmd<Page<Pipeline>> {
+            let project = project_path(&source, &args.project).await?;
             Ok(source
                 .recent_pipelines(
-                    &args.project,
+                    &project,
                     args.r#ref.as_deref(),
                     args.workflow.as_deref(),
                     args.after.as_deref(),
@@ -188,7 +190,8 @@ pub(crate) async fn workflows(
 ) -> Response {
     state
         .run(jar, &args.host, async |source| -> Cmd<Vec<Workflow>> {
-            Ok(source.list_workflows(&args.project).await?)
+            let project = project_path(&source, &args.project).await?;
+            Ok(source.list_workflows(&project).await?)
         })
         .await
 }

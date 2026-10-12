@@ -149,6 +149,10 @@
       "back": "← Atrás",
       "loading": "Cargando el informe…"
     },
+    "reportLink": {
+      "signIn": "Inicia sesión en {{host}} para ver el informe",
+      "home": "Ir al inicio"
+    },
     "welcome": {
       "title": "Te damos la bienvenida a Longpole",
       "text": "Inicia sesión para ver tus pipelines y descubrir qué ralentiza la compilación.",

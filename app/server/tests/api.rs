@@ -151,6 +151,35 @@ async fn поток_build_это_прогресс_и_последняя_стро
 }
 
 #[tokio::test]
+async fn ссылка_с_id_репозитория_строит_отчёт_по_его_пути() {
+    let mock = providers(28800).await;
+    mount_run(&mock).await;
+    Mock::given(method("GET"))
+        .and(path("/api/v3/repositories/42"))
+        .respond_with(reply(200, json!({"full_name": "o/r"})))
+        .mount(&mock)
+        .await;
+    let app = router(state(&mock));
+    let cookie = sign_in(&app, GHES, "").await;
+    let url = format!("https://{GHES}/42/actions/runs/7");
+    let out = call(
+        &app,
+        "build",
+        &cookie,
+        json!({"form": {"mode": "link", "url": url}}),
+    )
+    .await;
+    let ok = &out.last().unwrap()["ok"];
+    assert_eq!(ok["report"]["meta"]["project"], "o/r", "{out:?}");
+    assert_eq!(ok["entry"]["label"]["project"], "o/r");
+    // запрос в истории остаётся по id: он переживёт переименование
+    assert_eq!(
+        ok["entry"]["request"],
+        json!({"mode": "pipeline", "project": "42", "pipelineId": "7"})
+    );
+}
+
+#[tokio::test]
 async fn поток_build_с_ошибкой_провайдера_кончается_err() {
     let mock = providers(28800).await;
     let app = router(state(&mock));
@@ -286,6 +315,20 @@ async fn операции_формы_идут_к_провайдеру_с_ток�
     )
     .await;
     assert_eq!(workflows[0]["ok"][0]["file"], "ci.yml", "{workflows:?}");
+    // экран проекта по ссылке с id репозитория вместо пути
+    Mock::given(method("GET"))
+        .and(path("/api/v3/repositories/42"))
+        .respond_with(reply(200, json!({"full_name": "o/r"})))
+        .mount(&mock)
+        .await;
+    let by_id = call(
+        &app,
+        "workflows",
+        &cookie,
+        json!({"host": GHES, "project": "42"}),
+    )
+    .await;
+    assert_eq!(by_id, workflows);
     let no_session = call(
         &app,
         "workflows",

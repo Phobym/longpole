@@ -75,6 +75,32 @@ async fn build(request: &Request, handler: impl Fn(&Value) -> Value + Sync) -> B
 }
 
 #[tokio::test]
+async fn mr_по_числовому_id_проекта_читается_по_пути() {
+    let seen = Mutex::new(Vec::new());
+    let handler = gitlab(vec![], Some("gid://gitlab/Ci::Pipeline/9"));
+    let gql = fake_gql(|v| {
+        seen.lock().unwrap().push(v["project"].clone());
+        if v.get("ids").is_some() {
+            json!({ "projects": { "nodes": [{ "fullPath": "g/p", "nameWithNamespace": "G / P",
+                                              "lastActivityAt": null, "repository": null }] } })
+        } else {
+            handler(v)
+        }
+    });
+    let request = Request::Mr {
+        project: "42".into(),
+        mr_iid: "3".into(),
+    };
+    let built = build_report(&gql, &request, ENV, |_| {}).await.unwrap();
+    assert_eq!(built.report.meta().project, "g/p");
+    assert_eq!(built.file_name, "longpole-g-p-mr3.html");
+    assert_eq!(
+        *seen.lock().unwrap(),
+        [Value::Null, json!("g/p"), json!("g/p")]
+    );
+}
+
+#[tokio::test]
 async fn pipeline_одно_дерево_метка_по_имени_прогресс_0_и_1() {
     let progress = Mutex::new(Vec::new());
     let request = Request::Pipeline {

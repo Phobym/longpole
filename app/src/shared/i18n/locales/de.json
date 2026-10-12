@@ -148,6 +148,10 @@
       "back": "← Zurück",
       "loading": "Bericht wird geladen…"
     },
+    "reportLink": {
+      "signIn": "Melde dich bei {{host}} an, um den Bericht zu sehen",
+      "home": "Zur Startseite"
+    },
     "welcome": {
       "title": "Willkommen bei Longpole",
       "text": "Anmelden, um Pipelines zu sehen und herauszufinden, was den Build bremst.",

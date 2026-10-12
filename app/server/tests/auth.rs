@@ -140,6 +140,64 @@ async fn return_to_только_относительный_путь() {
     assert_eq!(unknown.status(), StatusCode::BAD_REQUEST);
 }
 
+/// `/auth/login` с возвратом на `return_to`: `state` из адреса провайдера и cookie `longpole_oauth`.
+async fn start_login(app: &Router, return_to: &str) -> (String, String) {
+    let login = send(
+        app,
+        get(
+            &format!("/auth/login?host={GITLAB}&return_to={return_to}"),
+            "",
+        ),
+    )
+    .await;
+    let state = Url::parse(&location(&login))
+        .unwrap()
+        .query_pairs()
+        .find(|(k, _)| k == "state")
+        .unwrap()
+        .1
+        .into_owned();
+    let (pending, _) = set_cookie(login.headers(), "longpole_oauth").unwrap();
+    (state, format!("longpole_oauth={pending}"))
+}
+
+#[tokio::test]
+async fn ссылка_на_отчёт_через_вход_и_через_отказ_возвращает_на_себя() {
+    let mock = providers(7200).await;
+    let app = router(state(&mock));
+    let link = format!("/{GITLAB}/g/p/-/pipelines/7");
+
+    let (state, pending) = start_login(&app, &link).await;
+    let callback = send(
+        &app,
+        get(
+            &format!("/auth/callback/{GITLAB}?code=c1&state={state}"),
+            &pending,
+        ),
+    )
+    .await;
+    assert_eq!(callback.status(), StatusCode::FOUND);
+    assert_eq!(location(&callback), link);
+    assert!(set_cookie(callback.headers(), "longpole_session").is_some());
+
+    let (state, pending) = start_login(&app, &link).await;
+    let refused = send(
+        &app,
+        get(
+            &format!("/auth/callback/{GITLAB}?error=access_denied&state={state}"),
+            &pending,
+        ),
+    )
+    .await;
+    assert_eq!(refused.status(), StatusCode::FOUND);
+    assert_eq!(
+        location(&refused),
+        link,
+        "отказ — туда же, экран входа рисует SPA"
+    );
+    assert_eq!(set_cookie(refused.headers(), "longpole_session"), None);
+}
+
 #[tokio::test]
 async fn callback_с_чужим_state_отклоняется() {
     let mock = providers(7200).await;

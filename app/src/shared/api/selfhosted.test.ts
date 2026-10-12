@@ -11,6 +11,10 @@ Object.defineProperty(globalThis, 'localStorage', {
     removeItem: (k: string) => void store.delete(k),
   },
 })
+const session = new Map<string, string>()
+Object.defineProperty(globalThis, 'sessionStorage', {
+  value: { getItem: (k: string) => session.get(k) ?? null, setItem: (k: string, v: string) => void session.set(k, v) },
+})
 Object.defineProperty(globalThis, 'navigator', { value: { language: 'fr-FR' } })
 
 const api = await import('./selfhosted.ts')
@@ -27,6 +31,7 @@ const serve = (reply: (cmd: string, body: any) => unknown[]) => {
 
 beforeEach(() => {
   store.clear()
+  session.clear()
   calls.length = 0
 })
 
@@ -164,4 +169,23 @@ test('выход: POST /auth/logout с JSON-заголовком, отказ с�
   assert.deepEqual(sent[0], { url: '/auth/logout?host=gitlab.example.com', init: { method: 'POST', headers: { 'Content-Type': 'application/json' } } })
   status = 403
   assert.deepEqual(await api.logout('gitlab.example.com'), { ok: false, error: { kind: 'message', code: 'transport', params: { detail: 'HTTP 403' } } })
+})
+
+test('authRequired сразу после входа в этот хост (отказ или 401 на свежий токен) — без второго входа: ошибка доходит до экрана', async () => {
+  const assigned: string[] = []
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: { pathname: '/gitlab.example.com/g/p/-/pipelines/7', search: '', hash: '', assign: (url: string) => assigned.push(url) },
+  })
+  const authRequired = (host: string) => ({ kind: 'message', code: 'authRequired', params: { host } }) as const
+  serve(() => [{ err: authRequired('gitlab.example.com') }])
+  await api.build(form, () => {})
+  assert.deepEqual(assigned, ['/auth/login?host=gitlab.example.com&return_to=%2Fgitlab.example.com%2Fg%2Fp%2F-%2Fpipelines%2F7'])
+  // провайдер вернул на ту же ссылку, сервер снова не пустил
+  assert.deepEqual(await api.build(form, () => {}), { ok: false, error: authRequired('gitlab.example.com') })
+  assert.equal(assigned.length, 1)
+  // другой хост — свой тихий вход
+  serve(() => [{ err: authRequired('ghe.example.com') }])
+  await api.workflows('ghe.example.com', 'o/r')
+  assert.equal(assigned.length, 2)
 })

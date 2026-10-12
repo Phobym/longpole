@@ -147,6 +147,10 @@
       "back": "← 返回",
       "loading": "正在加载报告…"
     },
+    "reportLink": {
+      "signIn": "登录 {{host}} 以查看报告",
+      "home": "返回首页"
+    },
     "welcome": {
       "title": "欢迎使用 Longpole",
       "text": "登录以查看你的流水线，找出拖慢构建的原因。",

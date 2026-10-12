@@ -4,8 +4,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use ts_rs::TS;
 
-use crate::error::Error;
+use crate::error::{Error, ErrorCode};
 use crate::gitlab::{Connection, Gql, query_as, query_project};
+use crate::request::is_project_id;
 
 /// Страница списка; `next` — курсор следующей страницы, `null` у последней.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
@@ -128,8 +129,35 @@ const PROJECT_QUERY: &str = "query($project: ID!) {
   project(fullPath: $project) { fullPath nameWithNamespace lastActivityAt repository { rootRef } }
 }";
 
-/// Один проект по пути: проверка доступа при добавлении в «Мои проекты».
+/// `project(fullPath:)` числа не понимает, а старый путь после переименования не находит.
+const PROJECT_BY_ID_QUERY: &str = "query($ids: [ID!]) {
+  projects(ids: $ids) { nodes { fullPath nameWithNamespace lastActivityAt repository { rootRef } } }
+}";
+
+#[derive(Deserialize)]
+struct ProjectsByIdData {
+    projects: Nodes<WireProject>,
+}
+
+#[derive(Deserialize)]
+struct Nodes<T> {
+    nodes: Vec<T>,
+}
+
+/// Один проект по пути или числовому id: проверка доступа при добавлении в «Мои проекты», путь по id из ссылки.
 pub async fn fetch_project(gql: &impl Gql, path: &str) -> Result<Project, Error> {
+    if is_project_id(path) {
+        let gid = format!("gid://gitlab/Project/{path}");
+        let data: ProjectsByIdData =
+            query_as(gql, PROJECT_BY_ID_QUERY, json!({ "ids": [gid] })).await?;
+        let found = data
+            .projects
+            .nodes
+            .into_iter()
+            .next()
+            .ok_or_else(|| gql.error(ErrorCode::ProjectNotFound).with("project", path))?;
+        return Ok(found.into());
+    }
     let found: WireProject =
         query_project(gql, PROJECT_QUERY, json!({ "project": path }), path).await?;
     Ok(found.into())

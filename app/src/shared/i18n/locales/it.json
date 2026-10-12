@@ -149,6 +149,10 @@
       "back": "← Indietro",
       "loading": "Caricamento del report…"
     },
+    "reportLink": {
+      "signIn": "Accedi a {{host}} per vedere il report",
+      "home": "Vai all'inizio"
+    },
     "welcome": {
       "title": "Benvenuto in Longpole",
       "text": "Accedi per vedere le tue pipeline e scoprire cosa rallenta la build.",

@@ -11,6 +11,7 @@ use crate::error::Error;
 use crate::github;
 use crate::gitlab::{self, Gql, Listed, PipelineFilter};
 use crate::model::RawPipeline;
+use crate::request::is_project_id;
 #[cfg(feature = "desktop")]
 use crate::settings::Settings;
 
@@ -161,6 +162,15 @@ impl<G: Gql> Source for G {
 
     async fn list_workflows(&self, _project: &str) -> Result<Vec<Workflow>, Error> {
         Ok(Vec::new())
+    }
+}
+
+/// Путь проекта: числовой id из ссылки (спека поставки, § 8) провайдер переводит в путь, путь остаётся как есть.
+pub async fn project_path(source: &impl Source, project: &str) -> Result<String, Error> {
+    if is_project_id(project) {
+        Ok(source.fetch_project(project).await?.full_path)
+    } else {
+        Ok(project.to_owned())
     }
 }
 

@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
-import { apiError, setCurrentReport } from '../../shared/api'
+import { apiError, setCurrentReport, type Report } from '../../shared/api'
 import { useTranslation } from '../../shared/i18n'
 import { useGoBack } from '../../shared/lib/useGoBack'
 import { showError } from '../../shared/lib/dialogs'
@@ -16,7 +16,6 @@ export function ReportRoute() {
   const { id } = useParams({ from: '/report/$id' })
   const reportId = Number(id)
   const navigate = useNavigate()
-  const back = useGoBack()
   const valid = isReportId(reportId)
   const { data, error, isPending } = useReportById(reportId)
 
@@ -45,15 +44,22 @@ export function ReportRoute() {
   }, [error, navigate])
 
   if (!valid) return null
-  if (isPending || !data) {
-    return (
-      <p className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
-        <Giraffe pose="loading" size={72} />
-        {t('form.reportView.loading')}
-      </p>
-    )
-  }
-  const title = `${data.meta.project} · ${data.meta.label ?? t('report.allPipelines')}`
+  if (isPending || !data) return <ReportLoading text={t('form.reportView.loading')} />
+  return <ReportScreen report={data} />
+}
+
+export const ReportLoading = ({ text }: { text: string }) => (
+  <p className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
+    <Giraffe pose="loading" size={72} />
+    {text}
+  </p>
+)
+
+/** Отчёт на весь экран с полосой «Назад» и заголовком. */
+export function ReportScreen({ report }: { report: Report }) {
+  const { t } = useTranslation()
+  const back = useGoBack()
+  const title = `${report.meta.project} · ${report.meta.label ?? t('report.allPipelines')}`
   return (
     <>
       {/* не sticky: липкая ось водопада и панель деталей пинятся к верху того же скролла */}
@@ -65,7 +71,7 @@ export function ReportRoute() {
           {title}
         </h1>
       </div>
-      <ReportPage report={data} embedded />
+      <ReportPage report={report} embedded />
     </>
   )
 }

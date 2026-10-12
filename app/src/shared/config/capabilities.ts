@@ -12,4 +12,6 @@ export const capabilities = {
   nativeSave: desktop,
   /** вход без ухода со страницы */
   oauthLoopback: desktop,
+  /** маршруты в hash: окно грузит файл, сервера, который отдал бы `index.html` на любой путь, нет — и ссылки на отчёт тоже */
+  hashRouting: desktop,
 } as const

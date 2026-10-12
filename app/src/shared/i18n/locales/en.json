@@ -148,6 +148,10 @@
       "back": "← Back",
       "loading": "Loading the report…"
     },
+    "reportLink": {
+      "signIn": "Sign in to {{host}} to see the report",
+      "home": "Go to start"
+    },
     "welcome": {
       "title": "Welcome to Longpole",
       "text": "Sign in to see your pipelines and find what slows your build down.",

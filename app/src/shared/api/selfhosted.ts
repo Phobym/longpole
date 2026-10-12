@@ -25,9 +25,27 @@ const ok = <T>(value: T): Result<T> => ({ ok: true, value })
 
 type Line<T> = { ok: T } | { err: ApiError } | { progress: Progress } | { queued: true }
 
-/** Вход истёк или отозван (спека, § 5): повторный вход у confidential-приложения тихий, возврат — на текущий URL. */
+const SIGNING_IN = 'longpole.signingIn'
+/** Сколько после начала входа новый `authRequired` того же хоста считается его неудачей. */
+const SIGN_IN_WINDOW_MS = 60_000
+
+/** Вход в хост начат только что: отказ у провайдера или 401 на свежий токен вернули на ту же страницу. */
+const justSignedIn = (host: string) => {
+  try {
+    const mark = JSON.parse(sessionStorage.getItem(SIGNING_IN) ?? 'null') as { host: string; at: number } | null
+    return mark?.host === host && Date.now() - mark.at < SIGN_IN_WINDOW_MS
+  } catch {
+    // испорченная метка — как её отсутствие
+    return false
+  }
+}
+
+/**
+ * Вход истёк или отозван (спека, § 5): повторный вход у confidential-приложения тихий, возврат — на текущий URL.
+ * Сразу после входа в тот же хост не повторяем — иначе цикл; ошибка доходит до экрана с кнопкой «Войти».
+ */
 const signInAgain = (e: ApiError) => {
-  if (e.kind === 'message' && e.code === 'authRequired' && e.params.host) login(e.params.host)
+  if (e.kind === 'message' && e.code === 'authRequired' && e.params.host && !justSignedIn(e.params.host)) login(e.params.host)
 }
 
 /**
@@ -145,6 +163,7 @@ export const hosts = () => post<HostInfo[]>('hosts', {})
 
 /** Вход переходом всей страницы (спека, § 5): сервер уводит к провайдеру и возвращает на `returnTo` — путь этого сайта. */
 export const login = (host: string, returnTo = location.pathname + location.search + location.hash): void => {
+  sessionStorage.setItem(SIGNING_IN, JSON.stringify({ host, at: Date.now() }))
   location.assign(`/auth/login?${new URLSearchParams({ host, return_to: returnTo })}`)
 }
 /** Стирает вход только в этот хост; JSON-заголовок — как у всех POST (сверка CSRF на сервере). */

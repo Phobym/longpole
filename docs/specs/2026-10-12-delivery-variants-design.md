@@ -177,7 +177,7 @@ Redirect URI выводится, а не задаётся: `<url>/auth/callback/
 
 Хост определяется по домену из ссылки, неизвестный домен даёт `unknownHost`. Вместо пути проекта принимается и числовой id: ядро переводит его в путь (GitLab — GraphQL `projects(ids:)`, GitHub — `GET /repositories/:id`). Отчёт и подпись записи истории получают путь, а запрос в истории остаётся по id. «Добавить проект» id не принимает: «Мои проекты» хранят путь.
 
-**Старый путь после переименования не открывается** (проверено 2026-10-12 на gitlab.com, `gitlab-org/gitlab-ce` → `gitlab-org/gitlab-foss`): веб и REST отвечают 301 на новый путь, но GraphQL `project(fullPath:)`, через который ядро читает пайплайны, по старому пути отдаёт `null` — пользователь видит «проект не найден». Ссылке, которая должна пережить переименование, нужен числовой id (`$CI_PROJECT_ID`); решение для шаблона CI — на этапе 6.
+**Старый путь после переименования не открывается** (проверено 2026-10-12 на gitlab.com, `gitlab-org/gitlab-ce` → `gitlab-org/gitlab-foss`): веб и REST отвечают 301 на новый путь, но GraphQL `project(fullPath:)`, через который ядро читает пайплайны, по старому пути отдаёт `null` — пользователь видит «проект не найден». Поэтому ссылка из CI (§12) строится по числовому id: `$CI_PROJECT_ID` в GitLab, `$GITHUB_REPOSITORY_ID` в GitHub (клиент GitHub в ядре тоже не следует редиректам).
 
 Если вход в хост ссылки не удался сразу после попытки (отказ у провайдера или 401 на свежий токен), второй тихий вход не делается — иначе цикл: SPA показывает экран входа.
 
@@ -263,10 +263,10 @@ longpole:
   stage: .pre
   image: alpine
   script:
-    - echo "Посмотреть в Longpole: $LONGPOLE_URL/$CI_SERVER_HOST/$CI_PROJECT_PATH/-/pipelines/$CI_PIPELINE_ID"
+    - echo "Посмотреть в Longpole: $LONGPOLE_URL/$CI_SERVER_HOST/$CI_PROJECT_ID/-/pipelines/$CI_PIPELINE_ID"
   environment:
     name: longpole
-    url: $LONGPOLE_URL/$CI_SERVER_HOST/$CI_PROJECT_PATH/-/pipelines/$CI_PIPELINE_ID
+    url: $LONGPOLE_URL/$CI_SERVER_HOST/$CI_PROJECT_ID/-/pipelines/$CI_PIPELINE_ID
     action: access
 ```
 
@@ -275,7 +275,7 @@ longpole:
 **GitHub/GHES.** Переменная организации `vars.LONGPOLE_URL` и одна строка в любом job:
 
 ```yaml
-- run: echo "[Посмотреть в Longpole](${{ vars.LONGPOLE_URL }}/${GITHUB_SERVER_URL#https://}/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)" >> "$GITHUB_STEP_SUMMARY"
+- run: echo "[Посмотреть в Longpole](${{ vars.LONGPOLE_URL }}/${GITHUB_SERVER_URL#https://}/$GITHUB_REPOSITORY_ID/actions/runs/$GITHUB_RUN_ID)" >> "$GITHUB_STEP_SUMMARY"
 ```
 
 Reusable action не делается.

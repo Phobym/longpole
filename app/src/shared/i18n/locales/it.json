@@ -29,7 +29,7 @@
     "oauthExpired": "L'accesso a {{host}} è scaduto, ricomincia",
     "oauthFailed": "Impossibile accedere a {{host}}: {{detail}}",
     "oauthClientId": "Indica il Client ID dell'app registrata su {{host}}",
-    "ipc": "Impossibile eseguire il comando: {{detail}}"
+    "transport": "Impossibile eseguire il comando: {{detail}}"
   },
   "form": {
     "cancel": "Annulla",

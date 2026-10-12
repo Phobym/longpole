@@ -29,7 +29,7 @@
     "oauthExpired": "Anmeldung bei {{host}} abgelaufen, bitte neu beginnen",
     "oauthFailed": "Anmeldung bei {{host}} fehlgeschlagen: {{detail}}",
     "oauthClientId": "Client ID der auf {{host}} registrierten App angeben",
-    "ipc": "Der Befehl konnte nicht ausgeführt werden: {{detail}}"
+    "transport": "Der Befehl konnte nicht ausgeführt werden: {{detail}}"
   },
   "form": {
     "cancel": "Abbrechen",

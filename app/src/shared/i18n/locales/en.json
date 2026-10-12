@@ -29,7 +29,7 @@
     "oauthExpired": "Sign-in to {{host}} timed out, start again",
     "oauthFailed": "Could not sign in to {{host}}: {{detail}}",
     "oauthClientId": "Enter the Client ID of the app registered on {{host}}",
-    "ipc": "Could not run the command: {{detail}}"
+    "transport": "Could not run the command: {{detail}}"
   },
   "form": {
     "cancel": "Cancel",

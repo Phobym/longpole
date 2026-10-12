@@ -29,7 +29,7 @@
     "oauthExpired": "El inicio de sesión en {{host}} caducó; vuelve a empezar",
     "oauthFailed": "No se pudo iniciar sesión en {{host}}: {{detail}}",
     "oauthClientId": "Indica el Client ID de la aplicación registrada en {{host}}",
-    "ipc": "No se pudo ejecutar el comando: {{detail}}"
+    "transport": "No se pudo ejecutar el comando: {{detail}}"
   },
   "form": {
     "cancel": "Cancelar",

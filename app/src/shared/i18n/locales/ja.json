@@ -29,7 +29,7 @@
     "oauthExpired": "{{host}} へのサインインの有効期限が切れました。やり直してください",
     "oauthFailed": "{{host}} にサインインできませんでした: {{detail}}",
     "oauthClientId": "{{host}} に登録したアプリの Client ID を入力してください",
-    "ipc": "コマンドを実行できませんでした: {{detail}}"
+    "transport": "コマンドを実行できませんでした: {{detail}}"
   },
   "form": {
     "cancel": "キャンセル",

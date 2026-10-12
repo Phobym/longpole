@@ -1,7 +1,7 @@
 import i18next, { type TFunction } from 'i18next'
 import { initReactI18next, useTranslation } from 'react-i18next'
 import type { Locale } from '../api/schema/Locale'
-import type { ApiError, IpcError } from '../api/api'
+import type { ApiError } from '../api/api'
 import type { ErrorBody } from '../api/schema/ErrorBody'
 import de from './locales/de.json'
 import en from './locales/en.json'
@@ -58,7 +58,7 @@ export const initI18n = async (locale: Locale) => {
 
 export const changeLocale = (locale: Locale) => i18next.changeLanguage(locale)
 
-type ErrorCodes = ErrorBody['code'] | IpcError['code']
+type ErrorCodes = ErrorBody['code']
 
 // tsc падает, если в ru.json нет перевода для кода ошибки ядра (совпадение en с ru сверяет check-locales)
 void (ru.errors satisfies Record<ErrorCodes, string>)

@@ -63,6 +63,8 @@ pub enum ErrorCode {
     OauthFailed,
     /// для входа на хост нужен client_id приложения: `host`
     OauthClientId,
+    /// ядро его не возвращает: фронт не достучался до моста Tauri или сервера: `detail`
+    Transport,
 }
 
 /// Ошибка ядра: код и параметры, без готового текста.

@@ -29,7 +29,7 @@
     "oauthExpired": "Время входа в {{host}} истекло, начни заново",
     "oauthFailed": "Не удалось войти в {{host}}: {{detail}}",
     "oauthClientId": "Укажи Client ID приложения, зарегистрированного на {{host}}",
-    "ipc": "Не удалось выполнить команду: {{detail}}"
+    "transport": "Не удалось выполнить команду: {{detail}}"
   },
   "form": {
     "cancel": "Отмена",

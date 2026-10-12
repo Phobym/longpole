@@ -138,9 +138,9 @@ Redirect URI выводится, а не задаётся: `<url>/auth/callback/
 
 **Стиль** — RPC один к одному с командами Tauri: `POST /api/<command>`, в JSON-теле те же аргументы, в ответе тот же сериализованный `Cmd<T>`. Типы ts-rs переиспользуются.
 
-**Операции сервера:** `hosts`, `hostProvider`, `projects`, `branches`, `pipelines`, `workflows`, `build`. `hosts` отдаёт хосты конфига и флаг «есть сессия» по каждому, вместе с логином у провайдера. `hostProvider` берёт провайдера из конфига без пробы. `report` и `findReport` на сервер не ходят (§9).
+**Операции сервера:** `hosts`, `hostProvider`, `projects`, `branches`, `pipelines`, `workflows`, `build`, `addProject` (только разбирает ввод и отдаёт `SavedProject`, список хранит браузер). `hosts` отдаёт хосты конфига и флаг «есть сессия» по каждому, вместе с логином у провайдера. `hostProvider` берёт провайдера из конфига без пробы. `report` и `findReport` на сервер не ходят (§9).
 
-**Прогресс `build`** — NDJSON в ответе на `POST /api/build`: строки `{"progress":{loaded,total}}` и `{"queued":true}` (§11), последняя строка — `{"ok":<Report>}` или `{"err":…}`. Фронт читает поток через `fetch` и `ReadableStream`. Серверного id отчёта нет. Аргумент `fresh: true` — это «Перестроить» (§7).
+**Прогресс `build`** — NDJSON в ответе на `POST /api/build`: строки `{"progress":{loaded,total}}` и `{"queued":true}` (§11), последняя строка — `{"ok":{"report":<Report>,"entry":<HistoryEntry>}}` или `{"err":…}`. Запись истории (`at`, ссылка без query, `request`, `label`) считает ядро, браузер кладёт её в «Недавние». Остальные операции отвечают одной строкой `{"ok":…}` или `{"err":…}`. Фронт читает поток через `fetch` и `ReadableStream`. Серверного id отчёта нет. Аргумент `fresh: true` — это «Перестроить» (§7).
 
 **Ограничение хостами (SSRF):** `host` во всех операциях — домен из конфига, не URL. Неизвестный домен даёт `CmdError { code: 'unknownHost' }`. В режиме формы «ссылка» origin URL должен совпасть с хостом конфига. Исходящий URL из пользовательского ввода не строится.
 

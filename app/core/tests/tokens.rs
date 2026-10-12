@@ -1,4 +1,5 @@
 //! Токены и хосты: `desktop/tokens.test` на мок-сторе `keyring-core` и поиск токена из `gitlab.test`.
+#![cfg(feature = "desktop")]
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

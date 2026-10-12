@@ -5,11 +5,21 @@ edition = "2024"
 license = "MIT"
 publish = false
 
+[features]
+default = ["desktop"]
+# Только Desktop (ADR 0001): связка ключей, glab/gh, loopback и Device Flow, файловые хранилища.
+desktop = [
+    "dep:keyring-core",
+    "dep:apple-native-keyring-store",
+    "dep:windows-native-keyring-store",
+    "dep:dbus-secret-service-keyring-store",
+]
+
 [dependencies]
 base64 = "0.22"
 futures = "0.3"
 getrandom = "0.3"
-keyring-core = "1"
+keyring-core = { version = "1", optional = true }
 regex = "1"
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "json"] }
 serde = { version = "1", features = ["derive"] }
@@ -29,10 +39,10 @@ tokio = { version = "1", features = ["io-util", "macros", "net", "rt-multi-threa
 wiremock = "0.6"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-apple-native-keyring-store = { version = "1", features = ["keychain"] }
+apple-native-keyring-store = { version = "1", features = ["keychain"], optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-native-keyring-store = "1"
+windows-native-keyring-store = { version = "1", optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-dbus-secret-service-keyring-store = { version = "1", features = ["crypto-rust", "vendored"] }
+dbus-secret-service-keyring-store = { version = "1", features = ["crypto-rust", "vendored"], optional = true }

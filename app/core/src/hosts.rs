@@ -1,11 +1,15 @@
-//! Хосты GitLab: проверка имени и список хостов с сохранёнными токенами.
+//! Хосты: проверка имени; в Desktop — ещё список хостов с сохранёнными токенами.
 
+#[cfg(feature = "desktop")]
 use std::path::PathBuf;
-use std::sync::{LazyLock, Mutex};
+use std::sync::LazyLock;
+#[cfg(feature = "desktop")]
+use std::sync::Mutex;
 
 use regex::Regex;
 
 use crate::error::{Error, ErrorCode};
+#[cfg(feature = "desktop")]
 use crate::json_file;
 
 static HOST: LazyLock<Regex> = LazyLock::new(|| {
@@ -38,11 +42,13 @@ pub fn normalize_host(raw: &str) -> Result<String, Error> {
 }
 
 /// Хосты, для которых сохранён токен: `hosts.json`, по алфавиту, без секретов.
+#[cfg(feature = "desktop")]
 pub(crate) struct HostList {
     file: PathBuf,
     lock: Mutex<()>,
 }
 
+#[cfg(feature = "desktop")]
 impl HostList {
     pub(crate) fn new(file: PathBuf) -> Self {
         Self {

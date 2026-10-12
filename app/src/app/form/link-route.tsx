@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useState } from 'react'
-import { apiError, build, login, report, unwrap, type ApiError, type Progress, type Report } from '../../shared/api'
-import { useErrorText, useTranslation } from '../../shared/i18n'
+import { apiError, build, login, report, unwrap, type ApiError, type BuildProgress, type Report } from '../../shared/api'
+import { progressText, useErrorText, useTranslation } from '../../shared/i18n'
 import { Button } from '../../shared/ui/button'
 import { historyQuery, linkForm } from '../../entities/history-entry'
 import { reportLink } from './link'
@@ -17,11 +17,12 @@ export function ReportLinkRoute() {
   const pathname = useLocation({ select: (l) => l.pathname })
   const link = reportLink(pathname)
   const queryClient = useQueryClient()
-  const [progress, setProgress] = useState<Progress | null>(null)
+  const [progress, setProgress] = useState<BuildProgress | null>(null)
   // запрос, а не мутация: двойной эффект StrictMode и возврат «Назад» не строят отчёт заново
   const { data, error } = useQuery({
     queryKey: ['reportLink', link?.url],
     queryFn: async () => {
+      setProgress(null)
       const id = await unwrap(build(linkForm(link!.url), setProgress))
       void queryClient.invalidateQueries(historyQuery)
       return { id, report: await unwrap(report(id)) }
@@ -32,13 +33,14 @@ export function ReportLinkRoute() {
 
   if (!link) return <LinkFailure error={{ kind: 'message', code: 'invalidLink', params: {} }} />
   const failure = apiError(error)
-  if (failure) return <LinkFailure error={failure} />
-  if (!data) return <ReportLoading text={progress ? t('form.progress.step', progress) : t('form.progress.start')} />
+  // сброс, а не refetch: у refetch ошибка висит до ответа, а нужны «В очереди…» и прогресс
+  if (failure) return <LinkFailure error={failure} onRetry={() => void queryClient.resetQueries({ queryKey: ['reportLink', link.url] })} />
+  if (!data) return <ReportLoading text={progressText(t, progress)} />
   const onRebuilt = (next: Report) => queryClient.setQueryData(['reportLink', link.url], { id: data.id, report: next })
   return <ReportScreen id={data.id} report={data.report} onRebuilt={onRebuilt} />
 }
 
-function LinkFailure({ error }: { error: ApiError }) {
+function LinkFailure({ error, onRetry }: { error: ApiError; onRetry?: () => void }) {
   const { t } = useTranslation()
   const errorText = useErrorText()
   const host = error.kind === 'message' && error.code === 'authRequired' ? error.params.host : undefined
@@ -48,6 +50,10 @@ function LinkFailure({ error }: { error: ApiError }) {
       {host ? (
         <Button type="button" onClick={() => login(host)}>
           {t('form.settings.signIn')}
+        </Button>
+      ) : error.kind === 'message' && error.code === 'buildTimeout' && onRetry ? (
+        <Button type="button" onClick={onRetry}>
+          {t('form.reportLink.retry')}
         </Button>
       ) : (
         <Link to="/" className="text-link hover:underline">

@@ -2,7 +2,7 @@ import { DELIVERY } from '../config/delivery'
 import * as desktop from './desktop'
 import * as selfhosted from './selfhosted'
 
-export type { ApiError, Result } from './result'
+export type { ApiError, BuildProgress, Result } from './result'
 
 // `DELIVERY` при сборке — литерал: ветка другого варианта вырезается, `@tauri-apps/*` в веб-бандл не попадает
 const transport: typeof desktop = DELIVERY === 'desktop' ? desktop : selfhosted

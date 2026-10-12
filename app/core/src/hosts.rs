@@ -1,4 +1,4 @@
-//! Хосты: проверка имени; в Desktop — ещё список хостов с сохранёнными токенами.
+//! Хосты: проверка имени и что о хосте знает интерфейс; в Desktop — ещё список хостов с сохранёнными токенами.
 
 #[cfg(feature = "desktop")]
 use std::path::PathBuf;
@@ -7,10 +7,13 @@ use std::sync::LazyLock;
 use std::sync::Mutex;
 
 use regex::Regex;
+use serde::Serialize;
+use ts_rs::TS;
 
 use crate::error::{Error, ErrorCode};
 #[cfg(feature = "desktop")]
 use crate::json_file;
+use crate::source::Provider;
 
 static HOST: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?(:[0-9]+)?$").expect("верный шаблон")
@@ -39,6 +42,30 @@ pub fn normalize_host(raw: &str) -> Result<String, Error> {
     } else {
         Err(Error::new(ErrorCode::InvalidHost))
     }
+}
+
+/// Откуда у хоста токен; «Удалить» в настройках есть у `Keychain` и `Oauth`. Вход в Selfhosted — `Oauth`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "lowercase")]
+#[ts(export)]
+pub enum TokenSource {
+    Keychain,
+    Oauth,
+    Glab,
+    Env,
+    Gh,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
+pub struct HostInfo {
+    pub host: String,
+    /// `None` — входа нет: хост инстанса Selfhosted без сессии
+    pub source: Option<TokenSource>,
+    /// `None` — хост из связки ключей, тип ещё не определён
+    pub provider: Option<Provider>,
+    /// логин у провайдера; знает только Selfhosted
+    pub login: Option<String>,
 }
 
 /// Хосты, для которых сохранён токен: `hosts.json`, по алфавиту, без секретов.

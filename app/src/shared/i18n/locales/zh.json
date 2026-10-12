@@ -29,6 +29,8 @@
     "oauthExpired": "登录 {{host}} 已超时，请重新开始",
     "oauthFailed": "无法登录 {{host}}：{{detail}}",
     "oauthClientId": "请输入在 {{host}} 上注册的应用的 Client ID",
+    "authRequired": "请登录 {{host}}",
+    "unknownHost": "主机 {{host}} 未连接到此 Longpole",
     "transport": "无法执行命令：{{detail}}"
   },
   "form": {
@@ -136,7 +138,10 @@
       },
       "tips": "提示",
       "tipsShow": "显示长颈鹿提示",
-      "tipsReset": "重新显示"
+      "tipsReset": "重新显示",
+      "signedInAs": "已登录为 @{{login}}",
+      "signIn": "登录",
+      "signOut": "退出登录"
     },
     "reportView": {
       "back": "← 返回",
@@ -145,7 +150,8 @@
     "welcome": {
       "title": "欢迎使用 Longpole",
       "text": "登录以查看你的流水线，找出拖慢构建的原因。",
-      "skip": "跳过"
+      "skip": "跳过",
+      "loginWith": "通过 {{provider}} 登录（{{host}}）"
     },
     "connect": {
       "title": "连接账户",

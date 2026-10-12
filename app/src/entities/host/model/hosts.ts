@@ -20,9 +20,11 @@ export const normalizeHost = (raw: string) =>
     .replace(/^https?:\/\//, '')
     .replace(/\/$/, '')
 
-/** Текущий хост формы и то, что про него известно. `host === null` — сохранённых хостов нет. */
+/** Текущий хост формы и то, что про него известно. `host === null` — хостов со входом нет. */
 export function useHostState() {
-  const { data: saved = [], isPending, error } = useQuery(hostsQuery)
+  const { data: hosts = [], isPending, error } = useQuery(hostsQuery)
+  // в Selfhosted приходят все хосты инстанса; форме нужны только те, где есть вход
+  const saved = hosts.filter((h) => h.source !== null)
   const picked = useHostStore((s) => s.picked)
   const host = picked.kind === 'host' ? picked.host : (saved[0]?.host ?? null)
   return {

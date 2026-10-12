@@ -130,6 +130,20 @@ export const findReport = async (host: string, request: Request) => {
 }
 
 export const hosts = () => post<HostInfo[]>('hosts', {})
+
+/** Вход переходом всей страницы (спека, § 5): сервер уводит к провайдеру и возвращает на `returnTo` — путь этого сайта. */
+export const login = (host: string, returnTo = location.pathname + location.search + location.hash): void => {
+  location.assign(`/auth/login?${new URLSearchParams({ host, return_to: returnTo })}`)
+}
+/** Стирает вход только в этот хост; JSON-заголовок — как у всех POST (сверка CSRF на сервере). */
+export const logout = async (host: string): Promise<Result<null>> => {
+  try {
+    const res = await fetch(`/auth/logout?${new URLSearchParams({ host })}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+    return res.ok ? ok(null) : { ok: false, error: transportError(`HTTP ${res.status}`) }
+  } catch (e) {
+    return { ok: false, error: transportError(String(e)) }
+  }
+}
 export const hostProvider = (host: string) => post<Provider>('host_provider', { host })
 export const projects = (host: string, search: string, after: string | null) => post<Page<Project>>('projects', { host, search, after })
 export const branches = (host: string, project: string, search: string) => post<string[]>('branches', { host, project, search })

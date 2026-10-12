@@ -29,6 +29,8 @@
     "oauthExpired": "Anmeldung bei {{host}} abgelaufen, bitte neu beginnen",
     "oauthFailed": "Anmeldung bei {{host}} fehlgeschlagen: {{detail}}",
     "oauthClientId": "Client ID der auf {{host}} registrierten App angeben",
+    "authRequired": "Melde dich bei {{host}} an",
+    "unknownHost": "Der Host {{host}} ist nicht mit diesem Longpole verbunden",
     "transport": "Der Befehl konnte nicht ausgeführt werden: {{detail}}"
   },
   "form": {
@@ -137,7 +139,10 @@
       },
       "tips": "Tipps",
       "tipsShow": "Tipps der Giraffe anzeigen",
-      "tipsReset": "Erneut zeigen"
+      "tipsReset": "Erneut zeigen",
+      "signedInAs": "Angemeldet als @{{login}}",
+      "signIn": "Anmelden",
+      "signOut": "Abmelden"
     },
     "reportView": {
       "back": "← Zurück",
@@ -146,7 +151,8 @@
     "welcome": {
       "title": "Willkommen bei Longpole",
       "text": "Anmelden, um Pipelines zu sehen und herauszufinden, was den Build bremst.",
-      "skip": "Überspringen"
+      "skip": "Überspringen",
+      "loginWith": "Mit {{provider}} anmelden ({{host}})"
     },
     "connect": {
       "title": "Konto verbinden",

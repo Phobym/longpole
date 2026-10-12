@@ -29,6 +29,8 @@
     "oauthExpired": "Время входа в {{host}} истекло, начни заново",
     "oauthFailed": "Не удалось войти в {{host}}: {{detail}}",
     "oauthClientId": "Укажи Client ID приложения, зарегистрированного на {{host}}",
+    "authRequired": "Войди в {{host}}",
+    "unknownHost": "Хост {{host}} не подключён к этому Longpole",
     "transport": "Не удалось выполнить команду: {{detail}}"
   },
   "form": {
@@ -139,7 +141,10 @@
       },
       "tips": "Подсказки",
       "tipsShow": "Показывать подсказки жирафа",
-      "tipsReset": "Показать заново"
+      "tipsReset": "Показать заново",
+      "signedInAs": "Вошли как @{{login}}",
+      "signIn": "Войти",
+      "signOut": "Выйти"
     },
     "reportView": {
       "back": "← Назад",
@@ -148,7 +153,8 @@
     "welcome": {
       "title": "Добро пожаловать в Longpole",
       "text": "Войди, чтобы видеть свои пайплайны и находить, что тормозит сборку.",
-      "skip": "Пропустить"
+      "skip": "Пропустить",
+      "loginWith": "Войти через {{provider}} ({{host}})"
     },
     "connect": {
       "title": "Подключить аккаунт",

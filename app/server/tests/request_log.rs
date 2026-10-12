@@ -38,7 +38,7 @@ async fn request_log_has_method_path_status_without_query() {
             .body(Body::empty())
             .unwrap();
 
-    app(&Config::parse(yaml, |_| None).unwrap())
+    app(Config::parse(yaml, |_| None).unwrap())
         .oneshot(request)
         .await
         .unwrap();
@@ -49,7 +49,7 @@ async fn request_log_has_method_path_status_without_query() {
         log.contains("path=/auth/callback/gitlab.example.com "),
         "{log}"
     );
-    assert!(log.contains("status=404"), "{log}");
+    assert!(log.contains("status=400"), "{log}");
     assert!(log.contains("ms="), "{log}");
     assert!(!log.contains("SECRET"), "{log}");
 }

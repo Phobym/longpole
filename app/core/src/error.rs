@@ -63,6 +63,10 @@ pub enum ErrorCode {
     OauthFailed,
     /// для входа на хост нужен client_id приложения: `host`
     OauthClientId,
+    /// Selfhosted: нет входа в хост, 401 провайдера или `invalid_grant`: `host`
+    AuthRequired,
+    /// Selfhosted: домен не из конфигурации инстанса: `host`
+    UnknownHost,
     /// ядро его не возвращает: фронт не достучался до моста Tauri или сервера: `detail`
     Transport,
 }

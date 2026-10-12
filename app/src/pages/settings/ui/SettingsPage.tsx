@@ -2,11 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { apiError } from '../../../shared/api'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
+import { capabilities } from '../../../shared/config'
 import { useGoBack } from '../../../shared/lib/useGoBack'
 import { Button } from '../../../shared/ui/button'
 import { Card } from '../../../shared/ui/card'
 import { labelClasses } from '../../../shared/ui/input'
 import { ThemeSwitch } from '../../../features/choose-theme'
+import { HostAccount } from '../../../features/instance-login'
 import { TipsSettings } from '../../../features/onboarding'
 import { GITHUB_APP_INSTALL, RemoveTokenButton, TokenForm } from '../../../features/manage-token'
 import { hostsQuery } from '../../../entities/host'
@@ -47,17 +49,24 @@ export function SettingsPage() {
                   {h.provider === 'github' ? 'GitHub' : 'GitLab'}
                 </span>
               )}
-              <span className="text-[11px] text-muted-foreground">{t(`form.settings.source.${h.source}`)}</span>
-              {h.source === 'oauth' && h.host === 'github.com' && (
-                <a href={GITHUB_APP_INSTALL} target="_blank" rel="noopener noreferrer" className="text-[11px] text-link hover:underline">
-                  {t('form.oauth.installShort')}
-                </a>
+              {capabilities.manageHosts ? (
+                <>
+                  {h.source && <span className="text-[11px] text-muted-foreground">{t(`form.settings.source.${h.source}`)}</span>}
+                  {h.source === 'oauth' && h.host === 'github.com' && (
+                    <a href={GITHUB_APP_INSTALL} target="_blank" rel="noopener noreferrer" className="text-[11px] text-link hover:underline">
+                      {t('form.oauth.installShort')}
+                    </a>
+                  )}
+                  {(h.source === 'keychain' || h.source === 'oauth') && <RemoveTokenButton host={h.host} />}
+                </>
+              ) : (
+                <HostAccount host={h} />
               )}
-              {(h.source === 'keychain' || h.source === 'oauth') && <RemoveTokenButton host={h.host} />}
             </li>
           ))}
         </ul>
-        {adding ? (
+        {/* Selfhosted: хосты задаёт администратор, здесь только вход и выход (спека, § 10) */}
+        {capabilities.manageHosts && (adding ? (
           <>
             <TokenForm defaultHost="" onSaved={() => setAdding(false)} />
             <Button type="button" variant="ghost" className="self-start" onClick={() => setAdding(false)}>
@@ -68,8 +77,8 @@ export function SettingsPage() {
           <Button type="button" variant="outline" className="self-start" onClick={() => setAdding(true)}>
             {t('form.settings.addHost')}
           </Button>
-        )}
-        {navigator.platform.startsWith('Linux') && <p className="text-xs text-muted-foreground">{t('form.settings.linuxHint')}</p>}
+        ))}
+        {capabilities.manageHosts && navigator.platform.startsWith('Linux') && <p className="text-xs text-muted-foreground">{t('form.settings.linuxHint')}</p>}
       </section>
 
       <section className="flex flex-col gap-2">

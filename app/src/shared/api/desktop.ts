@@ -77,3 +77,9 @@ export const addProject = (input: string) => call<SavedProject>('add_project', {
 export const removeProject = (project: ProjectRef) => call<SavedProject[]>('remove_project', { project })
 export const getSettings = () => call<AppSettings>('get_settings')
 export const setSettings = (patch: SettingsPatch) => call<AppSettings>('set_settings', { patch })
+
+// Только Selfhosted: в Desktop вход — `oauthLogin`, выход — `removeToken`. Интерфейс прячет их по `capabilities`.
+export const login = (host: string, _returnTo?: string): void => {
+  throw new Error(`login ${host}: только Selfhosted`)
+}
+export const logout = async (host: string): Promise<Result<null>> => ({ ok: false, error: transportError(`logout ${host}: только Selfhosted`) })

@@ -16,7 +16,7 @@ fn config(url: &str) -> Config {
 
 async fn get_from(url: &str, path: &str) -> Response<Body> {
     let request = Request::get(path).body(Body::empty()).unwrap();
-    app(&config(url)).oneshot(request).await.unwrap()
+    app(config(url)).oneshot(request).await.unwrap()
 }
 
 async fn get(path: &str) -> Response<Body> {
@@ -59,8 +59,8 @@ async fn unknown_get_serves_index_html() {
 async fn fallback_skips_api_auth_healthz_and_assets() {
     for path in [
         "/api",
-        "/api/hosts",
-        "/auth/login",
+        "/api/unknown",
+        "/auth/unknown",
         "/healthz/x",
         "/assets/missing.js",
     ] {

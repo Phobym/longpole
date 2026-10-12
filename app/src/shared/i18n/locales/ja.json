@@ -29,6 +29,8 @@
     "oauthExpired": "{{host}} へのサインインの有効期限が切れました。やり直してください",
     "oauthFailed": "{{host}} にサインインできませんでした: {{detail}}",
     "oauthClientId": "{{host}} に登録したアプリの Client ID を入力してください",
+    "authRequired": "{{host}} にサインインしてください",
+    "unknownHost": "ホスト {{host}} はこの Longpole に接続されていません",
     "transport": "コマンドを実行できませんでした: {{detail}}"
   },
   "form": {
@@ -136,7 +138,10 @@
       },
       "tips": "ヒント",
       "tipsShow": "キリンのヒントを表示",
-      "tipsReset": "もう一度表示"
+      "tipsReset": "もう一度表示",
+      "signedInAs": "@{{login}} としてサインイン中",
+      "signIn": "サインイン",
+      "signOut": "サインアウト"
     },
     "reportView": {
       "back": "← 戻る",
@@ -145,7 +150,8 @@
     "welcome": {
       "title": "Longpole へようこそ",
       "text": "サインインしてパイプラインを表示し、ビルドを遅くしている原因を見つけましょう。",
-      "skip": "スキップ"
+      "skip": "スキップ",
+      "loginWith": "{{provider}} でサインイン（{{host}}）"
     },
     "connect": {
       "title": "アカウントを接続",

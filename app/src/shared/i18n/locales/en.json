@@ -29,6 +29,8 @@
     "oauthExpired": "Sign-in to {{host}} timed out, start again",
     "oauthFailed": "Could not sign in to {{host}}: {{detail}}",
     "oauthClientId": "Enter the Client ID of the app registered on {{host}}",
+    "authRequired": "Sign in to {{host}}",
+    "unknownHost": "Host {{host}} is not connected to this Longpole",
     "transport": "Could not run the command: {{detail}}"
   },
   "form": {
@@ -137,7 +139,10 @@
       },
       "tips": "Tips",
       "tipsShow": "Show giraffe tips",
-      "tipsReset": "Show again"
+      "tipsReset": "Show again",
+      "signedInAs": "Signed in as @{{login}}",
+      "signIn": "Sign in",
+      "signOut": "Sign out"
     },
     "reportView": {
       "back": "← Back",
@@ -146,7 +151,8 @@
     "welcome": {
       "title": "Welcome to Longpole",
       "text": "Sign in to see your pipelines and find what slows your build down.",
-      "skip": "Skip"
+      "skip": "Skip",
+      "loginWith": "Sign in with {{provider}} ({{host}})"
     },
     "connect": {
       "title": "Connect account",

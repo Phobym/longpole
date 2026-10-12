@@ -11,11 +11,11 @@ use keyring_core::mock::{Cred, Store};
 use keyring_core::{CredentialStore, Entry, Error as KeyringError};
 use longpole_core::error::{Error, ErrorCode};
 use longpole_core::hosts::normalize_host;
+use longpole_core::hosts::{HostInfo, TokenSource};
 use longpole_core::oauth::Credential;
 use longpole_core::source::Provider;
 use longpole_core::tokens::{
-    Gh, Glab, HostInfo, SERVICE, TokenSource, TokenStore, find_github_token, find_token,
-    github_hosts, list_hosts,
+    Gh, Glab, SERVICE, TokenStore, find_github_token, find_token, github_hosts, list_hosts,
 };
 use serde_json::json;
 use tempfile::TempDir;
@@ -365,8 +365,9 @@ fn list_hosts_связка_потом_glab_потом_env_без_дублей() 
     };
     let info = |host: &str, source: TokenSource| HostInfo {
         host: host.into(),
-        source,
+        source: Some(source),
         provider: (source != TokenSource::Keychain).then_some(Provider::Gitlab),
+        login: None,
     };
     assert_eq!(
         list_hosts(&f.tokens, &env, &glab).unwrap(),
@@ -521,8 +522,9 @@ fn хосты_github_из_gh_и_окружения() {
         |args: &[&str]| (args == ["auth", "status", "--json", "hosts"]).then(|| status.to_string());
     let info = |host: &str, source| HostInfo {
         host: host.into(),
-        source,
+        source: Some(source),
         provider: Some(Provider::Github),
+        login: None,
     };
     let no_env = |_: &str| None;
     assert_eq!(
@@ -619,7 +621,7 @@ fn свежая_запись_oauth_отдаёт_access_без_запроса_и_
     assert!(f.tokens.is_oauth(OAUTH_HOST));
     let hosts = list_hosts(&f.tokens, &|_| None, &|_| None).unwrap();
     assert_eq!(hosts.len(), 1);
-    assert_eq!(hosts[0].source, TokenSource::Oauth);
+    assert_eq!(hosts[0].source, Some(TokenSource::Oauth));
     f.tokens.set(OAUTH_HOST, "glpat-x").unwrap();
     assert!(!f.tokens.is_oauth(OAUTH_HOST), "PAT поверх OAuth");
     assert_eq!(

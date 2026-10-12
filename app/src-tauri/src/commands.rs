@@ -6,6 +6,7 @@ use std::collections::BTreeMap;
 use longpole_core::browse::{Page, Pipeline, Project, Workflow};
 use longpole_core::error::{CmdError, Error, ErrorCode, Field};
 use longpole_core::history::{HistoryEntry, HistoryLabel, NewEntry};
+use longpole_core::hosts::HostInfo;
 use longpole_core::hosts::normalize_host;
 use longpole_core::oauth::{self, UserCode};
 use longpole_core::projects::SavedProject;
@@ -17,9 +18,7 @@ use longpole_core::request::{
 use longpole_core::schema::{Meta, Report};
 use longpole_core::settings::{AppSettings, SettingsPatch};
 use longpole_core::source::{AnySource, Provider, Source, resolve_provider};
-use longpole_core::tokens::{
-    Gh, Glab, HostInfo, find_github_token, find_token, github_hosts, list_hosts,
-};
+use longpole_core::tokens::{Gh, Glab, find_github_token, find_token, github_hosts, list_hosts};
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, State, Webview};
 use tauri_plugin_opener::OpenerExt;

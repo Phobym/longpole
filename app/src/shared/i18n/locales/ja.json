@@ -145,7 +145,8 @@
     },
     "reportView": {
       "back": "← 戻る",
-      "loading": "レポートを読み込み中…"
+      "loading": "レポートを読み込み中…",
+      "rebuild": "再生成"
     },
     "reportLink": {
       "signIn": "レポートを見るには {{host}} にサインインしてください",

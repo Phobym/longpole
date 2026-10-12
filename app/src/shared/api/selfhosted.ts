@@ -137,23 +137,32 @@ const key = (host: string, request: Request) => JSON.stringify([host, request])
 
 /** Отчёты вкладки: серверного id нет, перезагрузка страницы их теряет. */
 // ponytail: память вкладки не ограничена; вытеснять старые, если вкладки живут долго
-const reports = new Map<number, { key: string; report: Report }>()
+const reports = new Map<number, { key: string; report: Report; form: Form }>()
 let lastId = 0
 
-/** Сервер строит отчёт и отдаёт готовую запись истории (`at`, очищенная ссылка, `request`, `label` — от ядра). */
-export const build = async (form: Form, onProgress: (p: Progress) => void): Promise<Result<number>> => {
-  const r = await post<{ report: Report; entry: HistoryEntry }>('build', { form }, onProgress)
+/** Сервер строит отчёт и отдаёт готовую запись истории (`at`, очищенная ссылка, `request`, `label` — от ядра); отчёт ложится под `id`. */
+async function buildAs(id: number, form: Form, fresh: boolean, onProgress: (p: Progress) => void): Promise<Result<number>> {
+  const r = await post<{ report: Report; entry: HistoryEntry }>('build', fresh ? { form, fresh } : { form }, onProgress)
   if (!r.ok) return r
   const { report, entry } = r.value
   const k = key(entry.host, entry.request)
   write('history', [entry, ...storedHistory().filter((e) => key(e.host, e.request) !== k)].slice(0, HISTORY_LIMIT))
-  reports.set(++lastId, { key: k, report })
-  return ok(lastId)
+  reports.set(id, { key: k, report, form })
+  return ok(id)
+}
+
+export const build = (form: Form, onProgress: (p: Progress) => void) => buildAs(++lastId, form, false, onProgress)
+
+/** «Перестроить» (спека, § 10): сервер строит заново мимо кэша, отчёт остаётся под тем же id — адрес страницы не меняется. */
+export const rebuild = async (id: number, onProgress: (p: Progress) => void): Promise<Result<number>> => {
+  const found = reports.get(id)
+  return found ? buildAs(id, found.form, true, onProgress) : expired(id)
 }
 export const report = async (id: number): Promise<Result<Report>> => {
   const found = reports.get(id)
-  return found ? ok(found.report) : { ok: false, error: { kind: 'message', code: 'reportExpired', params: { id: String(id) } } }
+  return found ? ok(found.report) : expired(id)
 }
+const expired = (id: number): Result<never> => ({ ok: false, error: { kind: 'message', code: 'reportExpired', params: { id: String(id) } } })
 export const findReport = async (host: string, request: Request) => {
   const k = key(host, request)
   return ok([...reports].reverse().find(([, r]) => r.key === k)?.[0] ?? null)

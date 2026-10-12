@@ -1,5 +1,5 @@
 export {
-  addProject, branches, build, clearHistory, findReport, getSettings, history, hosts, hostProvider, login, logout, oauthCancel, oauthLogin, pipelines, projects, removeHistory,
+  addProject, branches, build, clearHistory, findReport, getSettings, history, hosts, hostProvider, login, logout, oauthCancel, oauthLogin, pipelines, projects, rebuild, removeHistory,
   removeProject, removeToken, report, savedProjects, setCurrentReport, setSettings, setToken, workflows,
   type ApiError, type Result,
 } from './api'

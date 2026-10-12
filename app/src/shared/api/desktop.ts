@@ -83,3 +83,8 @@ export const login = (host: string, _returnTo?: string): void => {
   throw new Error(`login ${host}: только Selfhosted`)
 }
 export const logout = async (host: string): Promise<Result<null>> => ({ ok: false, error: transportError(`logout ${host}: только Selfhosted`) })
+// Кэша отчётов в Desktop нет — перестраивать мимо него нечего
+export const rebuild = async (id: number, _onProgress: (p: Progress) => void): Promise<Result<number>> => ({
+  ok: false,
+  error: transportError(`rebuild ${id}: только Selfhosted`),
+})

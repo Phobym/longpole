@@ -147,7 +147,8 @@
     },
     "reportView": {
       "back": "← Indietro",
-      "loading": "Caricamento del report…"
+      "loading": "Caricamento del report…",
+      "rebuild": "Ricostruisci"
     },
     "reportLink": {
       "signIn": "Accedi a {{host}} per vedere il report",

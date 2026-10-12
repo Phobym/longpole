@@ -146,7 +146,8 @@
     },
     "reportView": {
       "back": "← Zurück",
-      "loading": "Bericht wird geladen…"
+      "loading": "Bericht wird geladen…",
+      "rebuild": "Neu erstellen"
     },
     "reportLink": {
       "signIn": "Melde dich bei {{host}} an, um den Bericht zu sehen",

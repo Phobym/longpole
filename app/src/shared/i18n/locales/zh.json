@@ -145,7 +145,8 @@
     },
     "reportView": {
       "back": "← 返回",
-      "loading": "正在加载报告…"
+      "loading": "正在加载报告…",
+      "rebuild": "重新生成"
     },
     "reportLink": {
       "signIn": "登录 {{host}} 以查看报告",

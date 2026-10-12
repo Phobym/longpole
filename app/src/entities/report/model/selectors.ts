@@ -14,6 +14,12 @@ export const isLeaf = (node: ReportNode) => LEAF.has(node.kind)
 /** У этих узлов есть связи `deps`/`dependents`, их линии и метки рисует водопад. */
 export const isLinkable = (node: ReportNode) => LINKABLE.has(node.kind)
 
+const TERMINAL = new Set(['success', 'failed', 'canceled', 'skipped'])
+
+/** Один пайплайн, и он и все downstream завершены — как `finished` в кэше сервера: только такой отчёт там лежит. */
+export const isFinished = (report: Report) =>
+  report.mode === 'single' && Object.values(report.tree.nodes).every((n) => n.kind !== 'pipeline' || TERMINAL.has(n.status ?? ''))
+
 const leafIds = (nodes: Nodes, node: ReportNode): string[] =>
   node.kind === 'group' ? node.children.flatMap((id) => leafIds(nodes, nodes[id])) : [node.id]
 

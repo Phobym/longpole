@@ -31,6 +31,8 @@
     "oauthClientId": "Укажи Client ID приложения, зарегистрированного на {{host}}",
     "authRequired": "Войди в {{host}}",
     "unknownHost": "Хост {{host}} не подключён к этому Longpole",
+    "tooManyBuilds": "Дождись построения других отчётов",
+    "buildTimeout": "Отчёт строился слишком долго и был остановлен",
     "transport": "Не удалось выполнить команду: {{detail}}"
   },
   "form": {
@@ -41,7 +43,8 @@
     "more": "Показать ещё",
     "progress": {
       "start": "Загружаю…",
-      "step": "Загружаю {{loaded}} из {{total}}…"
+      "step": "Загружаю {{loaded}} из {{total}}…",
+      "queued": "В очереди…"
     },
     "history": {
       "clear": "Очистить",
@@ -153,7 +156,8 @@
     },
     "reportLink": {
       "signIn": "Войди в {{host}}, чтобы увидеть отчёт",
-      "home": "На главную"
+      "home": "На главную",
+      "retry": "Повторить"
     },
     "welcome": {
       "title": "Добро пожаловать в Longpole",

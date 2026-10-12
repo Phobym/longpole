@@ -98,8 +98,8 @@ url: https://longpole.example.com   # публичный адрес, тольк�
 cookie_key: ${LONGPOLE_COOKIE_KEY}
 listen: 0.0.0.0:8080                # необязательно
 cache_max_mb: 256                   # необязательно, лимит кэша отчётов
-max_concurrent_builds: 8            # необязательно
-build_timeout: 5m                   # необязательно, s | m | h
+max_concurrent_builds: 8            # необязательно; сверх лимита построения ждут в очереди, у пользователя хоста — не больше двух
+build_timeout: 5m                   # необязательно, s | m | h; время в очереди не входит
 log:
   level: info                       # trace | debug | info | warn | error
   format: text                      # text | json

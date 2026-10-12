@@ -31,6 +31,8 @@
     "oauthClientId": "Indiquez le Client ID de l'application enregistrée sur {{host}}",
     "authRequired": "Connectez-vous à {{host}}",
     "unknownHost": "L'hôte {{host}} n'est pas connecté à ce Longpole",
+    "tooManyBuilds": "Attendez la fin de la génération de vos autres rapports",
+    "buildTimeout": "La génération du rapport a pris trop de temps et a été arrêtée",
     "transport": "Impossible d'exécuter la commande : {{detail}}"
   },
   "form": {
@@ -41,7 +43,8 @@
     "more": "Afficher plus",
     "progress": {
       "start": "Chargement…",
-      "step": "Chargement de {{loaded}} sur {{total}}…"
+      "step": "Chargement de {{loaded}} sur {{total}}…",
+      "queued": "En file d'attente…"
     },
     "history": {
       "clear": "Effacer",
@@ -152,7 +155,8 @@
     },
     "reportLink": {
       "signIn": "Connectez-vous à {{host}} pour voir le rapport",
-      "home": "Aller à l'accueil"
+      "home": "Aller à l'accueil",
+      "retry": "Réessayer"
     },
     "welcome": {
       "title": "Bienvenue dans Longpole",

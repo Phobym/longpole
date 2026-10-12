@@ -67,6 +67,10 @@ pub enum ErrorCode {
     AuthRequired,
     /// Selfhosted: домен не из конфигурации инстанса: `host`
     UnknownHost,
+    /// Selfhosted: у пользователя хоста уже идут два построения
+    TooManyBuilds,
+    /// Selfhosted: построение не уложилось в `build_timeout` инстанса
+    BuildTimeout,
     /// ядро его не возвращает: фронт не достучался до моста Tauri или сервера: `detail`
     Transport,
 }

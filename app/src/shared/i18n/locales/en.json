@@ -31,6 +31,8 @@
     "oauthClientId": "Enter the Client ID of the app registered on {{host}}",
     "authRequired": "Sign in to {{host}}",
     "unknownHost": "Host {{host}} is not connected to this Longpole",
+    "tooManyBuilds": "Wait for your other reports to finish building",
+    "buildTimeout": "Building the report took too long and was stopped",
     "transport": "Could not run the command: {{detail}}"
   },
   "form": {
@@ -41,7 +43,8 @@
     "more": "Show more",
     "progress": {
       "start": "Loading…",
-      "step": "Loading {{loaded}} of {{total}}…"
+      "step": "Loading {{loaded}} of {{total}}…",
+      "queued": "Queued…"
     },
     "history": {
       "clear": "Clear",
@@ -151,7 +154,8 @@
     },
     "reportLink": {
       "signIn": "Sign in to {{host}} to see the report",
-      "home": "Go to start"
+      "home": "Go to start",
+      "retry": "Retry"
     },
     "welcome": {
       "title": "Welcome to Longpole",

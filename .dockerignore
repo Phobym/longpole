@@ -1,0 +1,6 @@
+# Рабочая копия разработчика: зависимости и сборки под его ОС не должны попасть в образ.
+.git
+app/node_modules
+app/target
+app/dist
+app/dist-report

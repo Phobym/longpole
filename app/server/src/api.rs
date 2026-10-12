@@ -20,7 +20,7 @@ use longpole_core::projects::SavedProject;
 use longpole_core::report::{BuildEnv, build_report};
 use longpole_core::request::{Form, FormMode, Parsed, Request, parse_form, parse_remote};
 use longpole_core::schema::{Locale, Report};
-use longpole_core::source::{AnySource, Provider, Source};
+use longpole_core::source::{AnySource, Provider, Source, project_path};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use time::OffsetDateTime;
@@ -142,7 +142,8 @@ pub(crate) async fn branches(
 ) -> Response {
     state
         .run(jar, &args.host, async |source| -> Cmd<Vec<String>> {
-            Ok(source.list_branches(&args.project, &args.search).await?)
+            let project = project_path(&source, &args.project).await?;
+            Ok(source.list_branches(&project, &args.search).await?)
         })
         .await
 }
@@ -163,9 +164,10 @@ pub(crate) async fn pipelines(
 ) -> Response {
     state
         .run(jar, &args.host, async |source| -> Cmd<Page<Pipeline>> {
+            let project = project_path(&source, &args.project).await?;
             Ok(source
                 .recent_pipelines(
-                    &args.project,
+                    &project,
                     args.r#ref.as_deref(),
                     args.workflow.as_deref(),
                     args.after.as_deref(),
@@ -188,7 +190,8 @@ pub(crate) async fn workflows(
 ) -> Response {
     state
         .run(jar, &args.host, async |source| -> Cmd<Vec<Workflow>> {
-            Ok(source.list_workflows(&args.project).await?)
+            let project = project_path(&source, &args.project).await?;
+            Ok(source.list_workflows(&project).await?)
         })
         .await
 }
@@ -295,18 +298,25 @@ async fn prepare(
 async fn build_lines(
     source: AnySource,
     form: Form,
-    Parsed { host, request }: Parsed,
+    Parsed { host, mut request }: Parsed,
     locale: Locale,
     tx: mpsc::UnboundedSender<Value>,
 ) {
     let progress = tx.clone();
     let now = OffsetDateTime::now_utc();
     let env = BuildEnv { now, locale };
-    let built = build_report(&source, &request, env, move |p| {
-        // поток уже закрыт — прогресс некому показывать
-        let _ = progress.send(json!({ "progress": p }));
-    })
-    .await;
+    // id проекта из ссылки — в путь: по нему строятся отчёт и запись истории
+    let built = match project_path(&source, request.project()).await {
+        Ok(path) => {
+            *request.project_mut() = path;
+            build_report(&source, &request, env, move |p| {
+                // поток уже закрыт — прогресс некому показывать
+                let _ = progress.send(json!({ "progress": p }));
+            })
+            .await
+        }
+        Err(e) => Err(e),
+    };
     let result: Cmd<Value> = built.map_err(Into::into).map(|built| {
         let (Report::Single { meta, .. } | Report::Aggregate { meta, .. }) = &built.report;
         let label = HistoryLabel {

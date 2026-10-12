@@ -289,3 +289,32 @@ fn старая_запись_истории_без_workflow_читается() {
     .unwrap();
     assert!(matches!(request, Request::Aggregate { workflow: None, .. }));
 }
+
+#[test]
+fn четыре_формы_ссылки_принимают_числовой_id_вместо_пути_проекта() {
+    let parsed = |url: &str| parse_form(&link(url)).map(|p| p.request);
+    let pipeline = |project: &str| Request::Pipeline {
+        project: project.into(),
+        pipeline_id: "7".into(),
+    };
+    let mr = |project: &str| Request::Mr {
+        project: project.into(),
+        mr_iid: "7".into(),
+    };
+    for (url, request) in [
+        ("https://h.example/42/-/pipelines/7", pipeline("42")),
+        ("https://h.example/42/-/merge_requests/7", mr("42")),
+        ("https://h.example/42/actions/runs/7", pipeline("42")),
+        ("https://h.example/42/pull/7", mr("42")),
+        (
+            "https://h.example/g/sub/p/-/pipelines/7",
+            pipeline("g/sub/p"),
+        ),
+        ("https://h.example/o/r/pull/7", mr("o/r")),
+    ] {
+        assert_eq!(parsed(url), Ok(request), "{url}");
+    }
+    // один сегмент — только число: имя без группы проектом не бывает
+    assert!(parse_form(&link("https://h.example/p/-/pipelines/7")).is_err());
+    assert!(parse_form(&aggregate(|f| f.project = "42".into())).is_ok());
+}

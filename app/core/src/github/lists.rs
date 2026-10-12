@@ -10,6 +10,7 @@ use crate::browse::{Commit, Page, Pipeline, Project, Workflow};
 use crate::error::{Error, ErrorCode};
 use crate::gitlab::{Listed, PipelineFilter};
 use crate::iso::iso;
+use crate::request::is_project_id;
 
 const MAX_LIST_PAGES: usize = 10;
 const RECENT_PER_PAGE: usize = 20;
@@ -137,9 +138,15 @@ impl Client {
             .with("project", project)
     }
 
+    /// `owner/repo` или числовой id репозитория.
     pub(crate) async fn repo(&self, project: &str) -> Result<Project, Error> {
+        let target = if is_project_id(project) {
+            format!("/repositories/{project}")
+        } else {
+            format!("/repos/{project}")
+        };
         let repo: Repo = self
-            .json(&format!("/repos/{project}"))
+            .json(&target)
             .await?
             .ok_or_else(|| self.project_not_found(project))?;
         Ok(repo.into())

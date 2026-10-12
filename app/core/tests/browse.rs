@@ -189,3 +189,21 @@ async fn fetch_project_поля_и_project_not_found_при_null() {
         &[("host", "h.example"), ("project", "g/none")],
     );
 }
+
+#[tokio::test]
+async fn fetch_project_по_числовому_id_ищет_проект_по_gid() {
+    let gql = fake_gql(|v| {
+        if v["ids"] == json!(["gid://gitlab/Project/42"]) {
+            json!({ "projects": { "nodes": [{ "fullPath": "g/p", "nameWithNamespace": "G / P",
+                                              "lastActivityAt": null, "repository": null }] } })
+        } else {
+            json!({ "projects": { "nodes": [] } })
+        }
+    });
+    assert_eq!(fetch_project(&gql, "42").await.unwrap().full_path, "g/p");
+    assert_error(
+        fetch_project(&gql, "7").await,
+        ErrorCode::ProjectNotFound,
+        &[("host", "h.example"), ("project", "7")],
+    );
+}

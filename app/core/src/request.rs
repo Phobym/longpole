@@ -17,9 +17,9 @@ static LINK: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^https?://([^/]+)/(.+?)/-/(pipelines|merge_requests)/([0-9]+)(?:[/?#]|$)")
         .expect("верный шаблон")
 });
-/// `https://host/owner/repo/actions/runs/<id>[/job/…|/attempts/…]` или `…/pull/<n>[/…]`.
+/// `https://host/owner/repo/actions/runs/<id>[/job/…|/attempts/…]` или `…/pull/<n>[/…]`; вместо `owner/repo` — id репозитория.
 static GITHUB_LINK: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^https?://([^/]+)/([^/]+/[^/]+)/(actions/runs|pull)/([0-9]+)(?:[/?#]|$)")
+    Regex::new(r"^https?://([^/]+)/([0-9]+|[^/]+/[^/]+)/(actions/runs|pull)/([0-9]+)(?:[/?#]|$)")
         .expect("верный шаблон")
 });
 /// Третий сегмент пути на github: страница репозитория, а не часть пути проекта.
@@ -137,6 +137,14 @@ pub enum Request {
 
 impl Request {
     pub fn project(&self) -> &str {
+        match self {
+            Request::Pipeline { project, .. }
+            | Request::Mr { project, .. }
+            | Request::Aggregate { project, .. } => project,
+        }
+    }
+
+    pub fn project_mut(&mut self) -> &mut String {
         match self {
             Request::Pipeline { project, .. }
             | Request::Mr { project, .. }
@@ -348,18 +356,25 @@ fn host(text: &str) -> Result<String, Error> {
     }
 }
 
+/// Путь `group/project` или числовой id проекта (спека поставки, § 8).
 fn project(text: &str) -> Result<String, Error> {
     let project = text.trim();
     let segments: Vec<&str> = project.split('/').collect();
-    let valid = segments.len() > 1
-        && segments
-            .iter()
-            .all(|s| SEGMENT.is_match(s) && !s.chars().all(|c| c == '.'));
+    let valid = is_project_id(project)
+        || segments.len() > 1
+            && segments
+                .iter()
+                .all(|s| SEGMENT.is_match(s) && !s.chars().all(|c| c == '.'));
     if valid {
         Ok(project.into())
     } else {
         Err(Error::new(ErrorCode::InvalidProject))
     }
+}
+
+/// Числовой id проекта вместо пути: путь по нему узнаёт `Source::project_path`.
+pub fn is_project_id(project: &str) -> bool {
+    !project.is_empty() && project.bytes().all(|b| b.is_ascii_digit())
 }
 
 fn last(text: &str) -> Result<u32, Error> {

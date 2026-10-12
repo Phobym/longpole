@@ -1,5 +1,6 @@
 //! Оболочка Selfhosted (ADR 0001, 0002): конфигурация инстанса и HTTP-сервер поверх ядра.
 
+mod api;
 mod auth;
 pub mod config;
 
@@ -109,6 +110,13 @@ pub fn router(state: AppState) -> Router {
         .route("/auth/callback/{domain}", get(auth::callback))
         .route("/auth/logout", post(auth::logout))
         .route("/api/hosts", post(hosts))
+        .route("/api/host_provider", post(api::host_provider))
+        .route("/api/projects", post(api::projects))
+        .route("/api/branches", post(api::branches))
+        .route("/api/pipelines", post(api::pipelines))
+        .route("/api/workflows", post(api::workflows))
+        .route("/api/add_project", post(api::add_project))
+        .route("/api/build", post(api::build))
         .fallback(get(frontend))
         .layer(middleware::from_fn_with_state(
             state.clone(),

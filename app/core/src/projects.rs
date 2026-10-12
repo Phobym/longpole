@@ -1,14 +1,18 @@
 //! «Мои проекты»: `projects.json`, в порядке добавления, без секретов.
 
+#[cfg(feature = "desktop")]
 use std::path::PathBuf;
+#[cfg(feature = "desktop")]
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use ts_rs::TS;
 
+#[cfg(feature = "desktop")]
 use crate::error::Error;
 use crate::iso::iso;
+#[cfg(feature = "desktop")]
 use crate::json_file;
 use crate::request::ProjectRef;
 
@@ -25,16 +29,29 @@ pub struct SavedProject {
 }
 
 impl SavedProject {
+    /// Проект, добавленный сейчас; в Selfhosted список хранит браузер, сервер только отдаёт запись.
+    pub fn new(project: ProjectRef, name: &str, now: OffsetDateTime) -> Self {
+        Self {
+            host: project.host,
+            path: project.path,
+            name: name.into(),
+            added_at: iso(now),
+        }
+    }
+
+    #[cfg(feature = "desktop")]
     fn is(&self, project: &ProjectRef) -> bool {
         self.host == project.host && self.path == project.path
     }
 }
 
+#[cfg(feature = "desktop")]
 pub struct Projects {
     file: PathBuf,
     lock: Mutex<()>,
 }
 
+#[cfg(feature = "desktop")]
 impl Projects {
     pub fn new(file: impl Into<PathBuf>) -> Self {
         Self {
@@ -58,12 +75,7 @@ impl Projects {
         let mut list = self.list()?;
         match list.iter_mut().find(|p| p.is(&project)) {
             Some(found) => found.name = name.into(),
-            None => list.push(SavedProject {
-                host: project.host,
-                path: project.path,
-                name: name.into(),
-                added_at: iso(now),
-            }),
+            None => list.push(SavedProject::new(project, name, now)),
         }
         self.save(list)
     }

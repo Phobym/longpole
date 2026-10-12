@@ -1,17 +1,23 @@
-//! История запросов: `history.json`, не больше `LIMIT` записей, новые сверху.
+//! История запросов: `history.json`, не больше `LIMIT` записей, новые сверху. Запись считает ядро и для
+//! Selfhosted, там историю хранит браузер.
 
+#[cfg(feature = "desktop")]
 use std::path::PathBuf;
+#[cfg(feature = "desktop")]
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use ts_rs::TS;
 
+#[cfg(feature = "desktop")]
 use crate::error::Error;
 use crate::iso::iso;
+#[cfg(feature = "desktop")]
 use crate::json_file;
 use crate::request::{Form, FormMode, Request};
 
+#[cfg(feature = "desktop")]
 const LIMIT: usize = 20;
 
 /// Подпись записи: форма рендерит её на текущем языке.
@@ -34,13 +40,29 @@ pub struct HistoryEntry {
     pub label: HistoryLabel,
 }
 
-/// Запись без времени: его проставляет `History::add`.
+/// Запись без времени: его проставляет [`NewEntry::at`].
 #[derive(Debug, Clone)]
 pub struct NewEntry {
     pub host: String,
     pub form: Form,
     pub request: Request,
     pub label: HistoryLabel,
+}
+
+impl NewEntry {
+    /// Запись истории на момент `now`; ссылка — без query и фрагмента.
+    pub fn at(self, now: OffsetDateTime) -> HistoryEntry {
+        HistoryEntry {
+            at: iso(now),
+            host: self.host,
+            form: Form {
+                url: stored_url(self.form.mode, self.form.url),
+                ..self.form
+            },
+            request: self.request,
+            label: self.label,
+        }
+    }
 }
 
 /// Ссылка на пайплайн может нести `?private_token=…`: в историю идёт только путь.
@@ -55,12 +77,14 @@ fn stored_url(mode: FormMode, mut url: String) -> String {
     url
 }
 
+#[cfg(feature = "desktop")]
 pub struct History {
     file: PathBuf,
     /// чтение-изменение-запись не должны перемешиваться у одновременных сборок
     lock: Mutex<()>,
 }
 
+#[cfg(feature = "desktop")]
 impl History {
     pub fn new(file: impl Into<PathBuf>) -> Self {
         Self {
@@ -76,16 +100,7 @@ impl History {
     /// Запись наверх; прежняя с тем же хостом и запросом заменяется.
     pub fn add(&self, new: NewEntry, now: OffsetDateTime) -> Result<Vec<HistoryEntry>, Error> {
         let _guard = json_file::lock(&self.lock);
-        let entry = HistoryEntry {
-            at: iso(now),
-            host: new.host,
-            form: Form {
-                url: stored_url(new.form.mode, new.form.url),
-                ..new.form
-            },
-            request: new.request,
-            label: new.label,
-        };
+        let entry = new.at(now);
         let rest: Vec<_> = self
             .list()?
             .into_iter()

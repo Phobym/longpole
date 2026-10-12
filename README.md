@@ -70,6 +70,8 @@ npm run build        # шаблон отчёта нужен сборке Rust
 npm run tauri dev
 ```
 
+Selfhosted в dev: сервер `cargo run -p longpole-server` с `url: http://localhost:5173` в `/etc/longpole/config.yaml`, фронт — `VITE_DELIVERY=selfhosted npm run dev`. Vite проксирует `/api`, `/auth` и `/healthz` на `localhost:8080`, Redirect URI OAuth-приложения — `http://localhost:5173/auth/callback/<domain>`.
+
 Сборка установщика: `npm run tauri build`. Выпуск — автоматически по мержу в `main`; ручной запуск `workflow_dispatch` в Actions только собирает артефакты в прогоне, релиз не создаёт.
 
 Проверки ядра: `cargo test -p longpole-core` в `app/`.

@@ -164,7 +164,8 @@ pub fn parse_project_input(input: &str) -> Result<ProjectRef, Error> {
     parse_remote(input)
 }
 
-fn parse_remote(input: &str) -> Result<ProjectRef, Error> {
+/// Как [`parse_project_input`], но без папок: файлов не читает, поэтому так ввод разбирает сервер.
+pub fn parse_remote(input: &str) -> Result<ProjectRef, Error> {
     let invalid = || Error::new(ErrorCode::ProjectInputInvalid);
     let clean = LINK.captures(input).or_else(|| GITHUB_LINK.captures(input));
     // хвост страницы режем только у веб-адресов: ssh/scp дают чистый путь проекта

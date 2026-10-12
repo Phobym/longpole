@@ -25,10 +25,19 @@ const ok = <T>(value: T): Result<T> => ({ ok: true, value })
 
 type Line<T> = { ok: T } | { err: ApiError } | { progress: Progress } | { queued: true }
 
-/** Ответ сервера — NDJSON: у `build` сначала строки прогресса, у всех последняя строка `ok` или `err`. */
+/** Вход истёк или отозван (спека, § 5): повторный вход у confidential-приложения тихий, возврат — на текущий URL. */
+const signInAgain = (e: ApiError) => {
+  if (e.kind === 'message' && e.code === 'authRequired' && e.params.host) login(e.params.host)
+}
+
+/**
+ * Ответ сервера — NDJSON: у `build` сначала строки прогресса, у всех последняя строка `ok` или `err`.
+ * `Accept-Language` — язык из настроек: на нём ядро пишет `meta.locale` отчёта.
+ */
 async function post<T>(cmd: string, args: Record<string, unknown>, onProgress?: (p: Progress) => void): Promise<Result<T>> {
   try {
-    const res = await fetch(`/api/${cmd}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(args) })
+    const headers = { 'Content-Type': 'application/json', 'Accept-Language': settings().locale }
+    const res = await fetch(`/api/${cmd}`, { method: 'POST', headers, body: JSON.stringify(args) })
     if (!res.body) return { ok: false, error: transportError(`HTTP ${res.status}`) }
     const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
     let rest = ''
@@ -39,7 +48,10 @@ async function post<T>(cmd: string, args: Record<string, unknown>, onProgress?: 
       for (const raw of lines.filter(Boolean)) {
         const line = JSON.parse(raw) as Line<T>
         if ('ok' in line) return ok(line.ok)
-        if ('err' in line) return { ok: false, error: line.err }
+        if ('err' in line) {
+          signInAgain(line.err)
+          return { ok: false, error: line.err }
+        }
         if ('progress' in line) onProgress?.(line.progress)
       }
       if (done) return { ok: false, error: transportError(`HTTP ${res.status}: нет строки ok или err`) }

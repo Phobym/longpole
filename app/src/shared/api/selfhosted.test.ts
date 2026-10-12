@@ -128,6 +128,31 @@ test('вход — переход всей страницы на /auth/login с 
   assert.deepEqual(assigned, ['/auth/login?host=gitlab.example.com&return_to=%2F%3Fa%3D1%23%2Fproject%2Fh%2Fg', '/auth/login?host=ghe.example.com&return_to=%2F'])
 })
 
+test('authRequired во время работы — тихий вход в этот хост с возвратом на текущий URL', async () => {
+  const assigned: string[] = []
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: { pathname: '/project/gitlab.example.com/g/p', search: '?ref=main', hash: '', assign: (url: string) => assigned.push(url) },
+  })
+  const authRequired = { kind: 'message', code: 'authRequired', params: { host: 'gitlab.example.com' } } as const
+  serve(() => [{ progress: { loaded: 0, total: 1 } }, { err: authRequired }])
+  assert.deepEqual(await api.build(form, () => {}), { ok: false, error: authRequired })
+  serve(() => [{ err: { kind: 'message', code: 'pipelineNotFound', params: {} } }])
+  await api.pipelines('gitlab.example.com', 'g/p', null, null, null)
+  assert.deepEqual(assigned, ['/auth/login?host=gitlab.example.com&return_to=%2Fproject%2Fgitlab.example.com%2Fg%2Fp%3Fref%3Dmain'])
+})
+
+test('язык отчёта — язык из настроек, а не только браузера', async () => {
+  await api.setSettings({ locale: 'de' })
+  const sent: RequestInit[] = []
+  globalThis.fetch = (async (_: string, init: RequestInit) => {
+    sent.push(init)
+    return new Response(JSON.stringify({ ok: [] }) + '\n')
+  }) as typeof fetch
+  await api.workflows('ghe.example.com', 'o/r')
+  assert.equal(new Headers(sent[0].headers).get('Accept-Language'), 'de')
+})
+
 test('выход: POST /auth/logout с JSON-заголовком, отказ сервера — transport', async () => {
   const sent: { url: string; init: RequestInit }[] = []
   let status = 204

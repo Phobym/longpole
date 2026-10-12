@@ -9,6 +9,7 @@ publish = false
 axum = "0.8"
 axum-extra = { version = "0.12.6", features = ["cookie-private", "cookie-key-expansion"] }
 base64 = "0.22"
+futures = "0.3"
 longpole-core = { path = "../core", default-features = false }
 regex = "1"
 rust-embed = { version = "8", features = ["mime-guess"] }

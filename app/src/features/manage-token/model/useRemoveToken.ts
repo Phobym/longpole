@@ -13,6 +13,6 @@ export function useRemoveToken() {
     const result = await removeToken(host)
     if (!result.ok) return showError(result.error)
     await queryClient.invalidateQueries(hostsQuery)
-    resetHostPick() // первый из оставшихся или «+ Добавить хост…»
+    resetHostPick() // первый из оставшихся или null, если хостов не осталось
   }
 }

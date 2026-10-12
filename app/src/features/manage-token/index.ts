@@ -1,4 +1,6 @@
 export { GITHUB_APP_INSTALL } from './model/oauth'
+export { closeConnect, openConnect, useConnectOpen } from './model/connect'
+export { ConnectAccount } from './ui/ConnectAccount'
 export { HostSelect } from './ui/HostSelect'
 export { RemoveTokenButton } from './ui/RemoveTokenButton'
 export { TokenBlock } from './ui/TokenBlock'

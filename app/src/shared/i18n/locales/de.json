@@ -59,7 +59,7 @@
     },
     "host": {
       "label": "Host",
-      "add": "+ Host hinzufügen…",
+      "add": "+ Weiteres Konto…",
       "saved": "{{host}} — Token gespeichert",
       "placeholder": "gitlab.example.com",
       "token": "Token",
@@ -85,12 +85,9 @@
       "projects": "Meine Projekte",
       "add": "+ Hinzufügen",
       "recent": "Zuletzt verwendet",
-      "removeProject": "Aus der Liste entfernen: {{name}}"
-    },
-    "empty": {
-      "title": "Erstes Projekt hinzufügen",
-      "text": "Einen Link zu einem GitLab- oder GitHub-Repository einfügen oder einen Ordner mit einem Klon auswählen.",
-      "add": "+ Projekt hinzufügen"
+      "removeProject": "Aus der Liste entfernen: {{name}}",
+      "accounts": "Konten",
+      "connect": "Verbinden"
     },
     "addProject": {
       "title": "Projekt hinzufügen",
@@ -107,7 +104,17 @@
       "stored": "Wird im System-Schlüsselbund gespeichert.",
       "scopeGithub": "Fine-grained Token mit den Berechtigungen Actions: read und Contents: read."
     },
-    "oauth": { "login": "Mit {{host}} anmelden", "or": "oder ein Token:", "clientId": "Client ID", "clientIdHint": "Der auf {{host}} registrierten App.", "register": "App registrieren ↗", "enterCode": "Diesen Code im Browser eingeben:", "copy": "Kopieren", "open": "{{host}} öffnen ↗", "finishInBrowser": "Anmeldung im Browser abschließen.", "installOrg": "Repositorys einer Organisation erscheinen, sobald Longpole dort installiert ist ↗", "installShort": "In einer Organisation installieren ↗" },
+    "oauth": {
+      "login": "Mit {{host}} anmelden",
+      "or": "oder ein Token:",
+      "clientId": "Client ID",
+      "clientIdHint": "Der auf {{host}} registrierten App.",
+      "register": "App registrieren ↗",
+      "enterCode": "Diesen Code im Browser eingeben:",
+      "finishInBrowser": "Anmeldung im Browser abschließen.",
+      "installOrg": "Repositorys einer Organisation erscheinen, sobald Longpole dort installiert ist ↗",
+      "installShort": "In einer Organisation installieren ↗"
+    },
     "settings": {
       "title": "Einstellungen",
       "back": "← Zurück",
@@ -115,9 +122,19 @@
       "noHosts": "Noch keine Hosts",
       "addHost": "Host hinzufügen",
       "linuxHint": "Unter Linux wird das Token im Secret Service (gnome-keyring, KWallet) gespeichert. Ohne diesen glab oder die Variablen GITLAB_TOKEN und GITLAB_HOST verwenden.",
-      "source": { "keychain": "Schlüsselbund", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "Umgebungsvariablen" },
+      "source": {
+        "keychain": "Schlüsselbund",
+        "oauth": "OAuth",
+        "glab": "glab",
+        "gh": "gh",
+        "env": "Umgebungsvariablen"
+      },
       "theme": "Design",
-      "themes": { "system": "System", "light": "Hell", "dark": "Dunkel" },
+      "themes": {
+        "system": "System",
+        "light": "Hell",
+        "dark": "Dunkel"
+      },
       "tips": "Tipps",
       "tipsShow": "Tipps der Giraffe anzeigen",
       "tipsReset": "Erneut zeigen"
@@ -125,6 +142,23 @@
     "reportView": {
       "back": "← Zurück",
       "loading": "Bericht wird geladen…"
+    },
+    "welcome": {
+      "title": "Willkommen bei Longpole",
+      "text": "Anmelden, um Pipelines zu sehen und herauszufinden, was den Build bremst.",
+      "skip": "Überspringen"
+    },
+    "connect": {
+      "title": "Konto verbinden",
+      "github": "Mit GitHub anmelden",
+      "gitlab": "Mit GitLab anmelden",
+      "server": "Anderer Server…",
+      "manual": "Token manuell einfügen",
+      "trust": "Nur Lesezugriff · Token im Schlüsselbund gespeichert",
+      "back": "← Zurück",
+      "copyOpen": "Code kopieren und {{host}} öffnen",
+      "pickTitle": "Projekt auf {{host}} auswählen",
+      "pickOther": "Link einfügen oder Ordner auswählen"
     }
   },
   "report": {
@@ -230,20 +264,59 @@
   "onboarding": {
     "ok": "Verstanden",
     "never": "Nicht mehr anzeigen",
-    "add-project": { "input": { "title": "Was hier hineingehört", "text": "Ein <b>Link auf Repository, Pipeline oder MR</b>, eine ssh-Adresse oder ein Ordner mit einem Klon – Schaltfläche rechts." } },
-    "token": { "create": { "title": "Ein Token wird benötigt", "text": "Der Link öffnet die Token-Seite <b>mit den nötigen Rechten</b>. Das Token liegt im Schlüsselbund des Systems." } },
-    "project": {
-      "screen": { "title": "Eine Pipeline oder viele", "text": "Ein Klick auf eine Pipeline erstellt ihren Bericht. Das <b>Aggregat</b> fasst N Pipelines des Branches zusammen und zeigt p50 und p90." },
-      "workflow": { "title": "Workflow", "text": "Bei GitHub beziehen sich Läufe und Aggregat <b>auf einen Workflow</b> – wähle ihn hier." }
+    "add-project": {
+      "input": {
+        "title": "Was hier hineingehört",
+        "text": "Ein <b>Link auf Repository, Pipeline oder MR</b>, eine ssh-Adresse oder ein Ordner mit einem Klon – Schaltfläche rechts."
+      }
     },
-    "header": { "link": { "title": "Abkürzung", "text": "Füge beim nächsten Mal hier einen <b>Link auf Pipeline, MR, Run oder PR</b> ein – der Bericht entsteht ohne Umweg über das Projekt." } },
+    "token": {
+      "create": {
+        "title": "Ein Token wird benötigt",
+        "text": "Der Link öffnet die Token-Seite <b>mit den nötigen Rechten</b>. Das Token liegt im Schlüsselbund des Systems."
+      }
+    },
+    "project": {
+      "screen": {
+        "title": "Eine Pipeline oder viele",
+        "text": "Ein Klick auf eine Pipeline erstellt ihren Bericht. Das <b>Aggregat</b> fasst N Pipelines des Branches zusammen und zeigt p50 und p90."
+      },
+      "workflow": {
+        "title": "Workflow",
+        "text": "Bei GitHub beziehen sich Läufe und Aggregat <b>auf einen Workflow</b> – wähle ihn hier."
+      }
+    },
+    "header": {
+      "link": {
+        "title": "Abkürzung",
+        "text": "Füge beim nächsten Mal hier einen <b>Link auf Pipeline, MR, Run oder PR</b> ein – der Bericht entsteht ohne Umweg über das Projekt."
+      }
+    },
     "report": {
-      "hotspots": { "title": "Wo anfangen", "text": "Hier stehen nur Jobs des <b>kritischen Pfads</b>: Andere zu beschleunigen verkürzt die Pipeline nicht. Ein Klick springt zum Job." },
-      "critical": { "title": "Orange ist der kritische Pfad", "text": "Diese Jobs bestimmen die Pipeline-Dauer. <b>Klick auf eine Stage</b> berechnet den Pfad bis zu ihrem Ende neu." },
-      "keys": { "title": "Zoom und Tasten", "text": "<b>⌘/Strg + Mausrad</b> zoomt, <b>[</b> und <b>]</b> verschieben, <b>0</b> zeigt die ganze Pipeline. Der Rest steht unter „?“." },
-      "retries": { "title": "Wiederholungen", "text": "Rote Schraffur markiert fehlgeschlagene Versuche. Die Beschriftung <b>↻2 −8m29s</b> zeigt ihre Anzahl und die verlorene Zeit." },
-      "aggregate": { "title": "Das Aggregat lesen", "text": "Der Balken zeigt Start und Dauer im <b>p50</b>, die Linie danach reicht bis <b>p90</b>. Die Markierung rechts ist der Anteil der Läufe mit Wiederholungen." },
-      "detail": { "title": "Detailbereich", "text": "Oben steht das <b>Fazit</b>: ob eine Beschleunigung die Pipeline verkürzt. Darunter die Beziehungen ↑/↓. Esc hebt die Auswahl auf." }
+      "hotspots": {
+        "title": "Wo anfangen",
+        "text": "Hier stehen nur Jobs des <b>kritischen Pfads</b>: Andere zu beschleunigen verkürzt die Pipeline nicht. Ein Klick springt zum Job."
+      },
+      "critical": {
+        "title": "Orange ist der kritische Pfad",
+        "text": "Diese Jobs bestimmen die Pipeline-Dauer. <b>Klick auf eine Stage</b> berechnet den Pfad bis zu ihrem Ende neu."
+      },
+      "keys": {
+        "title": "Zoom und Tasten",
+        "text": "<b>⌘/Strg + Mausrad</b> zoomt, <b>[</b> und <b>]</b> verschieben, <b>0</b> zeigt die ganze Pipeline. Der Rest steht unter „?“."
+      },
+      "retries": {
+        "title": "Wiederholungen",
+        "text": "Rote Schraffur markiert fehlgeschlagene Versuche. Die Beschriftung <b>↻2 −8m29s</b> zeigt ihre Anzahl und die verlorene Zeit."
+      },
+      "aggregate": {
+        "title": "Das Aggregat lesen",
+        "text": "Der Balken zeigt Start und Dauer im <b>p50</b>, die Linie danach reicht bis <b>p90</b>. Die Markierung rechts ist der Anteil der Läufe mit Wiederholungen."
+      },
+      "detail": {
+        "title": "Detailbereich",
+        "text": "Oben steht das <b>Fazit</b>: ob eine Beschleunigung die Pipeline verkürzt. Darunter die Beziehungen ↑/↓. Esc hebt die Auswahl auf."
+      }
     }
   }
 }

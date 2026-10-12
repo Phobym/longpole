@@ -5,7 +5,7 @@ import { Button } from '../../../shared/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../../../shared/ui/dialog'
 import { Input } from '../../../shared/ui/input'
 import { closeAddProject, pickFolder, useAddProject, useAddProjectOpen } from '../../../features/add-project'
-import { HostSelect, TokenBlock } from '../../../features/manage-token'
+import { HostSelect, openConnect, TokenBlock } from '../../../features/manage-token'
 import { ProjectsPanel, resetSearch } from '../../../features/search-projects'
 import { Tip } from '../../../features/onboarding'
 import { useHostState } from '../../../entities/host'
@@ -94,7 +94,14 @@ function AddProjectBody() {
       </button>
       {browse && (
         <div id={`${id}-browse`} className="flex flex-col gap-3 border-t pt-3">
-          <HostSelect onChange={resetSearch} />
+          {/* модальные Radix-диалоги рядом спорят за фокус — сначала закрываем свой */}
+          <HostSelect
+            onChange={resetSearch}
+            onAddAccount={() => {
+              closeAddProject()
+              openConnect()
+            }}
+          />
           {tokenHost !== null && <ProjectsPanel host={tokenHost} onPick={(project) => !busy && submit(`https://${tokenHost}/${project.fullPath}`)} />}
         </div>
       )}

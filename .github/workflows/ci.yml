@@ -36,7 +36,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint:fsd
       - run: npm run check:locales
-      - run: npm run test:onboarding
+      - run: npm test
       # До cargo: generate_context! требует dist/, шаблон отчёта — dist-report/.
       - run: npm run build
 

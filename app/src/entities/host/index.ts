@@ -1,1 +1,1 @@
-export { hostsQuery, normalizeHost, pickAddHost, pickHost, resetHostPick, useHostState } from './model/hosts'
+export { hostsQuery, normalizeHost, pickHost, resetHostPick, useHostState } from './model/hosts'

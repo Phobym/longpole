@@ -59,7 +59,7 @@
     },
     "host": {
       "label": "Host",
-      "add": "+ Añadir host…",
+      "add": "+ Otra cuenta…",
       "saved": "{{host}} — token guardado",
       "placeholder": "gitlab.example.com",
       "token": "Token",
@@ -86,12 +86,9 @@
       "projects": "Mis proyectos",
       "add": "+ Añadir",
       "recent": "Recientes",
-      "removeProject": "Quitar de la lista: {{name}}"
-    },
-    "empty": {
-      "title": "Añade tu primer proyecto",
-      "text": "Pega un enlace a un repositorio de GitLab o GitHub o elige una carpeta con un clon.",
-      "add": "+ Añadir proyecto"
+      "removeProject": "Quitar de la lista: {{name}}",
+      "accounts": "Cuentas",
+      "connect": "Conectar"
     },
     "addProject": {
       "title": "Añadir proyecto",
@@ -108,7 +105,17 @@
       "stored": "Se guarda en el llavero del sistema.",
       "scopeGithub": "Token de acceso granular con los permisos Actions: read y Contents: read."
     },
-    "oauth": { "login": "Iniciar sesión con {{host}}", "or": "o un token:", "clientId": "Client ID", "clientIdHint": "De la aplicación registrada en {{host}}.", "register": "Registrar una aplicación ↗", "enterCode": "Introduce este código en el navegador:", "copy": "Copiar", "open": "Abrir {{host}} ↗", "finishInBrowser": "Termina de iniciar sesión en el navegador.", "installOrg": "Los repositorios de una organización aparecen tras instalar Longpole en ella ↗", "installShort": "Instalar en una organización ↗" },
+    "oauth": {
+      "login": "Iniciar sesión con {{host}}",
+      "or": "o un token:",
+      "clientId": "Client ID",
+      "clientIdHint": "De la aplicación registrada en {{host}}.",
+      "register": "Registrar una aplicación ↗",
+      "enterCode": "Introduce este código en el navegador:",
+      "finishInBrowser": "Termina de iniciar sesión en el navegador.",
+      "installOrg": "Los repositorios de una organización aparecen tras instalar Longpole en ella ↗",
+      "installShort": "Instalar en una organización ↗"
+    },
     "settings": {
       "title": "Ajustes",
       "back": "← Atrás",
@@ -116,9 +123,19 @@
       "noHosts": "Aún no hay hosts",
       "addHost": "Añadir host",
       "linuxHint": "En Linux el token se guarda en Secret Service (gnome-keyring, KWallet). Si no está disponible, usa glab o las variables GITLAB_TOKEN y GITLAB_HOST.",
-      "source": { "keychain": "llavero", "oauth": "OAuth", "glab": "glab", "gh": "gh", "env": "variables de entorno" },
+      "source": {
+        "keychain": "llavero",
+        "oauth": "OAuth",
+        "glab": "glab",
+        "gh": "gh",
+        "env": "variables de entorno"
+      },
       "theme": "Tema",
-      "themes": { "system": "Sistema", "light": "Claro", "dark": "Oscuro" },
+      "themes": {
+        "system": "Sistema",
+        "light": "Claro",
+        "dark": "Oscuro"
+      },
       "tips": "Consejos",
       "tipsShow": "Mostrar los consejos de la jirafa",
       "tipsReset": "Volver a mostrar"
@@ -126,6 +143,23 @@
     "reportView": {
       "back": "← Atrás",
       "loading": "Cargando el informe…"
+    },
+    "welcome": {
+      "title": "Te damos la bienvenida a Longpole",
+      "text": "Inicia sesión para ver tus pipelines y descubrir qué ralentiza la compilación.",
+      "skip": "Omitir"
+    },
+    "connect": {
+      "title": "Conectar cuenta",
+      "github": "Iniciar sesión con GitHub",
+      "gitlab": "Iniciar sesión con GitLab",
+      "server": "Otro servidor…",
+      "manual": "Pegar un token manualmente",
+      "trust": "Solo lectura · el token se guarda en el llavero",
+      "back": "← Atrás",
+      "copyOpen": "Copiar el código y abrir {{host}}",
+      "pickTitle": "Elige un proyecto en {{host}}",
+      "pickOther": "Pega un enlace o elige una carpeta"
     }
   },
   "report": {
@@ -239,20 +273,59 @@
   "onboarding": {
     "ok": "Entendido",
     "never": "No volver a mostrar",
-    "add-project": { "input": { "title": "Qué poner aquí", "text": "Sirve un <b>enlace a un repositorio, pipeline o MR</b>, una dirección ssh o una carpeta con un clon (botón a la derecha)." } },
-    "token": { "create": { "title": "Hace falta un token", "text": "El enlace abre la página de creación del token <b>con los permisos necesarios</b>. El token se guarda en el llavero del sistema." } },
-    "project": {
-      "screen": { "title": "Un pipeline o muchos", "text": "Al hacer clic en un pipeline se crea su informe. El <b>agregado</b> reúne N pipelines de la rama y muestra p50 y p90." },
-      "workflow": { "title": "Workflow", "text": "En GitHub, las ejecuciones y el agregado se construyen <b>para un solo workflow</b>: elígelo aquí." }
+    "add-project": {
+      "input": {
+        "title": "Qué poner aquí",
+        "text": "Sirve un <b>enlace a un repositorio, pipeline o MR</b>, una dirección ssh o una carpeta con un clon (botón a la derecha)."
+      }
     },
-    "header": { "link": { "title": "Un atajo", "text": "La próxima vez, pega aquí un <b>enlace a un pipeline, MR, run o PR</b>: el informe se crea sin abrir el proyecto." } },
+    "token": {
+      "create": {
+        "title": "Hace falta un token",
+        "text": "El enlace abre la página de creación del token <b>con los permisos necesarios</b>. El token se guarda en el llavero del sistema."
+      }
+    },
+    "project": {
+      "screen": {
+        "title": "Un pipeline o muchos",
+        "text": "Al hacer clic en un pipeline se crea su informe. El <b>agregado</b> reúne N pipelines de la rama y muestra p50 y p90."
+      },
+      "workflow": {
+        "title": "Workflow",
+        "text": "En GitHub, las ejecuciones y el agregado se construyen <b>para un solo workflow</b>: elígelo aquí."
+      }
+    },
+    "header": {
+      "link": {
+        "title": "Un atajo",
+        "text": "La próxima vez, pega aquí un <b>enlace a un pipeline, MR, run o PR</b>: el informe se crea sin abrir el proyecto."
+      }
+    },
     "report": {
-      "hotspots": { "title": "Por dónde empezar", "text": "Aquí solo hay jobs de la <b>ruta crítica</b>: acelerar los demás no acorta el pipeline. Haz clic para ir al job." },
-      "critical": { "title": "Lo naranja es la ruta crítica", "text": "Estos jobs fijan la duración del pipeline. <b>Haz clic en una etapa</b> para recalcular la ruta hasta su final." },
-      "keys": { "title": "Zoom y teclas", "text": "<b>⌘/Ctrl + rueda</b> para el zoom, <b>[</b> y <b>]</b> para desplazar, <b>0</b> muestra todo el pipeline. El resto, en «?»." },
-      "retries": { "title": "Reintentos", "text": "El rayado rojo marca los intentos fallidos. La etiqueta <b>↻2 −8m29s</b> indica cuántos hubo y el tiempo perdido." },
-      "aggregate": { "title": "Cómo leer el agregado", "text": "La barra es el inicio y la duración <b>p50</b>; la línea que sigue llega al <b>p90</b>. La etiqueta de la derecha es la proporción de ejecuciones con reintentos." },
-      "detail": { "title": "Panel de detalles", "text": "Arriba está la <b>conclusión</b>: si acelerarlo acorta el pipeline. Debajo, los vínculos ↑/↓. Esc quita la selección." }
+      "hotspots": {
+        "title": "Por dónde empezar",
+        "text": "Aquí solo hay jobs de la <b>ruta crítica</b>: acelerar los demás no acorta el pipeline. Haz clic para ir al job."
+      },
+      "critical": {
+        "title": "Lo naranja es la ruta crítica",
+        "text": "Estos jobs fijan la duración del pipeline. <b>Haz clic en una etapa</b> para recalcular la ruta hasta su final."
+      },
+      "keys": {
+        "title": "Zoom y teclas",
+        "text": "<b>⌘/Ctrl + rueda</b> para el zoom, <b>[</b> y <b>]</b> para desplazar, <b>0</b> muestra todo el pipeline. El resto, en «?»."
+      },
+      "retries": {
+        "title": "Reintentos",
+        "text": "El rayado rojo marca los intentos fallidos. La etiqueta <b>↻2 −8m29s</b> indica cuántos hubo y el tiempo perdido."
+      },
+      "aggregate": {
+        "title": "Cómo leer el agregado",
+        "text": "La barra es el inicio y la duración <b>p50</b>; la línea que sigue llega al <b>p90</b>. La etiqueta de la derecha es la proporción de ejecuciones con reintentos."
+      },
+      "detail": {
+        "title": "Panel de detalles",
+        "text": "Arriba está la <b>conclusión</b>: si acelerarlo acorta el pipeline. Debajo, los vínculos ↑/↓. Esc quita la selección."
+      }
     }
   }
 }

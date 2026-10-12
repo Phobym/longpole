@@ -161,11 +161,11 @@ server {
 
 ### 5. Ссылка в CI
 
-Заведи переменную `LONGPOLE_URL` со значением `url` из конфига: в GitLab — instance-level CI/CD-переменную (Admin Area → Settings → CI/CD → Variables), в GitHub — переменную организации. Пайплайны печатают по ней ссылку «Посмотреть в Longpole» на отчёт.
+Заведи переменную `LONGPOLE_URL` со значением `url` из конфига: в GitLab — instance-level CI/CD-переменную (Admin Area → Settings → CI/CD → Variables), в GitHub — переменную организации (Settings организации → Secrets and variables → Actions → Variables). Пайплайны печатают по ней ссылку «Посмотреть в Longpole» на отчёт.
 
 В ссылке вместо пути проекта — его числовой id: после переименования проекта ссылка по старому пути не открылась бы.
 
-**GitLab.** Положи шаблон [`ci/gitlab/longpole.yml`](ci/gitlab/longpole.yml) в общий репозиторий, например `ci-templates/longpole`, и подключи его в `.gitlab-ci.yml` проекта одной строкой:
+**GitLab.** Положи шаблон [`ci/gitlab/longpole.yml`](ci/gitlab/longpole.yml) в корень общего репозитория, например `ci-templates/longpole`, и подключи его в `.gitlab-ci.yml` проекта одной строкой:
 
 ```yaml
 include: { project: ci-templates/longpole, file: /longpole.yml }
@@ -178,3 +178,5 @@ include: { project: ci-templates/longpole, file: /longpole.yml }
 ```yaml
 - run: echo "[Посмотреть в Longpole](${{ vars.LONGPOLE_URL }}/${GITHUB_SERVER_URL#https://}/$GITHUB_REPOSITORY_ID/actions/runs/$GITHUB_RUN_ID)" >> "$GITHUB_STEP_SUMMARY"
 ```
+
+Если старый GHES не задаёт `GITHUB_REPOSITORY_ID`, ссылка выйдет с пустым сегментом — подставь `$GITHUB_REPOSITORY`: ссылка заработает, но перестанет открываться после переименования репозитория.

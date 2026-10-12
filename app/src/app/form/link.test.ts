@@ -36,17 +36,17 @@ test('экран проекта (агрегат), страницы прилож�
 
 const repoFile = (path: string) => readFileSync(new URL(`../../../../${path}`, import.meta.url), 'utf8')
 
-/** Подстановка переменных так, как её делают shell, GitLab и выражения GitHub Actions. */
-const expand = (line: string, vars: Record<string, string>) =>
+/** Как shell, GitLab и выражения GitHub Actions: сам CI в тесте не запускается. */
+const expandCiVars = (line: string, vars: Record<string, string>) =>
   line
     .replace(/\$\{\{\s*vars\.(\w+)\s*\}\}/g, (_, name: string) => vars[name])
     .replace(/\$\{(\w+)#([^}]*)\}/g, (_, name: string, prefix: string) => vars[name].replace(prefix, ''))
     .replace(/\$\{?(\w+)\}?/g, (_, name: string) => vars[name])
 
 const longpoleUrl = 'https://longpole.example.com'
-const ciLink = (url: string | undefined, vars: Record<string, string>) => {
+const linkPathInCi = (url: string | undefined, vars: Record<string, string>) => {
   assert.ok(url)
-  const expanded = expand(url, { LONGPOLE_URL: longpoleUrl, ...vars })
+  const expanded = expandCiVars(url, { LONGPOLE_URL: longpoleUrl, ...vars })
   assert.ok(expanded.startsWith(`${longpoleUrl}/`), expanded)
   return expanded.slice(longpoleUrl.length)
 }
@@ -55,7 +55,7 @@ test('шаблон GitLab строит ссылку формы «пайплай�
   const vars = { CI_SERVER_HOST: 'gitlab.example.com', CI_PROJECT_ID: '42', CI_PIPELINE_ID: '7' }
   const template = repoFile('ci/gitlab/longpole.yml')
   for (const url of [/echo "[^"]*: (\S+)"/.exec(template)?.[1], /^\s+url: (\S+)$/m.exec(template)?.[1]]) {
-    const path = ciLink(url, vars)
+    const path = linkPathInCi(url, vars)
     assert.equal(path, '/gitlab.example.com/42/-/pipelines/7')
     assert.ok(reportLink(path))
   }
@@ -64,7 +64,7 @@ test('шаблон GitLab строит ссылку формы «пайплай�
 test('строка GitHub из README строит ссылку формы «run GitHub» по id репозитория', () => {
   const vars = { GITHUB_SERVER_URL: 'https://ghe.example.com', GITHUB_REPOSITORY_ID: '42', GITHUB_RUN_ID: '7' }
   const line = /^- run: .*GITHUB_STEP_SUMMARY.*$/m.exec(repoFile('README.md'))?.[0]
-  const path = ciLink(line && /\]\((.+)\)"/.exec(line)?.[1], vars)
+  const path = linkPathInCi(line && /\]\((.+)\)"/.exec(line)?.[1], vars)
   assert.equal(path, '/ghe.example.com/42/actions/runs/7')
   assert.ok(reportLink(path))
 })

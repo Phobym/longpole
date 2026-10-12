@@ -98,6 +98,7 @@
     "addProject": {
       "title": "Projekt hinzufügen",
       "placeholder": "https://gitlab.example.com/group/project, https://github.com/owner/repo oder ein Ordnerpfad",
+      "placeholderLink": "https://gitlab.example.com/group/project oder https://github.com/owner/repo",
       "hint": "Ein Link zu Repository, Pipeline, MR, Run oder PR funktioniert.",
       "pickFolder": "Ordner auswählen…",
       "findOnHost": "In der Projektliste des Hosts suchen",
@@ -151,7 +152,8 @@
     "reportView": {
       "back": "← Zurück",
       "loading": "Bericht wird geladen…",
-      "rebuild": "Neu erstellen"
+      "rebuild": "Neu erstellen",
+      "download": "HTML herunterladen"
     },
     "reportLink": {
       "signIn": "Melde dich bei {{host}} an, um den Bericht zu sehen",

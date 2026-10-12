@@ -6,13 +6,14 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../../../
 import { Input } from '../../../shared/ui/input'
 import { closeAddProject, useAddProject, useAddProjectOpen } from '../../../features/add-project'
 import { pickFolder } from '../../../shared/lib/dialogs'
+import { capabilities } from '../../../shared/config'
 import { HostSelect, openConnect, TokenBlock } from '../../../features/manage-token'
 import { ProjectsPanel, resetSearch } from '../../../features/search-projects'
 import { Tip } from '../../../features/onboarding'
 import { useHostState } from '../../../entities/host'
 import { Giraffe } from '../../../shared/ui/giraffe'
 
-/** Одно поле на ссылку или путь, «Выбрать папку…», разворачиваемый поиск по хосту; токен запрашивается на месте. */
+/** Одно поле на ссылку или путь, «Выбрать папку…» (только Desktop), разворачиваемый поиск по хосту; токен запрашивается на месте. */
 export function AddProjectDialog() {
   const open = useAddProjectOpen()
   return (
@@ -60,11 +61,13 @@ function AddProjectBody() {
       >
         <div className="flex gap-2">
           <Tip id="add-project.input" side="top">
-            <Input id={id} autoFocus translate="no" placeholder={t('form.addProject.placeholder')} aria-invalid={showError} aria-describedby={showError ? `${id}-error` : undefined} value={input} onChange={(e) => setInput(e.target.value)} />
+            <Input id={id} autoFocus translate="no" placeholder={t(capabilities.addByFolder ? 'form.addProject.placeholder' : 'form.addProject.placeholderLink')} aria-invalid={showError} aria-describedby={showError ? `${id}-error` : undefined} value={input} onChange={(e) => setInput(e.target.value)} />
           </Tip>
-          <Button type="button" variant="outline" className="shrink-0" disabled={busy} onClick={() => void pick()}>
-            {t('form.addProject.pickFolder')}
-          </Button>
+          {capabilities.addByFolder && (
+            <Button type="button" variant="outline" className="shrink-0" disabled={busy} onClick={() => void pick()}>
+              {t('form.addProject.pickFolder')}
+            </Button>
+          )}
         </div>
         {showError && (
           <p id={`${id}-error`} role="alert" className="flex items-start gap-2 text-sm text-destructive">

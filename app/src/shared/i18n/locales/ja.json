@@ -97,6 +97,7 @@
     "addProject": {
       "title": "プロジェクトを追加",
       "placeholder": "https://gitlab.example.com/group/project、https://github.com/owner/repo、またはフォルダのパス",
+      "placeholderLink": "https://gitlab.example.com/group/project または https://github.com/owner/repo",
       "hint": "リポジトリ、パイプライン、MR、run、PR のリンクを利用できます。",
       "pickFolder": "フォルダを選択…",
       "findOnHost": "ホストのプロジェクト一覧から探す",
@@ -150,7 +151,8 @@
     "reportView": {
       "back": "← 戻る",
       "loading": "レポートを読み込み中…",
-      "rebuild": "再生成"
+      "rebuild": "再生成",
+      "download": "HTML をダウンロード"
     },
     "reportLink": {
       "signIn": "レポートを見るには {{host}} にサインインしてください",

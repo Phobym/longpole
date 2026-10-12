@@ -59,18 +59,30 @@ struct Target {
     status_counts: Option<BTreeMap<String, u32>>,
 }
 
+/// Суффикс имени файла отчёта по одному пайплайну: у MR — `mr<iid>`, иначе id пайплайна. Сервер берёт его
+/// для отчёта из кэша: имя то же, что у ⌘S в Desktop.
+pub fn single_suffix(request: &Request, pipeline_id: &str) -> String {
+    match request {
+        Request::Mr { mr_iid, .. } => format!("mr{mr_iid}"),
+        _ => pipeline_id.to_owned(),
+    }
+}
+
 async fn resolve(source: &impl Source, request: &Request, project: &str) -> Result<Target, Error> {
     match request {
         Request::Pipeline { pipeline_id, .. } => Ok(Target {
             ids: vec![pipeline_id.clone()],
-            suffix: pipeline_id.clone(),
+            suffix: single_suffix(request, pipeline_id),
             status_counts: None,
         }),
-        Request::Mr { mr_iid, .. } => Ok(Target {
-            ids: vec![source.head_pipeline(project, mr_iid).await?],
-            suffix: format!("mr{mr_iid}"),
-            status_counts: None,
-        }),
+        Request::Mr { mr_iid, .. } => {
+            let id = source.head_pipeline(project, mr_iid).await?;
+            Ok(Target {
+                suffix: single_suffix(request, &id),
+                ids: vec![id],
+                status_counts: None,
+            })
+        }
         Request::Aggregate {
             r#ref,
             source: event,

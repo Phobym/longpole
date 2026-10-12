@@ -123,3 +123,40 @@ async fn одновременные_запросы_одного_ключа_ст�
     assert!(a.get("ok").is_some() && b.get("ok").is_some(), "{a} {b}");
     assert_eq!(hits(&mock, JOBS).await, 1);
 }
+
+#[tokio::test]
+async fn имя_файла_как_в_desktop_и_у_отчёта_из_кэша() {
+    let mock = providers(28800).await;
+    mount_run(&mock, "completed", "2026-10-07T10:05:00Z").await;
+    Mock::given(method("GET"))
+        .and(path("/api/v3/repos/o/r/pulls/5"))
+        .respond_with(reply(200, json!({"head": {"sha": "abc123"}})))
+        .mount(&mock)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/api/v3/repos/o/r/actions/runs"))
+        .respond_with(reply(
+            200,
+            json!({"total_count": 1, "workflow_runs": [{
+                "id": 7, "name": "ci", "run_number": 12, "run_attempt": 1,
+                "status": "completed", "conclusion": "success",
+                "created_at": "2026-10-07T10:00:00Z", "updated_at": "2026-10-07T10:05:00Z",
+                "run_started_at": "2026-10-07T10:00:00Z",
+                "head_branch": "main", "head_sha": "abc123", "path": ".github/workflows/ci.yml",
+                "html_url": format!("https://{GHES}/o/r/actions/runs/7"), "event": "pull_request",
+                "head_commit": {"message": "fix"}, "actor": {"login": "bob"},
+            }]}),
+        ))
+        .mount(&mock)
+        .await;
+    let (app, cookie) = signed_in(&mock).await;
+
+    // Desktop: `longpole-<путь>-<id пайплайна>.html`, у MR и PR — `-mr<номер>`
+    let run = last(&app, build(&cookie, &run_url(), "en", false)).await;
+    assert_eq!(run["ok"]["fileName"], "longpole-o-r-7.html", "{run}");
+    let hit = last(&app, build(&cookie, &run_url(), "en", false)).await;
+    assert_eq!(hit["ok"]["fileName"], "longpole-o-r-7.html");
+    let pull = format!("https://{GHES}/o/r/pull/5");
+    let pr = last(&app, build(&cookie, &pull, "en", false)).await;
+    assert_eq!(pr["ok"]["fileName"], "longpole-o-r-mr5.html", "{pr}");
+}

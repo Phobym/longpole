@@ -18,7 +18,7 @@ use longpole_core::browse::{Page, Pipeline, Project, Workflow};
 use longpole_core::error::{CmdError, Error, ErrorCode, Field};
 use longpole_core::history::{HistoryLabel, NewEntry};
 use longpole_core::projects::SavedProject;
-use longpole_core::report::{BuildEnv, Progress, build_report};
+use longpole_core::report::{BuildEnv, Progress, build_report, default_file_name, single_suffix};
 use longpole_core::request::{Form, FormMode, Parsed, Request, parse_form, parse_remote};
 use longpole_core::schema::{Locale, Report};
 use longpole_core::source::{AnySource, Provider, Source, project_path};
@@ -234,8 +234,9 @@ pub(crate) struct BuildArgs {
     fresh: bool,
 }
 
-/// Отчёт и запись истории для «Недавних» в браузере. Ответ — поток NDJSON: `queued`, если все слоты реплики
-/// заняты, строки `progress`, последняя — `ok` или `err`. Закрытая вкладка обрывает поток, а с ним и сборку.
+/// Отчёт, запись истории для «Недавних» в браузере и имя файла для «Скачать HTML». Ответ — поток NDJSON:
+/// `queued`, если все слоты реплики заняты, строки `progress`, последняя — `ok` или `err`. Закрытая вкладка
+/// обрывает поток, а с ним и сборку.
 pub(crate) async fn build(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -357,33 +358,37 @@ impl AppState {
             // поток уже закрыт — прогресс некому показывать
             let _ = progress.send(json!({ "progress": p }));
         };
-        // отчёт, проект и пайплайн для лога (у пайплайна — числовые id ключа кэша), попадание в кэш
+        // отчёт, имя файла для «Скачать HTML», проект и пайплайн для лога (у пайплайна — числовые id ключа кэша),
+        // попадание в кэш
         let built = async {
             match single_pipeline(&source, &request).await? {
                 Some((project, pipeline)) => {
+                    let file_name =
+                        default_file_name(&project, &single_suffix(&request, &pipeline));
                     let (report, key, cached) = self
                         .cached_report(&source, project, pipeline, env, fresh, on_progress)
                         .await?;
-                    Ok((report, key.project, key.pipeline, cached))
+                    Ok((report, file_name, key.project, key.pipeline, cached))
                 }
                 None => {
                     let built = build_report(&source, &request, env, on_progress).await?;
                     let project = request.project().to_owned();
-                    Ok::<_, Error>((to_json(built.report), project, "-".to_owned(), false))
+                    let report = to_json(built.report);
+                    Ok::<_, Error>((report, built.file_name, project, "-".to_owned(), false))
                 }
             }
         };
         let built = self.0.builds.within_timeout(built).await;
         let ms = started.elapsed().as_millis() as u64;
         match &built {
-            Ok((_, project, pipeline, cached)) => {
+            Ok((_, _, project, pipeline, cached)) => {
                 tracing::info!(host = %host, project = %project, pipeline = %pipeline, cached, ms, "build");
             }
             Err(e) => {
                 tracing::info!(host = %host, project = %request.project(), error = ?e.code, ms, "build");
             }
         }
-        let result: Cmd<Value> = built.map_err(Into::into).map(|(report, ..)| {
+        let result: Cmd<Value> = built.map_err(Into::into).map(|(report, file_name, ..)| {
             let label = HistoryLabel::deserialize(&report["meta"])
                 .expect("meta отчёта несёт project и label");
             let entry = NewEntry {
@@ -393,7 +398,7 @@ impl AppState {
                 label,
             }
             .at(env.now);
-            json!({ "report": report, "entry": entry })
+            json!({ "report": report, "entry": entry, "fileName": file_name })
         });
         // ответ уже начат, cookie не поменять: фронт сразу уходит на вход, и callback перезапишет хост
         // ponytail: при отказе во входе мёртвый хост остаётся в cookie до 401 на другой операции

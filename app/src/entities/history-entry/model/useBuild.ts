@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { build, type BuildProgress, type Form, apiError, unwrap } from '../../../shared/api'
+import { build, type BuildProgress, type Form, apiError, messageError, unwrap } from '../../../shared/api'
 import { progressText, useTranslation } from '../../../shared/i18n'
 import { historyQuery } from './history'
 
@@ -26,6 +26,7 @@ export function useBuild() {
       void navigate({ to: '/report/$id', params: { id: String(id) } })
     },
   })
+  const error = apiError(mutation.error)
   return {
     start: mutation.mutate,
     busy: mutation.isPending,
@@ -33,6 +34,8 @@ export function useBuild() {
     progress: progress === 'queued' ? null : progress,
     /** «В очереди…», «Загружаю N из M…» (или «Загружаю…», пока прогресса нет). */
     progressLabel: progressText(t, progress),
-    error: apiError(mutation.error),
+    error,
+    /** «Повторить» после `buildTimeout` — та же форма; при других ошибках `null`. */
+    retry: messageError(error)?.code === 'buildTimeout' ? () => mutation.mutate(mutation.variables!) : null,
   }
 }

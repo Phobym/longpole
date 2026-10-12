@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { apiError, build, login, report, unwrap, type ApiError, type BuildProgress, type Report } from '../../shared/api'
 import { progressText, useErrorText, useTranslation } from '../../shared/i18n'
 import { Button } from '../../shared/ui/button'
+import { RetryButton } from '../../shared/ui/retry-button'
 import { historyQuery, linkForm } from '../../entities/history-entry'
 import { reportLink } from './link'
 import { ReportLoading, ReportScreen } from './report-route'
@@ -53,9 +54,7 @@ function LinkFailure({ error, onRetry }: { error: ApiError; onRetry?: () => void
           {t('form.settings.signIn')}
         </Button>
       ) : error.kind === 'message' && error.code === 'buildTimeout' && onRetry ? (
-        <Button type="button" onClick={onRetry}>
-          {t('form.reportLink.retry')}
-        </Button>
+        <RetryButton onClick={onRetry} />
       ) : (
         <Link to="/" className="text-link hover:underline">
           {t('form.reportLink.home')}

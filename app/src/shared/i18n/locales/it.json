@@ -37,6 +37,7 @@
   },
   "form": {
     "cancel": "Annulla",
+    "retry": "Riprova",
     "language": "Lingua",
     "loading": "Caricamento…",
     "nothing": "Nessun risultato",
@@ -155,8 +156,7 @@
     },
     "reportLink": {
       "signIn": "Accedi a {{host}} per vedere il report",
-      "home": "Vai all'inizio",
-      "retry": "Riprova"
+      "home": "Vai all'inizio"
     },
     "welcome": {
       "title": "Benvenuto in Longpole",

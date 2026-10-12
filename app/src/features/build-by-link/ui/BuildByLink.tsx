@@ -3,6 +3,7 @@ import { fieldError, messageError } from '../../../shared/api'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { Input } from '../../../shared/ui/input'
+import { RetryButton } from '../../../shared/ui/retry-button'
 import { linkForm, useBuild } from '../../../entities/history-entry'
 import { markFocusHandled, setLinkUrl, useFocusRequested, useLinkUrl } from '../model/link'
 
@@ -15,7 +16,7 @@ export function BuildByLink({ tokenBlock }: { tokenBlock?: (host: string, retry:
   const submitted = useRef('')
   const url = useLinkUrl()
   const focusRequested = useFocusRequested()
-  const { start, busy, progressLabel, error } = useBuild()
+  const { start, busy, progressLabel, error, retry } = useBuild()
   const failure = fieldError(error, 'url') ?? messageError(error)
   const needsToken = failure?.code === 'noToken' && tokenBlock ? failure.params.host : null
   const showError = failure !== undefined && !needsToken
@@ -60,6 +61,7 @@ export function BuildByLink({ tokenBlock }: { tokenBlock?: (host: string, retry:
             {errorText(failure)}
           </p>
         )}
+        {retry && <RetryButton onClick={retry} />}
       </form>
       {/* у блока токена своя форма — соседом, не внутри: вложенный submit всплыл бы и повторно запустил сборку */}
       {needsToken && tokenBlock?.(needsToken, () => start(linkForm(submitted.current)))}

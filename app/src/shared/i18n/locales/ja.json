@@ -37,6 +37,7 @@
   },
   "form": {
     "cancel": "キャンセル",
+    "retry": "再試行",
     "language": "言語",
     "loading": "読み込み中…",
     "nothing": "見つかりませんでした",
@@ -153,8 +154,7 @@
     },
     "reportLink": {
       "signIn": "レポートを見るには {{host}} にサインインしてください",
-      "home": "ホームへ",
-      "retry": "再試行"
+      "home": "ホームへ"
     },
     "welcome": {
       "title": "Longpole へようこそ",

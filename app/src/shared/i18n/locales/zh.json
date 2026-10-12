@@ -37,6 +37,7 @@
   },
   "form": {
     "cancel": "取消",
+    "retry": "重试",
     "language": "语言",
     "loading": "加载中…",
     "nothing": "未找到任何内容",
@@ -153,8 +154,7 @@
     },
     "reportLink": {
       "signIn": "登录 {{host}} 以查看报告",
-      "home": "返回首页",
-      "retry": "重试"
+      "home": "返回首页"
     },
     "welcome": {
       "title": "欢迎使用 Longpole",

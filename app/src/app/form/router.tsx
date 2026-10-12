@@ -1,10 +1,12 @@
-import { createHashHistory, createRootRoute, createRoute, createRouter, Outlet, useMatches, useNavigate } from '@tanstack/react-router'
+import { createBrowserHistory, createHashHistory, createRootRoute, createRoute, createRouter, Outlet, useMatches, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { capabilities } from '../../shared/config'
 import { useGoBack } from '../../shared/lib/useGoBack'
 import { openAddProject } from '../../features/add-project'
 import { HomePage } from '../../pages/home'
 import { ProjectPage } from '../../pages/project'
 import { SettingsPage } from '../../pages/settings'
+import { ReportLinkRoute } from './link-route'
 import { ReportRoute } from './report-route'
 import { AddProjectDialog } from '../../widgets/add-project-dialog'
 import { ConnectDialog } from '../../widgets/connect-account'
@@ -17,7 +19,7 @@ const mod = (e: KeyboardEvent) => (isMac ? e.metaKey : e.ctrlKey)
 function Layout() {
   const navigate = useNavigate()
   const goBack = useGoBack()
-  const onReport = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/report/$id') })
+  const onReport = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/report/$id' || m.routeId === '/$host/$') })
   const onSettings = useMatches({ select: (matches) => matches.some((m) => m.routeId === '/settings') })
 
   // Один обработчик клавиш на приложение. Открытый оверлей (Popover/Select) и выделенная строка отчёта гасят Esc сами (`defaultPrevented`):
@@ -90,10 +92,12 @@ const projectRoute = createRoute({
 
 export const reportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/report/$id', component: ReportRoute })
 const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: SettingsPage })
+// Ссылка на отчёт (спека поставки, § 8): `/<домен>/<путь у провайдера>`; статические `/project`, `/report`, `/settings` важнее
+const linkRoute = createRoute({ getParentRoute: () => rootRoute, path: '/$host/$', component: ReportLinkRoute })
 
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([homeRoute, projectRoute, reportRoute, settingsRoute]),
-  history: createHashHistory(),
+  routeTree: rootRoute.addChildren([homeRoute, projectRoute, reportRoute, settingsRoute, ...(capabilities.hashRouting ? [] : [linkRoute])]),
+  history: capabilities.hashRouting ? createHashHistory() : createBrowserHistory(),
 })
 
 declare module '@tanstack/react-router' {

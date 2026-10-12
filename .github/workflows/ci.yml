@@ -67,13 +67,17 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo test -p longpole-core
+      - run: cargo test -p longpole-core -p longpole-server
       # Ядро для Selfhosted (ADR 0001): без фичи `desktop` собирается и не тянет связку ключей.
       - run: cargo clippy -p longpole-core --no-default-features --all-targets -- -D warnings
       - name: Ядро без desktop — без keyring
         # дерево отдельно от grep: упавший `cargo tree` иначе сошёл бы за «keyring нет»
         run: |
           tree=$(cargo tree -p longpole-core --no-default-features -e normal --target all)
+          ! grep -i keyring <<< "$tree"
+      - name: Сервер — без keyring
+        run: |
+          tree=$(cargo tree -p longpole-server -e normal --target all)
           ! grep -i keyring <<< "$tree"
 
       - name: Сгенерированное закоммичено

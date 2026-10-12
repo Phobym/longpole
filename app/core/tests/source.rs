@@ -4,8 +4,50 @@ mod fixtures;
 use std::sync::Mutex;
 
 use fixtures::fake_gql;
-use longpole_core::source::{AnySource, Provider, Source};
+use longpole_core::error::ErrorCode;
+use longpole_core::source::{AnySource, Provider, Source, Stamp};
 use serde_json::json;
+
+#[tokio::test]
+async fn gitlab_отметка_пайплайна_это_числовые_id_и_updated_at() {
+    let gql = fake_gql(|v| {
+        assert_eq!(v["id"], json!("gid://gitlab/Ci::Pipeline/5"));
+        json!({ "project": { "id": "gid://gitlab/Project/12", "pipeline": {
+            "id": "gid://gitlab/Ci::Pipeline/5", "updatedAt": "2026-10-07T10:05:00Z"
+        } } })
+    });
+    assert_eq!(
+        gql.pipeline_stamp("g/p", "5").await.unwrap(),
+        Stamp {
+            project_id: "12".into(),
+            pipeline_id: "5".into(),
+            version: "2026-10-07T10:05:00Z".into(),
+        }
+    );
+}
+
+#[tokio::test]
+async fn gitlab_отметка_без_доступа_это_не_найден() {
+    let no_project = fake_gql(|_| json!({ "project": null }));
+    assert_eq!(
+        no_project
+            .pipeline_stamp("g/p", "5")
+            .await
+            .unwrap_err()
+            .code,
+        ErrorCode::ProjectNotFound
+    );
+    let no_pipeline =
+        fake_gql(|_| json!({ "project": { "id": "gid://gitlab/Project/12", "pipeline": null } }));
+    assert_eq!(
+        no_pipeline
+            .pipeline_stamp("g/p", "5")
+            .await
+            .unwrap_err()
+            .code,
+        ErrorCode::PipelineNotFound
+    );
+}
 
 #[tokio::test]
 async fn gitlab_номер_из_ссылки_становится_gid_а_gid_не_меняется() {

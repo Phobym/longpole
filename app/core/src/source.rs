@@ -47,6 +47,15 @@ pub async fn resolve_provider_at(
     Ok(probed)
 }
 
+/// Пайплайн по числовым id и его версия (спека поставки, § 7): ключ кэша отчётов и признак ретрая.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Stamp {
+    pub project_id: String,
+    pub pipeline_id: String,
+    /// `updated_at`, у GitHub ещё `run_attempt`: сменилась — отчёт устарел
+    pub version: String,
+}
+
 /// Операции, которые нужны отчёту и экранам формы.
 pub trait Source: Sync {
     fn host(&self) -> &str;
@@ -65,6 +74,13 @@ pub trait Source: Sync {
         project: &str,
         filter: &PipelineFilter,
     ) -> impl Future<Output = Result<Listed, Error>> + Send;
+
+    /// Лёгкая проверка прав на пайплайн от имени владельца токена; нет доступа (403, 404) — «не найден».
+    fn pipeline_stamp(
+        &self,
+        project: &str,
+        id: &str,
+    ) -> impl Future<Output = Result<Stamp, Error>> + Send;
 
     /// Пайплайн MR (GitLab) или самый долгий run head-коммита PR (GitHub).
     fn head_pipeline(
@@ -113,13 +129,7 @@ impl<G: Gql> Source for G {
     }
 
     async fn fetch_pipeline(&self, project: &str, id: &str) -> Result<RawPipeline, Error> {
-        // номер из ссылки — в gid; список и MR уже отдают gid
-        let gid = if id.starts_with("gid://") {
-            id.to_string()
-        } else {
-            format!("gid://gitlab/Ci::Pipeline/{id}")
-        };
-        gitlab::fetch_pipeline(self, project, &gid).await
+        gitlab::fetch_pipeline(self, project, &gitlab::pipeline_gid(id)).await
     }
 
     async fn list_pipelines(
@@ -128,6 +138,10 @@ impl<G: Gql> Source for G {
         filter: &PipelineFilter,
     ) -> Result<Listed, Error> {
         gitlab::list_pipelines(self, project, filter).await
+    }
+
+    async fn pipeline_stamp(&self, project: &str, id: &str) -> Result<Stamp, Error> {
+        gitlab::pipeline_stamp(self, project, &gitlab::pipeline_gid(id)).await
     }
 
     async fn head_pipeline(&self, project: &str, number: &str) -> Result<String, Error> {
@@ -232,6 +246,13 @@ impl Source for AnySource {
         match self {
             Self::Gitlab(c) => c.list_pipelines(project, filter).await,
             Self::Github(c) => c.list_pipelines(project, filter).await,
+        }
+    }
+
+    async fn pipeline_stamp(&self, project: &str, id: &str) -> Result<Stamp, Error> {
+        match self {
+            Self::Gitlab(c) => c.pipeline_stamp(project, id).await,
+            Self::Github(c) => c.pipeline_stamp(project, id).await,
         }
     }
 

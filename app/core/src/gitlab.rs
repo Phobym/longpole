@@ -11,6 +11,7 @@ use time::OffsetDateTime;
 
 use crate::error::{Error, ErrorCode};
 use crate::model::{RawJob, RawPipeline, RawPipelineInfo};
+use crate::source::Stamp;
 
 mod client;
 
@@ -299,6 +300,59 @@ fn fetch_at_depth<'a, G: Gql>(
             downstream,
             needs_missing: false,
         })
+    })
+}
+
+/// Номер из ссылки — в gid; список и MR уже отдают gid.
+pub(crate) fn pipeline_gid(id: &str) -> String {
+    if id.starts_with("gid://") {
+        id.to_string()
+    } else {
+        format!("gid://gitlab/Ci::Pipeline/{id}")
+    }
+}
+
+/// `gid://gitlab/Project/12` → `12`.
+fn gid_number(gid: &str) -> String {
+    gid.rsplit('/').next().unwrap_or(gid).to_string()
+}
+
+// Через GraphQL, а не REST `GET /projects/:id/pipelines/:pid` из спеки: у клиента GitLab только GraphQL,
+// а без доступа он так же отдаёт `null`
+const STAMP_QUERY: &str = "query($project: ID!, $id: CiPipelineID!) {
+  project(fullPath: $project) { id pipeline(id: $id) { id updatedAt } }
+}";
+
+#[derive(Deserialize)]
+struct StampProject {
+    id: String,
+    pipeline: Option<StampPipeline>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StampPipeline {
+    id: String,
+    updated_at: String,
+}
+
+/// Числовые id проекта и пайплайна и `updatedAt`; `id` — gid.
+pub(crate) async fn pipeline_stamp(
+    gql: &impl Gql,
+    project: &str,
+    id: &str,
+) -> Result<Stamp, Error> {
+    let variables = json!({ "project": project, "id": id });
+    let found: StampProject = query_project(gql, STAMP_QUERY, variables, project).await?;
+    let pipeline = found.pipeline.ok_or_else(|| {
+        gql.error(ErrorCode::PipelineNotFound)
+            .with("pipeline", gid_number(id))
+            .with("project", project)
+    })?;
+    Ok(Stamp {
+        project_id: gid_number(&found.id),
+        pipeline_id: gid_number(&pipeline.id),
+        version: pipeline.updated_at,
     })
 }
 

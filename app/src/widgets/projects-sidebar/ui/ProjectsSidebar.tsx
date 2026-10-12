@@ -113,7 +113,7 @@ export function ProjectsSidebar() {
                 <span translate="no" className="min-w-0 flex-1 truncate">
                   {h.host}
                 </span>
-                <span className="text-[11px] text-muted-foreground">{t(`form.settings.source.${h.source}`)}</span>
+                <span className="shrink-0 whitespace-nowrap text-[11px] text-muted-foreground">{t(`form.settings.source.${h.source}`)}</span>
               </Link>
             </li>
           ))}

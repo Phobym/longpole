@@ -3,7 +3,6 @@ import { useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '../../../shared/ui/dialog'
 import { closeConnect, ConnectAccount, useConnectOpen } from '../../../features/manage-token'
-import { resetSearch } from '../../../features/search-projects'
 import { useHostState } from '../../../entities/host'
 import { PickProject } from './PickProject'
 
@@ -29,7 +28,7 @@ function ConnectBody() {
   return (
     <>
       <DialogTitle>{t('form.connect.title')}</DialogTitle>
-      {connected && tokenHost ? <PickProject host={tokenHost} onAdded={closeConnect} /> : <ConnectAccount onConnected={() => { resetSearch(); setConnected(true) }} />}
+      {connected && tokenHost ? <PickProject host={tokenHost} onAdded={closeConnect} /> : <ConnectAccount onConnected={() => setConnected(true)} />}
       <Button type="button" variant="ghost" className="self-end" onClick={closeConnect}>
         {t('form.cancel')}
       </Button>

@@ -28,7 +28,7 @@ export function ConnectAccount({ onConnected, onWaitingChange }: { onConnected?:
   if (server) {
     return (
       <div className="flex w-full flex-col gap-2 text-left">
-        <Button type="button" variant="ghost" size="sm" className="self-start" onClick={() => setServer(false)}>
+        <Button type="button" variant="ghost" size="sm" className="self-start" onClick={() => { setServer(false); setLast(null) }}>
           {t('form.connect.back')}
         </Button>
         <TokenForm defaultHost="" onSaved={onConnected} />

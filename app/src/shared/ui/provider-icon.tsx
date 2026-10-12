@@ -12,7 +12,7 @@ const PATHS: Record<Provider, string> = {
 
 /** Логотип провайдера; хост без известного типа — нейтральный сервер. Декоративный: имя хоста — в тексте рядом. */
 export function ProviderIcon({ provider, className }: { provider: Provider | null; className?: string }) {
-  if (!provider) return <ServerIcon aria-hidden className={cn('size-4', className)} />
+  if (!provider) return <ServerIcon aria-hidden className={cn('size-4 shrink-0', className)} />
   return (
     <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden className={cn('size-4 shrink-0', className)}>
       <path d={PATHS[provider]} />

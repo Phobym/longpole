@@ -25,16 +25,21 @@ export function useOauthLogin(host: string) {
     setError(null)
     const result = await oauthLogin(host, clientId, setCode).finally(() => {
       pending.current = null
-      setWaiting(false)
       setCode(null)
     })
     if (!result.ok) {
+      setWaiting(false)
       setError(result.error)
       return false
     }
-    if (!result.value) return false
+    if (!result.value) {
+      setWaiting(false)
+      return false
+    }
+    // «ожидание» снимаем только когда хост уже выбран: иначе между входом и выбором проекта мелькает экран до входа
     await queryClient.invalidateQueries(hostsQuery)
     pickHost(normalizeHost(host))
+    setWaiting(false)
     return true
   }
   const cancel = () => {

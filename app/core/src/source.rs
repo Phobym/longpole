@@ -178,6 +178,18 @@ impl AnySource {
             Provider::Github => Self::Github(github::Client::new(host, token)?),
         })
     }
+
+    /// Клиент хоста по адресу `base` (`https://<домен>`, у GHES API под `/api/v3`); тесты подставляют wiremock.
+    pub fn at(provider: Provider, host: &str, base: &str, token: &str) -> Result<Self, Error> {
+        Ok(match provider {
+            Provider::Gitlab => Self::Gitlab(gitlab::Client::with_base_url(host, base, token)?),
+            Provider::Github => Self::Github(github::Client::with_api_url(
+                host,
+                &format!("{}/api/v3", base.trim_end_matches('/')),
+                token,
+            )?),
+        })
+    }
 }
 
 impl Source for AnySource {

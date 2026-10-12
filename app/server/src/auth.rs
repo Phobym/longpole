@@ -132,7 +132,7 @@ impl AppState {
         jar: PrivateCookieJar,
         domain: &str,
     ) -> (PrivateCookieJar, Result<HostSession, Error>) {
-        let auth_required = || Error::new(ErrorCode::AuthRequired).with("host", domain);
+        let auth_required = || auth_required(domain);
         let mut all = sessions(&jar);
         let (Some(host), Some(session)) = (self.host(domain), all.get(domain).cloned()) else {
             return (jar, Err(auth_required()));
@@ -158,6 +158,17 @@ impl AppState {
             Err(RefreshError::Failed(e)) => (jar, Err(e)),
         }
     }
+}
+
+pub(crate) fn auth_required(domain: &str) -> Error {
+    Error::new(ErrorCode::AuthRequired).with("host", domain)
+}
+
+/// Провайдер ответил 401 на живой access — вход отозван: хост уходит из cookie.
+pub(crate) fn forget(jar: PrivateCookieJar, domain: &str) -> PrivateCookieJar {
+    let mut all = sessions(&jar);
+    all.remove(domain);
+    with_sessions(jar, &all)
 }
 
 #[derive(Deserialize)]

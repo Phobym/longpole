@@ -2,6 +2,7 @@
 
 mod api;
 mod auth;
+mod cache;
 pub mod config;
 
 use std::sync::Arc;
@@ -21,6 +22,7 @@ use longpole_core::web_oauth::App;
 use rust_embed::{EmbeddedFile, RustEmbed};
 
 use crate::auth::Refreshes;
+use crate::cache::ReportCache;
 use crate::config::{Config, Host};
 
 /// Сборка фронта с `VITE_DELIVERY=selfhosted`; в release-бинарник встраивается целиком.
@@ -42,6 +44,7 @@ struct Server {
     origin: String,
     hsts: bool,
     refreshes: Refreshes,
+    reports: ReportCache,
 }
 
 /// Хост конфига с адресом провайдера и redirect URI его приложения.
@@ -82,6 +85,9 @@ impl AppState {
             origin: config.url.origin().ascii_serialization(),
             hsts: config.url.scheme() == "https",
             refreshes: Refreshes::default(),
+            reports: ReportCache::new(
+                usize::try_from(config.cache_max_mb.saturating_mul(1 << 20)).unwrap_or(usize::MAX),
+            ),
         }))
     }
 

@@ -25,7 +25,8 @@ pre-commit:
       run: cargo fmt --all --check
 
 pre-push:
-  parallel: true
+  # По очереди: тестам сервера нужен dist/, который собирает шаг clippy.
+  piped: true
   commands:
     cargo-clippy:
       root: app/
@@ -35,4 +36,4 @@ pre-push:
     cargo-test:
       root: app/
       glob: 'app/**/*.{rs,toml}'
-      run: cargo test -p longpole-core
+      run: cargo test -p longpole-core -p longpole-server

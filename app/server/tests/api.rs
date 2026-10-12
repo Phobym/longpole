@@ -171,9 +171,11 @@ async fn ссылка_с_id_репозитория_строит_отчёт_по_
     .await;
     let ok = &out.last().unwrap()["ok"];
     assert_eq!(ok["report"]["meta"]["project"], "o/r", "{out:?}");
+    assert_eq!(ok["entry"]["label"]["project"], "o/r");
+    // запрос в истории остаётся по id: он переживёт переименование
     assert_eq!(
         ok["entry"]["request"],
-        json!({"mode": "pipeline", "project": "o/r", "pipelineId": "7"})
+        json!({"mode": "pipeline", "project": "42", "pipelineId": "7"})
     );
 }
 

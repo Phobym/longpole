@@ -85,6 +85,9 @@ fn мусор_это_project_input_invalid() {
         "foo",
         "https://h.example/",
         "https://h.example/single",
+        // id проекта — только в ссылке на отчёт: «Мои проекты» хранят путь
+        "https://h.example/42",
+        "https://h.example/42/-/pipelines/7",
         "https://h.example/g/../p",
         "ftp://h/g/p",
         "git@h.example:/abs/path",

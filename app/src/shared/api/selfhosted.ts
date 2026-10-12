@@ -31,8 +31,13 @@ const SIGN_IN_WINDOW_MS = 60_000
 
 /** Вход в хост начат только что: отказ у провайдера или 401 на свежий токен вернули на ту же страницу. */
 const justSignedIn = (host: string) => {
-  const mark = JSON.parse(sessionStorage.getItem(SIGNING_IN) ?? 'null') as { host: string; at: number } | null
-  return mark?.host === host && Date.now() - mark.at < SIGN_IN_WINDOW_MS
+  try {
+    const mark = JSON.parse(sessionStorage.getItem(SIGNING_IN) ?? 'null') as { host: string; at: number } | null
+    return mark?.host === host && Date.now() - mark.at < SIGN_IN_WINDOW_MS
+  } catch {
+    // испорченная метка — как её отсутствие
+    return false
+  }
 }
 
 /**

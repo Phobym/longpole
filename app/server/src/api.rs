@@ -298,25 +298,18 @@ async fn prepare(
 async fn build_lines(
     source: AnySource,
     form: Form,
-    Parsed { host, mut request }: Parsed,
+    Parsed { host, request }: Parsed,
     locale: Locale,
     tx: mpsc::UnboundedSender<Value>,
 ) {
     let progress = tx.clone();
     let now = OffsetDateTime::now_utc();
     let env = BuildEnv { now, locale };
-    // id проекта из ссылки — в путь: по нему строятся отчёт и запись истории
-    let built = match project_path(&source, request.project()).await {
-        Ok(path) => {
-            *request.project_mut() = path;
-            build_report(&source, &request, env, move |p| {
-                // поток уже закрыт — прогресс некому показывать
-                let _ = progress.send(json!({ "progress": p }));
-            })
-            .await
-        }
-        Err(e) => Err(e),
-    };
+    let built = build_report(&source, &request, env, move |p| {
+        // поток уже закрыт — прогресс некому показывать
+        let _ = progress.send(json!({ "progress": p }));
+    })
+    .await;
     let result: Cmd<Value> = built.map_err(Into::into).map(|built| {
         let (Report::Single { meta, .. } | Report::Aggregate { meta, .. }) = &built.report;
         let label = HistoryLabel {

@@ -17,7 +17,7 @@ use crate::iso::iso;
 use crate::model::{Span, build_tree};
 use crate::request::Request;
 use crate::schema::{Locale, Meta, Report};
-use crate::source::Source;
+use crate::source::{Source, project_path};
 
 static UNSAFE_IN_NAME: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"[^A-Za-z0-9_.-]+").expect("верный шаблон"));
@@ -59,25 +59,25 @@ struct Target {
     status_counts: Option<BTreeMap<String, u32>>,
 }
 
-async fn resolve(source: &impl Source, request: &Request) -> Result<Target, Error> {
+async fn resolve(source: &impl Source, request: &Request, project: &str) -> Result<Target, Error> {
     match request {
         Request::Pipeline { pipeline_id, .. } => Ok(Target {
             ids: vec![pipeline_id.clone()],
             suffix: pipeline_id.clone(),
             status_counts: None,
         }),
-        Request::Mr { project, mr_iid } => Ok(Target {
+        Request::Mr { mr_iid, .. } => Ok(Target {
             ids: vec![source.head_pipeline(project, mr_iid).await?],
             suffix: format!("mr{mr_iid}"),
             status_counts: None,
         }),
         Request::Aggregate {
-            project,
             r#ref,
             source: event,
             last,
             statuses,
             workflow,
+            ..
         } => {
             let filter = PipelineFilter {
                 r#ref: r#ref.clone(),
@@ -146,8 +146,9 @@ pub async fn build_report(
     env: BuildEnv,
     on_progress: impl Fn(Progress) + Send + Sync,
 ) -> Result<Built, Error> {
-    let target = resolve(source, request).await?;
-    let project = request.project();
+    // id проекта из ссылки (спека поставки, § 8) — в путь: по пути читаются пайплайны и подписан отчёт
+    let project = &project_path(source, request.project()).await?;
+    let target = resolve(source, request, project).await?;
     let (trees, needs_missing) = load_trees(source, project, &target.ids, env, on_progress).await?;
 
     let (label, aggregated) = match request {

@@ -73,3 +73,90 @@ npm run tauri dev
 Сборка установщика: `npm run tauri build`. Выпуск — автоматически по мержу в `main`; ручной запуск `workflow_dispatch` в Actions только собирает артефакты в прогоне, релиз не создаёт.
 
 Проверки ядра: `cargo test -p longpole-core` в `app/`.
+
+## Selfhosted
+
+Веб-сервис для команды с GitLab self-managed или GitHub Enterprise Server: один инстанс в контуре организации, пользователи входят через OAuth своего хоста и смотрят отчёты в браузере. Базы нет: сессия лежит в зашифрованной cookie, кэш отчётов — в памяти процесса, «Мои проекты» и «Недавние» — в браузере. Бэкапить и мигрировать нечего.
+
+### 1. OAuth-приложения
+
+На каждый хост — одно приложение. Redirect URI выводится из конфига: `<url>/auth/callback/<domain>`, например `https://longpole.example.com/auth/callback/gitlab.example.com`.
+
+- **GitLab:** Admin Area → Applications → New application. Redirect URI — как выше, Confidential включён, scope `read_api`. Application ID → `client_id`, Secret → `client_secret`.
+- **GHES:** Settings организации → Developer settings → GitHub Apps → New GitHub App. Callback URL — как выше, «Expire user authorization tokens» включено, вебхук можно выключить. Repository permissions: Actions, Contents и Metadata — Read-only. Client ID → `client_id`, Generate a new client secret → `client_secret`; App ID не нужен. Приложение устанавливается на организации с нужными репозиториями.
+
+### 2. Конфигурация
+
+Ключ cookie — 32 случайных байта: `openssl rand -base64 32`. Смена ключа означает тихий повторный вход для всех.
+
+Конфиг — один YAML-файл, в контейнере всегда по пути `/etc/longpole/config.yaml`:
+
+```yaml
+url: https://longpole.example.com   # публичный адрес, только https (кроме http://localhost) и только корень домена
+cookie_key: ${LONGPOLE_COOKIE_KEY}
+listen: 0.0.0.0:8080                # необязательно
+cache_max_mb: 256                   # необязательно, лимит кэша отчётов
+max_concurrent_builds: 8            # необязательно
+build_timeout: 5m                   # необязательно, s | m | h
+log:
+  level: info                       # trace | debug | info | warn | error
+  format: text                      # text | json
+hosts:
+  - domain: gitlab.example.com      # без схемы и пути, порт допустим; ходим всегда по https
+    provider: gitlab                # gitlab | github
+    client_id: 3f9a…
+    client_secret: ${GITLAB_CLIENT_SECRET}
+  - domain: github.example.com
+    provider: github
+    client_id: Iv1.…
+    client_secret: ${GHES_CLIENT_SECRET}
+```
+
+Секреты в файл не пишутся: `${ИМЯ}` в любом месте файла подставляется из окружения контейнера, незаданная или пустая переменная — ошибка. Конфиг проверяется при старте: сервер печатает в stderr все ошибки сразу и выходит с ненулевым кодом. Изменения применяются рестартом. Логи — в stdout, `RUST_LOG` не читается.
+
+### 3. Образ и запуск
+
+Образ не публикуется — он собирается из тега релиза:
+
+```bash
+git clone --branch vX.Y.Z https://github.com/Phobym/longpole.git
+cd longpole
+docker build --build-arg VERSION=X.Y.Z -t longpole:X.Y.Z .
+```
+
+`VERSION` — версия, которую сервер пишет в лог при старте. В образе один файл `/longpole` на `distroless/static`, процесс работает от `nonroot` (uid 65532), порт 8080:
+
+```bash
+docker run -d --name longpole --restart unless-stopped -p 127.0.0.1:8080:8080 \
+  -v /srv/longpole/config.yaml:/etc/longpole/config.yaml:ro \
+  -e LONGPOLE_COOKIE_KEY -e GITLAB_CLIENT_SECRET -e GHES_CLIENT_SECRET \
+  longpole:X.Y.Z
+```
+
+Файл конфига должен читаться пользователем 65532. `GET /healthz` отвечает `200 ok` без сессии и без обращений к хостам. `HEALTHCHECK` в образе нет — в distroless нет curl, проверку настраивает оркестратор (например, `httpGet` в Kubernetes).
+
+**Инстанс работает в одну реплику**: обновление одноразового refresh-токена GitLab и кэш живут в памяти процесса. Рестарт теряет кэш, сессии в cookie переживают его.
+
+### 4. Сеть
+
+- **Прокси:** `HTTPS_PROXY` и `NO_PROXY` в окружении контейнера.
+- **Корпоративный CA:** образ не меняется. Смонтируй PEM-файл и задай `SSL_CERT_FILE`. Файл **заменяет** системное хранилище образа, а не дополняет его: в нём должны быть и корпоративный CA, и публичные корни, если хосты за ними. Например, на Debian-хосте: `cat corp-ca.pem /etc/ssl/certs/ca-certificates.crt > /srv/longpole/ca.pem`, затем `-v /srv/longpole/ca.pem:/etc/longpole/ca.pem:ro -e SSL_CERT_FILE=/etc/longpole/ca.pem`.
+- **Reverse proxy с TLS:** сервер слушает только HTTP, TLS завершает прокси или ingress. Деплой под подпутём не поддерживается — нужен отдельный домен. Прогресс построения отчёта приходит потоком, поэтому буферизацию ответов в прокси надо выключить. Rate limit на `/api/*` и `/auth/*` — тоже задача прокси или WAF.
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name longpole.example.com;
+    ssl_certificate     /etc/nginx/tls/longpole.crt;
+    ssl_certificate_key /etc/nginx/tls/longpole.key;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_buffering off;
+    }
+}
+```
+
+### 5. Ссылка в CI
+
+Заведи переменную `LONGPOLE_URL` со значением `url` из конфига: в GitLab — instance-level CI/CD-переменную (Admin Area → Settings → CI/CD → Variables), в GitHub — переменную организации. Пайплайны печатают по ней ссылку «Посмотреть в Longpole» на отчёт.

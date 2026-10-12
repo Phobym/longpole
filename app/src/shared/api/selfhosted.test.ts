@@ -92,6 +92,19 @@ test('build: прогресс из потока, отчёт в памяти вк
   assert.deepEqual(value(await api.history()), [entry('7', '2026-10-12T10:00:00Z')])
 })
 
+test('rebuild: build с fresh по той же форме, новый отчёт под тем же id', async () => {
+  serve(() => built('7', '2026-10-12T10:00:00Z'))
+  const id = value(await api.build(form, () => {}))
+  serve(() => [{ progress: { loaded: 1, total: 1 } }, { ok: { report: report('7b'), entry: entry('7', '2026-10-12T11:00:00Z') } }])
+  const progress: unknown[] = []
+  assert.equal(value(await api.rebuild(id, (p) => progress.push(p))), id)
+  assert.deepEqual(calls[1], { url: '/api/build', body: { form, fresh: true } })
+  assert.deepEqual(progress, [{ loaded: 1, total: 1 }])
+  assert.deepEqual(value(await api.report(id)), report('7b'))
+  assert.deepEqual(value(await api.history()), [entry('7', '2026-10-12T11:00:00Z')])
+  assert.equal((await api.rebuild(999, () => {})).ok, false)
+})
+
 test('отчёта нет в памяти вкладки — reportExpired', async () => {
   assert.deepEqual(await api.report(999), { ok: false, error: { kind: 'message', code: 'reportExpired', params: { id: '999' } } })
 })

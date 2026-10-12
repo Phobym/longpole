@@ -4,7 +4,7 @@ mod fixtures;
 
 use longpole_core::error::ErrorCode;
 use longpole_core::github::{Client, probe_at};
-use longpole_core::source::Provider;
+use longpole_core::source::{Provider, Source, Stamp};
 use serde_json::json;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -112,4 +112,43 @@ async fn проба_ghes_с_заголовком_при_503_всё_равно_gi
         probe_at("ghe.example", &server.uri()).await.unwrap(),
         Provider::Github
     );
+}
+
+#[tokio::test]
+async fn отметка_run_это_id_репозитория_updated_at_и_попытка() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/runs/7"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": 7, "run_attempt": 2, "updated_at": "2026-10-07T10:05:00Z", "repository": { "id": 42 }
+        })))
+        .mount(&server)
+        .await;
+    let client = Client::with_api_url("ghe.example", &server.uri(), "t").unwrap();
+    assert_eq!(
+        client.pipeline_stamp("o/r", "7").await.unwrap(),
+        Stamp {
+            project_id: "42".into(),
+            pipeline_id: "7".into(),
+            version: "2026-10-07T10:05:00Z#2".into(),
+        }
+    );
+}
+
+#[tokio::test]
+async fn отметка_run_при_403_и_404_это_не_найден() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/repos/o/r/actions/runs/8"))
+        .respond_with(ResponseTemplate::new(403).set_body_json(json!({ "message": "Forbidden" })))
+        .mount(&server)
+        .await;
+    let client = Client::with_api_url("ghe.example", &server.uri(), "t").unwrap();
+    for id in ["8", "404"] {
+        assert_eq!(
+            client.pipeline_stamp("o/r", id).await.unwrap_err().code,
+            ErrorCode::PipelineNotFound,
+            "{id}"
+        );
+    }
 }

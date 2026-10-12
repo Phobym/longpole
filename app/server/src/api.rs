@@ -5,6 +5,7 @@
 use std::collections::BTreeMap;
 use std::convert::Infallible;
 use std::future::ready;
+use std::time::Instant;
 
 use axum::Json;
 use axum::body::Body;
@@ -17,7 +18,7 @@ use longpole_core::browse::{Page, Pipeline, Project, Workflow};
 use longpole_core::error::{CmdError, Error, ErrorCode, Field};
 use longpole_core::history::{HistoryLabel, NewEntry};
 use longpole_core::projects::SavedProject;
-use longpole_core::report::{BuildEnv, build_report};
+use longpole_core::report::{BuildEnv, Progress, build_report};
 use longpole_core::request::{Form, FormMode, Parsed, Request, parse_form, parse_remote};
 use longpole_core::schema::{Locale, Report};
 use longpole_core::source::{AnySource, Provider, Source, project_path};
@@ -27,6 +28,7 @@ use time::OffsetDateTime;
 use tokio::sync::mpsc;
 
 use crate::auth::{auth_required, forget};
+use crate::cache::{Key, finished};
 use crate::{AppState, ndjson};
 
 type Cmd<T> = Result<T, CmdError>;
@@ -227,6 +229,9 @@ pub(crate) async fn add_project(
 #[derive(Deserialize)]
 pub(crate) struct BuildArgs {
     form: Form,
+    /// «Перестроить»: мимо кэша отчётов
+    #[serde(default)]
+    fresh: bool,
 }
 
 /// Отчёт и запись истории для «Недавних» в браузере. Ответ — поток NDJSON: строки `progress`, последняя —
@@ -235,20 +240,24 @@ pub(crate) async fn build(
     State(state): State<AppState>,
     headers: HeaderMap,
     jar: PrivateCookieJar,
-    Json(BuildArgs { form }): Json<BuildArgs>,
+    Json(args): Json<BuildArgs>,
 ) -> Response {
     let locale = headers
         .get(header::ACCEPT_LANGUAGE)
         .and_then(|v| v.to_str().ok())
         .map_or(Locale::En, Locale::from_tag);
-    let (jar, prepared) = prepare(&state, jar, &form).await;
+    let env = BuildEnv {
+        now: OffsetDateTime::now_utc(),
+        locale,
+    };
+    let (jar, prepared) = prepare(&state, jar, &args.form).await;
     let (source, parsed) = match prepared {
         Ok(prepared) => prepared,
         Err(e) => return (jar, fail(e)).into_response(),
     };
     // строк не больше, чем пайплайнов в сборке (+1): ограничивает их лимит ядра
     let (tx, rx) = mpsc::unbounded_channel::<Value>();
-    let work = build_lines(source, form, parsed, locale, tx);
+    let work = state.build_lines(source, args, parsed, env, tx);
     // `work` пишет строки в канал и закрывает его, когда завершён: последней уходит `ok` или `err`
     let lines = futures::stream::unfold(rx, |mut rx| async move {
         rx.recv().await.map(|line| (line, rx))
@@ -294,46 +303,134 @@ async fn prepare(
     (jar, Ok((source, parsed)))
 }
 
-/// Сборка: прогресс и последняя строка — в `tx`.
-async fn build_lines(
-    source: AnySource,
-    form: Form,
-    Parsed { host, request }: Parsed,
-    locale: Locale,
-    tx: mpsc::UnboundedSender<Value>,
-) {
-    let progress = tx.clone();
-    let now = OffsetDateTime::now_utc();
-    let env = BuildEnv { now, locale };
-    let built = build_report(&source, &request, env, move |p| {
-        // поток уже закрыт — прогресс некому показывать
-        let _ = progress.send(json!({ "progress": p }));
-    })
-    .await;
-    let result: Cmd<Value> = built.map_err(Into::into).map(|built| {
-        let (Report::Single { meta, .. } | Report::Aggregate { meta, .. }) = &built.report;
-        let label = HistoryLabel {
-            project: meta.project.clone(),
-            label: meta.label.clone(),
-        };
-        let entry = NewEntry {
-            host: host.clone(),
-            form,
-            request,
-            label,
+/// Пайплайн запроса: путь проекта и id пайплайна (MR разрешён в свой пайплайн); у агрегата — `None`.
+async fn single_pipeline(
+    source: &AnySource,
+    request: &Request,
+) -> Result<Option<(String, String)>, Error> {
+    let project = || project_path(source, request.project());
+    Ok(match request {
+        Request::Aggregate { .. } => None,
+        Request::Pipeline { pipeline_id, .. } => Some((project().await?, pipeline_id.clone())),
+        Request::Mr { mr_iid, .. } => {
+            let project = project().await?;
+            let pipeline = source.head_pipeline(&project, mr_iid).await?;
+            Some((project, pipeline))
         }
-        .at(now);
-        json!({ "report": built.report, "entry": entry })
-    });
-    // ответ уже начат, cookie не поменять: фронт сразу уходит на вход, и callback перезапишет хост
-    // ponytail: при отказе во входе мёртвый хост остаётся в cookie до 401 на другой операции
-    let result = if revoked(&result) {
-        Err(auth_required(&host).into())
-    } else {
-        result
-    };
-    // поток уже закрыт — ответ некому отдать
-    let _ = tx.send(line(result));
+    })
+}
+
+fn to_json(report: Report) -> Value {
+    serde_json::to_value(report).expect("Report сериализуется в JSON")
+}
+
+impl AppState {
+    /// Сборка: прогресс и последняя строка — в `tx`; в лог — что построено, из кэша ли и за сколько (§ 13).
+    async fn build_lines(
+        self,
+        source: AnySource,
+        BuildArgs { form, fresh }: BuildArgs,
+        Parsed { host, request }: Parsed,
+        env: BuildEnv,
+        tx: mpsc::UnboundedSender<Value>,
+    ) {
+        let started = Instant::now();
+        let progress = tx.clone();
+        let on_progress = move |p| {
+            // поток уже закрыт — прогресс некому показывать
+            let _ = progress.send(json!({ "progress": p }));
+        };
+        // отчёт, проект и пайплайн для лога (у пайплайна — числовые id ключа кэша), попадание в кэш
+        let built = async {
+            match single_pipeline(&source, &request).await? {
+                Some((project, pipeline)) => {
+                    let (report, key, cached) = self
+                        .cached_report(&source, project, pipeline, env, fresh, on_progress)
+                        .await?;
+                    Ok((report, key.project, key.pipeline, cached))
+                }
+                None => {
+                    let built = build_report(&source, &request, env, on_progress).await?;
+                    let project = request.project().to_owned();
+                    Ok::<_, Error>((to_json(built.report), project, "-".to_owned(), false))
+                }
+            }
+        };
+        let built = built.await;
+        let ms = started.elapsed().as_millis() as u64;
+        match &built {
+            Ok((_, project, pipeline, cached)) => {
+                tracing::info!(host = %host, project = %project, pipeline = %pipeline, cached, ms, "build");
+            }
+            Err(e) => {
+                tracing::info!(host = %host, project = %request.project(), error = ?e.code, ms, "build");
+            }
+        }
+        let result: Cmd<Value> = built.map_err(Into::into).map(|(report, ..)| {
+            let label = HistoryLabel::deserialize(&report["meta"])
+                .expect("meta отчёта несёт project и label");
+            let entry = NewEntry {
+                host: host.clone(),
+                form,
+                request,
+                label,
+            }
+            .at(env.now);
+            json!({ "report": report, "entry": entry })
+        });
+        // ответ уже начат, cookie не поменять: фронт сразу уходит на вход, и callback перезапишет хост
+        // ponytail: при отказе во входе мёртвый хост остаётся в cookie до 401 на другой операции
+        let result = if revoked(&result) {
+            Err(auth_required(&host).into())
+        } else {
+            result
+        };
+        // поток уже закрыт — ответ некому отдать
+        let _ = tx.send(line(result));
+    }
+
+    /// Отчёт по пайплайну через кэш (спека поставки, § 7): права проверяются у провайдера при каждой выдаче,
+    /// отчёт из кэша получает `meta.locale` запроса. `true` в ответе — попадание.
+    async fn cached_report(
+        &self,
+        source: &AnySource,
+        project: String,
+        pipeline: String,
+        env: BuildEnv,
+        fresh: bool,
+        on_progress: impl Fn(Progress) + Send + Sync,
+    ) -> Result<(Value, Key, bool), Error> {
+        let stamp = source.pipeline_stamp(&project, &pipeline).await?;
+        let key = Key {
+            host: source.host().to_owned(),
+            project: stamp.project_id,
+            pipeline: stamp.pipeline_id,
+        };
+        let cache = &self.0.reports;
+        let (report, cached) = cache
+            .single_flight(&key, async {
+                if !fresh && let Some(hit) = cache.get(&key, &stamp.version) {
+                    let mut report = Value::clone(&hit);
+                    report["meta"]["locale"] = json!(env.locale);
+                    return Ok((report, true));
+                }
+                let request = Request::Pipeline {
+                    project,
+                    pipeline_id: pipeline,
+                };
+                let report = to_json(
+                    build_report(source, &request, env, on_progress)
+                        .await?
+                        .report,
+                );
+                if finished(&report) {
+                    cache.put(key.clone(), stamp.version.clone(), report.clone());
+                }
+                Ok::<_, Error>((report, false))
+            })
+            .await?;
+        Ok((report, key, cached))
+    }
 }
 
 fn field_error(field: Field, code: ErrorCode) -> CmdError {

@@ -2,8 +2,10 @@ import { DELIVERY } from './delivery'
 
 const desktop = DELIVERY === 'desktop'
 
-/** Что умеет вариант поставки; в Selfhosted всё `false`. */
+/** Что умеет вариант поставки; в Selfhosted всё `false`, кроме `reportCache`. */
 export const capabilities = {
+  /** общий кэш отчётов на сервере: в шапке отчёта «Перестроить» мимо него */
+  reportCache: !desktop,
   /** свои хосты и токены */
   manageHosts: desktop,
   /** добавление проекта по папке */

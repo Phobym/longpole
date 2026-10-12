@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
 import { apiError, setCurrentReport, type Report } from '../../shared/api'
@@ -8,6 +9,7 @@ import { Button } from '../../shared/ui/button'
 import { isReportId, useReportById } from '../../entities/report'
 import { ReportPage } from '../../pages/report'
 import { markLeftReport } from '../../features/onboarding'
+import { RebuildButton } from '../../features/rebuild-report'
 import { Giraffe } from '../../shared/ui/giraffe'
 
 /** Отчёт из памяти ядра; ядро узнаёт, что он на экране (⌘S). Вытесненный id — ошибка и домой, битый (`/report/abc`) — сразу домой без диалога. */
@@ -16,6 +18,7 @@ export function ReportRoute() {
   const { id } = useParams({ from: '/report/$id' })
   const reportId = Number(id)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const valid = isReportId(reportId)
   const { data, error, isPending } = useReportById(reportId)
 
@@ -45,7 +48,7 @@ export function ReportRoute() {
 
   if (!valid) return null
   if (isPending || !data) return <ReportLoading text={t('form.reportView.loading')} />
-  return <ReportScreen report={data} />
+  return <ReportScreen id={reportId} report={data} onRebuilt={(next) => queryClient.setQueryData(['report', reportId], next)} />
 }
 
 export const ReportLoading = ({ text }: { text: string }) => (
@@ -55,8 +58,8 @@ export const ReportLoading = ({ text }: { text: string }) => (
   </p>
 )
 
-/** Отчёт на весь экран с полосой «Назад» и заголовком. */
-export function ReportScreen({ report }: { report: Report }) {
+/** Отчёт на весь экран с полосой «Назад», заголовком и «Перестроить»; `id` — отчёт в памяти транспорта. */
+export function ReportScreen({ id, report, onRebuilt }: { id: number; report: Report; onRebuilt: (report: Report) => void }) {
   const { t } = useTranslation()
   const back = useGoBack()
   const title = `${report.meta.project} · ${report.meta.label ?? t('report.allPipelines')}`
@@ -70,6 +73,7 @@ export function ReportScreen({ report }: { report: Report }) {
         <h1 translate="no" className="truncate text-sm font-semibold">
           {title}
         </h1>
+        <RebuildButton id={id} report={report} onRebuilt={onRebuilt} />
       </div>
       <ReportPage report={report} embedded />
     </>

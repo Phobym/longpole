@@ -92,7 +92,7 @@ async fn mount_run(mock: &MockServer) {
                 "run_started_at": "2026-10-07T10:00:00Z",
                 "head_branch": "main", "head_sha": "abc123", "path": ".github/workflows/ci.yml",
                 "html_url": format!("https://{GHES}/o/r/actions/runs/7"), "event": "push",
-                "head_commit": {"message": "fix"}, "actor": {"login": "bob"},
+                "head_commit": {"message": "fix"}, "actor": {"login": "bob"}, "repository": {"id": 42},
             }),
         ))
         .mount(mock)

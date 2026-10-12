@@ -17,7 +17,7 @@ use crate::browse::{Page, Pipeline, Project, Workflow as Flow};
 use crate::error::{Error, ErrorCode};
 use crate::gitlab::{Listed, PipelineFilter};
 use crate::model::{RawJob, RawPipeline, RawPipelineInfo};
-use crate::source::{Provider, Source};
+use crate::source::{Provider, Source, Stamp};
 use workflow::{Matched, Workflow};
 
 const MAX_JOB_PAGES: usize = 50;
@@ -243,15 +243,54 @@ fn to_raw(
     }
 }
 
+/// Поля run для `Stamp`.
+#[derive(Deserialize)]
+struct StampRun {
+    id: u64,
+    run_attempt: u32,
+    updated_at: String,
+    repository: StampRepo,
+}
+
+#[derive(Deserialize)]
+struct StampRepo {
+    id: u64,
+}
+
 impl Client {
+    fn run_not_found(&self, project: &str, id: &str) -> Error {
+        Error::new(ErrorCode::PipelineNotFound)
+            .with("host", self.host())
+            .with("pipeline", id)
+            .with("project", project)
+    }
+
+    /// Тот же `GET` run, что и в `fetch_run`, без джоб; 403 без лимита — тоже «не найден».
+    pub async fn run_stamp(&self, project: &str, id: &str) -> Result<Stamp, Error> {
+        let not_found = || self.run_not_found(project, id);
+        let run: StampRun = match self
+            .json(&format!("/repos/{project}/actions/runs/{id}"))
+            .await
+        {
+            Ok(run) => run.ok_or_else(not_found)?,
+            Err(e)
+                if e.code == ErrorCode::Unauthorized
+                    && e.params.get("status").map(String::as_str) == Some("403") =>
+            {
+                return Err(not_found());
+            }
+            Err(e) => return Err(e),
+        };
+        Ok(Stamp {
+            project_id: run.repository.id.to_string(),
+            pipeline_id: run.id.to_string(),
+            version: format!("{}#{}", run.updated_at, run.run_attempt),
+        })
+    }
+
     /// Workflow run со всеми попытками (спека, § 2).
     pub async fn fetch_run(&self, project: &str, id: &str) -> Result<RawPipeline, Error> {
-        let not_found = || {
-            Error::new(ErrorCode::PipelineNotFound)
-                .with("host", self.host())
-                .with("pipeline", id)
-                .with("project", project)
-        };
+        let not_found = || self.run_not_found(project, id);
         let run: WireRun = self
             .json(&format!("/repos/{project}/actions/runs/{id}"))
             .await?
@@ -326,6 +365,10 @@ impl Source for Client {
         filter: &PipelineFilter,
     ) -> Result<Listed, Error> {
         self.list_runs(project, filter).await
+    }
+
+    async fn pipeline_stamp(&self, project: &str, id: &str) -> Result<Stamp, Error> {
+        self.run_stamp(project, id).await
     }
 
     async fn head_pipeline(&self, project: &str, number: &str) -> Result<String, Error> {

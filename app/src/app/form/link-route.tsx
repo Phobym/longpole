@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useState } from 'react'
-import { apiError, build, login, report, unwrap, type ApiError, type Progress } from '../../shared/api'
+import { apiError, build, login, report, unwrap, type ApiError, type Progress, type Report } from '../../shared/api'
 import { useErrorText, useTranslation } from '../../shared/i18n'
 import { Button } from '../../shared/ui/button'
 import { historyQuery, linkForm } from '../../entities/history-entry'
@@ -24,7 +24,7 @@ export function ReportLinkRoute() {
     queryFn: async () => {
       const id = await unwrap(build(linkForm(link!.url), setProgress))
       void queryClient.invalidateQueries(historyQuery)
-      return unwrap(report(id))
+      return { id, report: await unwrap(report(id)) }
     },
     enabled: link !== null,
     staleTime: Infinity,
@@ -34,7 +34,8 @@ export function ReportLinkRoute() {
   const failure = apiError(error)
   if (failure) return <LinkFailure error={failure} />
   if (!data) return <ReportLoading text={progress ? t('form.progress.step', progress) : t('form.progress.start')} />
-  return <ReportScreen report={data} />
+  const onRebuilt = (next: Report) => queryClient.setQueryData(['reportLink', link.url], { id: data.id, report: next })
+  return <ReportScreen id={data.id} report={data.report} onRebuilt={onRebuilt} />
 }
 
 function LinkFailure({ error }: { error: ApiError }) {

@@ -235,6 +235,30 @@ async fn ответ_401_при_живом_access_даёт_auth_required_и_ст�
 }
 
 #[tokio::test]
+async fn ответ_401_во_время_build_кончает_поток_auth_required() {
+    let mock = providers(28800).await;
+    Mock::given(method("GET"))
+        .and(path("/api/v3/repos/o/r/actions/runs/7"))
+        .respond_with(reply(401, json!({"message": "Bad credentials"})))
+        .mount(&mock)
+        .await;
+    let app = router(state(&mock));
+    let cookie = sign_in(&app, GHES, "").await;
+    let url = format!("https://{GHES}/o/r/actions/runs/7");
+    let out = call(
+        &app,
+        "build",
+        &cookie,
+        json!({"form": {"mode": "link", "url": url}}),
+    )
+    .await;
+    assert_eq!(
+        out.last().unwrap(),
+        &json!({"err": {"kind": "message", "code": "authRequired", "params": {"host": GHES}}})
+    );
+}
+
+#[tokio::test]
 async fn операции_формы_идут_к_провайдеру_с_токеном_пользователя() {
     let mock = providers(7200).await;
     Mock::given(method("GET"))

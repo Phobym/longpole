@@ -132,10 +132,9 @@ impl AppState {
         jar: PrivateCookieJar,
         domain: &str,
     ) -> (PrivateCookieJar, Result<HostSession, Error>) {
-        let auth_required = || auth_required(domain);
         let mut all = sessions(&jar);
         let (Some(host), Some(session)) = (self.host(domain), all.get(domain).cloned()) else {
-            return (jar, Err(auth_required()));
+            return (jar, Err(auth_required(domain)));
         };
         if session.expires_at - now() > REFRESH_MARGIN {
             return (jar, Ok(session));
@@ -153,7 +152,7 @@ impl AppState {
             }
             Err(RefreshError::Revoked) => {
                 all.remove(domain);
-                (with_sessions(jar, &all), Err(auth_required()))
+                (with_sessions(jar, &all), Err(auth_required(domain)))
             }
             Err(RefreshError::Failed(e)) => (jar, Err(e)),
         }

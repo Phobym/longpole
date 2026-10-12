@@ -18,7 +18,7 @@ use longpole_core::error::{CmdError, Error, ErrorCode, Field};
 use longpole_core::history::{HistoryLabel, NewEntry};
 use longpole_core::projects::SavedProject;
 use longpole_core::report::{BuildEnv, build_report};
-use longpole_core::request::{Form, FormMode, Request, parse_form, parse_remote};
+use longpole_core::request::{Form, FormMode, Parsed, Request, parse_form, parse_remote};
 use longpole_core::schema::{Locale, Report};
 use longpole_core::source::{AnySource, Provider, Source};
 use serde::{Deserialize, Serialize};
@@ -47,6 +47,11 @@ fn line<T: Serialize>(result: Cmd<T>) -> Value {
         Ok(value) => json!({ "ok": value }),
         Err(e) => json!({ "err": e }),
     }
+}
+
+/// Ответ одной строкой `{"err":…}`.
+fn fail(e: impl Into<CmdError>) -> Response {
+    ndjson(&line::<()>(Err(e.into())))
 }
 
 impl AppState {
@@ -79,7 +84,7 @@ impl AppState {
         };
         if revoked(&result) {
             let jar = forget(jar, domain);
-            return (jar, ndjson(&line::<()>(Err(auth_required(domain).into())))).into_response();
+            return (jar, fail(auth_required(domain))).into_response();
         }
         (jar, ndjson(&line(result))).into_response()
     }
@@ -99,7 +104,7 @@ pub(crate) async fn host_provider(
         .host(&args.host)
         .map(|h| h.host.provider)
         .ok_or_else(|| unknown_host(&args.host).into());
-    ndjson(&line::<Provider>(provider))
+    ndjson(&line(provider))
 }
 
 #[derive(Deserialize)]
@@ -201,7 +206,7 @@ pub(crate) async fn add_project(
 ) -> Response {
     let project = match parse_remote(args.input.trim()) {
         Ok(project) => project,
-        Err(e) => return ndjson(&line::<()>(Err(e.into()))),
+        Err(e) => return fail(e),
     };
     let domain = project.host.clone();
     state
@@ -229,68 +234,19 @@ pub(crate) async fn build(
     jar: PrivateCookieJar,
     Json(BuildArgs { form }): Json<BuildArgs>,
 ) -> Response {
-    let parsed = match parse_form(&form) {
-        Ok(parsed) => parsed,
-        Err(errors) => return ndjson(&line::<()>(Err(errors.into()))),
-    };
-    let host = parsed.host;
-    if state.host(&host).is_none() {
-        return ndjson(&line::<()>(Err(unknown_host(&host).into())));
-    }
-    // ссылка ведёт на сам хост конфига: `https://<домен>/…`, без другой схемы и порта
-    if form.mode == FormMode::Link && !form.url.trim().starts_with(&format!("https://{host}/")) {
-        return ndjson(&line::<()>(Err(field(Field::Url, ErrorCode::InvalidLink))));
-    }
-    let (jar, source) = state.source(jar, &host).await;
-    let source = match source {
-        Ok(source) => source,
-        Err(e) => return (jar, ndjson(&line::<()>(Err(e.into())))).into_response(),
-    };
-    if source.provider() == Provider::Github
-        && matches!(parsed.request, Request::Aggregate { workflow: None, .. })
-    {
-        let e = field(Field::Workflow, ErrorCode::WorkflowRequired);
-        return (jar, ndjson(&line::<()>(Err(e)))).into_response();
-    }
     let locale = headers
         .get(header::ACCEPT_LANGUAGE)
         .and_then(|v| v.to_str().ok())
         .map_or(Locale::En, Locale::from_tag);
-    let request = parsed.request;
-    let (tx, rx) = mpsc::unbounded_channel::<Value>();
-    let work = async move {
-        let progress = tx.clone();
-        let now = OffsetDateTime::now_utc();
-        let env = BuildEnv { now, locale };
-        let built = build_report(&source, &request, env, move |p| {
-            // поток уже закрыт — прогресс некому показывать
-            let _ = progress.send(json!({ "progress": p }));
-        })
-        .await;
-        let result: Cmd<Value> = built.map_err(Into::into).map(|built| {
-            let (Report::Single { meta, .. } | Report::Aggregate { meta, .. }) = &built.report;
-            let label = HistoryLabel {
-                project: meta.project.clone(),
-                label: meta.label.clone(),
-            };
-            let entry = NewEntry {
-                host: host.clone(),
-                form,
-                request,
-                label,
-            }
-            .at(now);
-            json!({ "report": built.report, "entry": entry })
-        });
-        // ответ уже начат, cookie не поменять: хост сотрёт следующий запрос или новый вход
-        let result = if revoked(&result) {
-            Err(auth_required(&host).into())
-        } else {
-            result
-        };
-        let _ = tx.send(line(result));
+    let (jar, prepared) = prepare(&state, jar, &form).await;
+    let (source, parsed) = match prepared {
+        Ok(prepared) => prepared,
+        Err(e) => return (jar, fail(e)).into_response(),
     };
-    // `work` отдаёт строки в канал и заканчивается последней; канал закрывается, когда `work` завершён
+    // строк не больше, чем пайплайнов в сборке (+1): ограничивает их лимит ядра
+    let (tx, rx) = mpsc::unbounded_channel::<Value>();
+    let work = build_lines(source, form, parsed, locale, tx);
+    // `work` пишет строки в канал и закрывает его, когда завершён: последней уходит `ok` или `err`
     let lines = futures::stream::unfold(rx, |mut rx| async move {
         rx.recv().await.map(|line| (line, rx))
     })
@@ -301,6 +257,82 @@ pub(crate) async fn build(
     (jar, [(header::CONTENT_TYPE, "application/x-ndjson")], body).into_response()
 }
 
-fn field(field: Field, code: ErrorCode) -> CmdError {
+/// Проверки до начала потока: форма, хост конфига, ссылка на сам хост, вход, workflow агрегата GitHub.
+async fn prepare(
+    state: &AppState,
+    jar: PrivateCookieJar,
+    form: &Form,
+) -> (PrivateCookieJar, Cmd<(AnySource, Parsed)>) {
+    let parsed = match parse_form(form) {
+        Ok(parsed) => parsed,
+        Err(errors) => return (jar, Err(errors.into())),
+    };
+    if state.host(&parsed.host).is_none() {
+        return (jar, Err(unknown_host(&parsed.host).into()));
+    }
+    // ссылка ведёт на сам хост конфига: `https://<домен>/…`, без другой схемы и порта
+    let own = format!("https://{}/", parsed.host);
+    if form.mode == FormMode::Link && !form.url.trim().starts_with(&own) {
+        return (jar, Err(field_error(Field::Url, ErrorCode::InvalidLink)));
+    }
+    let (jar, source) = state.source(jar, &parsed.host).await;
+    let source = match source {
+        Ok(source) => source,
+        Err(e) => return (jar, Err(e.into())),
+    };
+    if source.provider() == Provider::Github
+        && matches!(parsed.request, Request::Aggregate { workflow: None, .. })
+    {
+        return (
+            jar,
+            Err(field_error(Field::Workflow, ErrorCode::WorkflowRequired)),
+        );
+    }
+    (jar, Ok((source, parsed)))
+}
+
+/// Сборка: прогресс и последняя строка — в `tx`.
+async fn build_lines(
+    source: AnySource,
+    form: Form,
+    Parsed { host, request }: Parsed,
+    locale: Locale,
+    tx: mpsc::UnboundedSender<Value>,
+) {
+    let progress = tx.clone();
+    let now = OffsetDateTime::now_utc();
+    let env = BuildEnv { now, locale };
+    let built = build_report(&source, &request, env, move |p| {
+        // поток уже закрыт — прогресс некому показывать
+        let _ = progress.send(json!({ "progress": p }));
+    })
+    .await;
+    let result: Cmd<Value> = built.map_err(Into::into).map(|built| {
+        let (Report::Single { meta, .. } | Report::Aggregate { meta, .. }) = &built.report;
+        let label = HistoryLabel {
+            project: meta.project.clone(),
+            label: meta.label.clone(),
+        };
+        let entry = NewEntry {
+            host: host.clone(),
+            form,
+            request,
+            label,
+        }
+        .at(now);
+        json!({ "report": built.report, "entry": entry })
+    });
+    // ответ уже начат, cookie не поменять: фронт сразу уходит на вход, и callback перезапишет хост
+    // ponytail: при отказе во входе мёртвый хост остаётся в cookie до 401 на другой операции
+    let result = if revoked(&result) {
+        Err(auth_required(&host).into())
+    } else {
+        result
+    };
+    // поток уже закрыт — ответ некому отдать
+    let _ = tx.send(line(result));
+}
+
+fn field_error(field: Field, code: ErrorCode) -> CmdError {
     BTreeMap::from([(field, Error::new(code))]).into()
 }

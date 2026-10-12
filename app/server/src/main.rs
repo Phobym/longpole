@@ -4,14 +4,17 @@ use std::sync::LazyLock;
 use longpole_server::app;
 use longpole_server::config::{self, Config, Log, LogFormat, LogLevel};
 use tokio::net::TcpListener;
-use tokio::signal::unix::{SignalKind, signal};
+use tokio::signal::unix::{Signal, SignalKind, signal};
 use tracing::level_filters::LevelFilter;
 
 /// Версия релиза: `release.yml` проставляет её в `package.json`, Cargo-версия крейтов всегда 0.0.0.
 static VERSION: LazyLock<String> = LazyLock::new(|| {
     let package: serde_json::Value =
-        serde_json::from_str(include_str!("../../package.json")).unwrap();
-    package["version"].as_str().unwrap_or_default().to_owned()
+        serde_json::from_str(include_str!("../../package.json")).expect("package.json");
+    package["version"]
+        .as_str()
+        .expect("version в package.json")
+        .to_owned()
 });
 
 #[tokio::main]
@@ -36,8 +39,15 @@ async fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
+    let terminate = match signal(SignalKind::terminate()) {
+        Ok(terminate) => terminate,
+        Err(e) => {
+            tracing::error!("не удалось подписаться на SIGTERM: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
     match axum::serve(listener, app(&config))
-        .with_graceful_shutdown(shutdown())
+        .with_graceful_shutdown(shutdown(terminate))
         .await
     {
         Ok(()) => ExitCode::SUCCESS,
@@ -71,8 +81,7 @@ fn init_logs(log: &Log) {
 }
 
 /// В контейнере процесс — PID 1: без своего обработчика SIGTERM `docker stop` ждёт SIGKILL.
-async fn shutdown() {
-    let mut terminate = signal(SignalKind::terminate()).expect("обработчик SIGTERM");
+async fn shutdown(mut terminate: Signal) {
     tokio::select! {
         _ = tokio::signal::ctrl_c() => {}
         _ = terminate.recv() => {}

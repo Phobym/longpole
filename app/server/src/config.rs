@@ -38,6 +38,15 @@ pub struct Log {
     pub format: LogFormat,
 }
 
+impl Default for Log {
+    fn default() -> Self {
+        Log {
+            level: LogLevel::Info,
+            format: LogFormat::Text,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LogLevel {
@@ -104,7 +113,7 @@ impl Config {
         let cache_max_mb = f.field("cache_max_mb", Ok).unwrap_or(256);
         let max_concurrent_builds = f
             .field("max_concurrent_builds", Ok)
-            .unwrap_or(NonZeroUsize::new(8).unwrap());
+            .unwrap_or(NonZeroUsize::new(8).expect("не ноль"));
         let build_timeout = f
             .field("build_timeout", check_duration)
             .unwrap_or(Duration::from_secs(300));
@@ -126,10 +135,7 @@ impl Config {
                 cache_max_mb,
                 max_concurrent_builds,
                 build_timeout,
-                log: log.unwrap_or(Log {
-                    level: LogLevel::Info,
-                    format: LogFormat::Text,
-                }),
+                log: log.unwrap_or_default(),
                 hosts,
             }),
             _ => Err(errors),
@@ -137,7 +143,8 @@ impl Config {
     }
 }
 
-static VAR: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\$\{([^}]*)\}").unwrap());
+static VAR: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\$\{([^}]*)\}").expect("верный шаблон"));
 
 /// `${ИМЯ}` во всём тексте; незаданная или пустая переменная — ошибка. `$$` и `${X:-y}` не поддерживаются.
 // ponytail: подстановка в текст до разбора YAML — значение с `: ` или `#` сломает разметку;
@@ -153,15 +160,17 @@ fn substitute(
                 "{}: переменная окружения не задана или пуста",
                 &c[0]
             ));
-            String::new()
+            // остаётся как есть: пустое значение дало бы вторую, сбивающую с толку ошибку разбора
+            c[0].to_owned()
         })
     })
     .into_owned()
 }
 
 fn parse_log(mut f: Fields) -> Log {
-    let level = f.field("level", Ok).unwrap_or(LogLevel::Info);
-    let format = f.field("format", Ok).unwrap_or(LogFormat::Text);
+    let default = Log::default();
+    let level = f.field("level", Ok).unwrap_or(default.level);
+    let format = f.field("format", Ok).unwrap_or(default.format);
     f.finish();
     Log { level, format }
 }
@@ -228,12 +237,12 @@ fn check_duration(s: String) -> Result<Duration, String> {
         "h" => 3600,
         _ => 0,
     };
-    match n.parse::<u64>() {
-        Ok(n) if n > 0 && unit > 0 => Ok(Duration::from_secs(n * unit)),
-        _ => Err(format!(
-            "{s}: нужно положительное число с единицей s, m или h"
-        )),
-    }
+    n.parse::<u64>()
+        .ok()
+        .and_then(|n| n.checked_mul(unit))
+        .filter(|&secs| secs > 0)
+        .map(Duration::from_secs)
+        .ok_or_else(|| format!("{s}: нужно положительное число с единицей s, m или h"))
 }
 
 /// Домен с необязательным портом; возвращается в нижнем регистре.

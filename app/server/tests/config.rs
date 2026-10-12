@@ -58,8 +58,6 @@ fn unset_or_empty_variable_is_an_error() {
         [
             "${MISSING}: переменная окружения не задана или пуста",
             "${EMPTY}: переменная окружения не задана или пуста",
-            // пустое значение после подстановки — null, а не строка
-            "hosts[0].client_secret: invalid type: unit value, expected a string",
         ]
     );
 }
@@ -170,4 +168,26 @@ fn secrets_print_as_redacted() {
     assert!(debug.contains("client_secret: [redacted]"), "{debug}");
     assert!(!debug.contains("s3cret"), "{debug}");
     assert_eq!(config.hosts[0].client_secret.to_string(), "[redacted]");
+}
+
+#[test]
+fn rejects_bad_cookie_key_and_build_timeout() {
+    let yaml = |key: &str, timeout: &str| {
+        MINIMAL.replace("${COOKIE_KEY}", key) + &format!("build_timeout: {timeout}\n")
+    };
+    assert_eq!(
+        errors(&yaml("not base64!", "99999999999999999999h")),
+        [
+            "cookie_key: нужно 32 байта в base64 (openssl rand -base64 32)",
+            "build_timeout: 99999999999999999999h: нужно положительное число с единицей s, m или h",
+        ]
+    );
+    assert_eq!(
+        errors(&yaml(KEY, "5124095576030432h")), // * 3600 переполняет u64
+        ["build_timeout: 5124095576030432h: нужно положительное число с единицей s, m или h"]
+    );
+    assert_eq!(
+        errors(&yaml(KEY, "0m")),
+        ["build_timeout: 0m: нужно положительное число с единицей s, m или h"]
+    );
 }

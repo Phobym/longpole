@@ -14,6 +14,7 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum_extra::extract::PrivateCookieJar;
 use axum_extra::extract::cookie::Key;
+use longpole_core::error::ErrorCode;
 use longpole_core::hosts::{HostInfo, TokenSource};
 use longpole_core::web_oauth::App;
 use rust_embed::{EmbeddedFile, RustEmbed};
@@ -125,9 +126,15 @@ pub fn router(state: AppState) -> Router {
 async fn hosts(State(state): State<AppState>, mut jar: PrivateCookieJar) -> Response {
     let mut list = Vec::new();
     for app in &state.0.hosts {
+        let stored = auth::stored_login(&jar, &app.host.domain);
         let (next, session) = state.session(jar, &app.host.domain).await;
         jar = next;
-        let login = session.ok().map(|s| s.login);
+        let login = match session {
+            Ok(session) => Some(session.login),
+            Err(e) if e.code == ErrorCode::AuthRequired => None,
+            // сбой refresh — не выход: следующий запрос попробует снова
+            Err(_) => stored,
+        };
         list.push(HostInfo {
             host: app.host.domain.clone(),
             source: login.as_ref().map(|_| TokenSource::Oauth),

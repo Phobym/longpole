@@ -248,6 +248,9 @@ async fn return_to_только_относительный_путь() {
         "//evil.example/x",
         "https://evil.example/x",
         "/%5Cevil.example",
+        // браузер выкидывает табуляцию и перевод строки из `Location`: вышло бы `//evil.example`
+        "/%09/evil.example",
+        "/%0A/evil.example",
         "x",
     ] {
         let response = send(
@@ -341,6 +344,25 @@ async fn invalid_grant_даёт_auth_required_и_убирает_хост_из_co
         [(GITLAB.into(), Value::Null), (GHES.into(), json!("bob"))]
     );
     assert!(renewed.is_some(), "хост убран и из cookie браузера");
+}
+
+#[tokio::test]
+async fn сбой_refresh_не_выход() {
+    let mock = providers(60).await;
+    Mock::given(method("POST"))
+        .and(path("/oauth/token"))
+        .and(body_string_contains("grant_type=refresh_token"))
+        .respond_with(reply(502, json!({})))
+        .mount(&mock)
+        .await;
+    let app = router(state(&mock));
+    let cookie = sign_in(&app, GITLAB, "").await;
+    let (list, renewed) = hosts(&app, &cookie).await;
+    assert_eq!(
+        list[0]["login"], "ann",
+        "вход остаётся до следующей попытки"
+    );
+    assert_eq!(renewed, None);
 }
 
 #[tokio::test]

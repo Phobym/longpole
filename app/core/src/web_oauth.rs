@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use reqwest::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, USER_AGENT};
+use reqwest::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use time::OffsetDateTime;
@@ -110,10 +110,9 @@ impl App<'_> {
         if let Some(verifier) = verifier {
             params.push(("code_verifier", verifier));
         }
-        match self.token(&params).await? {
-            Ok(tokens) => Ok(tokens),
-            Err(e) => Err(self.failed(e.detail)),
-        }
+        self.token(&params)
+            .await?
+            .map_err(|e| self.failed(e.detail))
     }
 
     pub async fn refresh(&self, refresh_token: &str) -> Result<Tokens, RefreshError> {
@@ -211,6 +210,8 @@ impl App<'_> {
             .timeout(TIMEOUT)
             // редирект унёс бы код, секрет или токен на чужой хост
             .redirect(reqwest::redirect::Policy::none())
+            // REST GitHub без User-Agent отвечает 403
+            .user_agent("longpole")
             .build()
             .map_err(|e| network_error(&self.host(), e))
     }
@@ -229,7 +230,6 @@ impl App<'_> {
             .post(url)
             .header(ACCEPT, "application/json")
             .header(CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .header(USER_AGENT, "longpole")
             .body(body)
             .send()
             .await

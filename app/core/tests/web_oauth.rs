@@ -234,6 +234,8 @@ async fn пользователь_по_токену() {
     Mock::given(method("GET"))
         .and(path("/api/v3/user"))
         .and(header("authorization", "Bearer ghu_1"))
+        // REST GitHub отвечает 403 на запрос без User-Agent
+        .and(header("user-agent", "longpole"))
         .respond_with(reply(200, json!({"id": 9, "login": "bob"})))
         .mount(&server)
         .await;

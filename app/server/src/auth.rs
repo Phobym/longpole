@@ -81,6 +81,11 @@ fn sessions(jar: &PrivateCookieJar) -> Sessions {
         .unwrap_or_default()
 }
 
+/// Логин из cookie, без обновления токена.
+pub(crate) fn stored_login(jar: &PrivateCookieJar, domain: &str) -> Option<String> {
+    sessions(jar).remove(domain).map(|s| s.login)
+}
+
 /// Скользящий `Max-Age`: продлевается при каждой записи; пустая сессия стирает cookie.
 fn with_sessions(jar: PrivateCookieJar, sessions: &Sessions) -> PrivateCookieJar {
     if sessions.is_empty() {
@@ -110,8 +115,9 @@ fn now() -> i64 {
 }
 
 impl AppState {
-    /// Вход в хост с живым access: если до истечения меньше 5 минут — refresh. Нет входа, 401 или
-    /// `invalid_grant` — `authRequired`, хост убран из cookie. Возвращённую cookie надо отдать в ответе.
+    /// Вход в хост с живым access: если до истечения меньше 5 минут — refresh. Нет входа или refresh
+    /// отвергнут (`invalid_grant`, 401) — `authRequired`, хост убран из cookie. Возвращённую cookie надо
+    /// отдать в ответе.
     pub async fn access(
         &self,
         jar: PrivateCookieJar,
@@ -188,9 +194,13 @@ pub(crate) async fn login(
     (jar, found(&authorize.url)).into_response()
 }
 
-/// Только путь своего сайта: `//…` и `/\…` браузер понимает как другой хост — open redirect.
+/// Только путь своего сайта: `//…` и `/\…` браузер понимает как другой хост — open redirect. Управляющие
+/// символы браузер из `Location` выкидывает, и `/\t/…` стал бы `//…`.
 fn is_local_path(path: &str) -> bool {
-    path.starts_with('/') && !path.starts_with("//") && !path.starts_with("/\\")
+    path.starts_with('/')
+        && !path.starts_with("//")
+        && !path.starts_with("/\\")
+        && !path.chars().any(char::is_control)
 }
 
 #[derive(Deserialize)]

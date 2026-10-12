@@ -17,7 +17,6 @@ import type { Report } from './schema/Report'
 import type { Request } from './schema/Request'
 import type { SavedProject } from './schema/SavedProject'
 import type { SettingsPatch } from './schema/SettingsPatch'
-import type { UserCode } from './schema/UserCode'
 import type { Workflow } from './schema/Workflow'
 // с расширением: тест гоняет файл в Node без сборщика
 import { transportError, type ApiError, type Result } from './result.ts'
@@ -58,38 +57,46 @@ const write = <T>(key: string, value: T): T => {
   localStorage.setItem(`longpole.${key}`, JSON.stringify(value))
   return value
 }
+const storedSettings = () => read<Partial<AppSettings>>('settings', {})
+const storedProjects = () => read<SavedProject[]>('projects', [])
+const storedHistory = () => read<HistoryEntry[]>('history', [])
 
 const LOCALES: Locale[] = ['ru', 'en', 'fr', 'es', 'de', 'it', 'zh', 'ja']
-/** Как `browserLocale` из `shared/i18n` и `Locale::system` в ядре: незнакомый язык — английский. */
+/** Как `browserLocale` из `shared/i18n` (не импортируем: тянет i18next и словари в тест на Node) и `Locale::system` в ядре. */
 const systemLocale = (): Locale => LOCALES.find((l) => navigator.language.toLowerCase().startsWith(l)) ?? 'en'
 
-const settings = (): AppSettings => ({ locale: systemLocale(), theme: 'system', lastProject: null, tips: true, seenTips: [], ...read<Partial<AppSettings>>('settings', {}) })
+const settings = (): AppSettings => ({ locale: systemLocale(), theme: 'system', lastProject: null, tips: true, seenTips: [], ...storedSettings() })
 
 export const getSettings = async () => ok(settings())
+/** Как `Settings::update` в ядре: поле без значения в патче не трогается. */
 export const setSettings = async (patch: SettingsPatch) => {
-  write('settings', { ...read<Partial<AppSettings>>('settings', {}), ...patch })
+  write('settings', { ...storedSettings(), ...Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined)) })
   return ok(settings())
 }
 
 const same = (a: ProjectRef, b: ProjectRef) => a.host === b.host && a.path === b.path
 
-export const savedProjects = async () => ok(read<SavedProject[]>('projects', []))
+export const savedProjects = async () => ok(storedProjects())
 /** Сервер только разбирает ввод и узнаёт имя проекта, список хранит браузер; повтор обновляет имя, как `Projects::add` в ядре. */
 export const addProject = async (input: string): Promise<Result<SavedProject>> => {
   const r = await post<SavedProject>('add_project', { input })
   if (!r.ok) return r
-  const list = read<SavedProject[]>('projects', [])
+  const list = storedProjects()
   const found = list.find((p) => same(p, r.value))
   write('projects', found ? list.map((p) => (p === found ? { ...p, name: r.value.name } : p)) : [...list, r.value])
   return ok(found ? { ...found, name: r.value.name } : r.value)
 }
-export const removeProject = async (project: ProjectRef) =>
-  ok(write('projects', read<SavedProject[]>('projects', []).filter((p) => !same(p, project))))
+/** Удалённый проект перестаёт быть последним — как `forget_project` в Desktop. */
+export const removeProject = async (project: ProjectRef) => {
+  const { lastProject, ...rest } = storedSettings()
+  if (lastProject && same(lastProject, project)) write('settings', rest)
+  return ok(write('projects', storedProjects().filter((p) => !same(p, project))))
+}
 
 const HISTORY_LIMIT = 20 // как `history::LIMIT` в ядре
 
-export const history = async () => ok(read<HistoryEntry[]>('history', []))
-export const removeHistory = async (at: string) => ok(write('history', read<HistoryEntry[]>('history', []).filter((e) => e.at !== at)))
+export const history = async () => ok(storedHistory())
+export const removeHistory = async (at: string) => ok(write('history', storedHistory().filter((e) => e.at !== at)))
 export const clearHistory = async () => {
   write('history', [])
   return ok(null)
@@ -109,7 +116,7 @@ export const build = async (form: Form, onProgress: (p: Progress) => void): Prom
   if (!r.ok) return r
   const { report, entry } = r.value
   const k = key(entry.host, entry.request)
-  write('history', [entry, ...read<HistoryEntry[]>('history', []).filter((e) => key(e.host, e.request) !== k)].slice(0, HISTORY_LIMIT))
+  write('history', [entry, ...storedHistory().filter((e) => key(e.host, e.request) !== k)].slice(0, HISTORY_LIMIT))
   reports.set(++lastId, { key: k, report })
   return ok(lastId)
 }
@@ -132,8 +139,9 @@ export const workflows = (host: string, project: string) => post<Workflow[]>('wo
 
 // Только Desktop: хосты и вход задаёт инстанс, ⌘S нет. Интерфейс прячет их по `capabilities`, вызов — ошибка.
 const desktopOnly = async (cmd: string): Promise<Result<never>> => ({ ok: false, error: transportError(`${cmd}: только Desktop`) })
-export const setToken = (_host: string, _token: string) => desktopOnly('set_token')
-export const removeToken = (_host: string) => desktopOnly('remove_token')
-export const oauthLogin = (_host: string, _clientId: string | null, _onCode: (code: UserCode) => void) => desktopOnly('oauth_login')
-export const oauthCancel = (_host: string) => desktopOnly('oauth_cancel')
-export const setCurrentReport = async (_id: number | null) => ok(null)
+export const setToken = () => desktopOnly('set_token')
+export const removeToken = () => desktopOnly('remove_token')
+export const oauthLogin = () => desktopOnly('oauth_login')
+export const oauthCancel = () => desktopOnly('oauth_cancel')
+// Экран отчёта зовёт его в обоих вариантах; без ⌘S сообщать некому — не ошибка
+export const setCurrentReport = async () => ok(null)

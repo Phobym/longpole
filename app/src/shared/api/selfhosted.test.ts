@@ -105,3 +105,14 @@ test('история: тот же запрос поднимается навер
   await api.clearHistory()
   assert.deepEqual(value(await api.history()), [])
 })
+
+test('удалённый проект перестаёт быть последним; поле патча со значением undefined не трогается', async () => {
+  const p = { host: 'gitlab.example.com', path: 'g/a' }
+  await api.setSettings({ lastProject: p, theme: 'dark' })
+  await api.setSettings({ theme: undefined, tips: false })
+  assert.equal(value(await api.getSettings()).theme, 'dark')
+  await api.removeProject({ host: 'gitlab.example.com', path: 'g/other' })
+  assert.deepEqual(value(await api.getSettings()).lastProject, p)
+  await api.removeProject(p)
+  assert.equal(value(await api.getSettings()).lastProject, null)
+})

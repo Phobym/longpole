@@ -27,3 +27,4 @@ pub mod settings;
 pub mod source;
 #[cfg(feature = "desktop")]
 pub mod tokens;
+pub mod web_oauth;

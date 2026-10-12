@@ -4,6 +4,7 @@ mod api;
 mod auth;
 mod cache;
 pub mod config;
+mod limits;
 
 use std::sync::Arc;
 use std::time::Instant;
@@ -24,6 +25,7 @@ use rust_embed::{EmbeddedFile, RustEmbed};
 use crate::auth::Refreshes;
 use crate::cache::ReportCache;
 use crate::config::{Config, Host};
+use crate::limits::Limits;
 
 /// Сборка фронта с `VITE_DELIVERY=selfhosted`; в release-бинарник встраивается целиком.
 #[derive(RustEmbed)]
@@ -45,6 +47,7 @@ struct Server {
     hsts: bool,
     refreshes: Refreshes,
     reports: ReportCache,
+    builds: Limits,
 }
 
 /// Хост конфига с адресом провайдера и redirect URI его приложения.
@@ -88,6 +91,7 @@ impl AppState {
             reports: ReportCache::new(
                 usize::try_from(config.cache_max_mb.saturating_mul(1 << 20)).unwrap_or(usize::MAX),
             ),
+            builds: Limits::new(config.max_concurrent_builds, config.build_timeout),
         }))
     }
 

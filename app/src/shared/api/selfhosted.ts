@@ -19,7 +19,7 @@ import type { SavedProject } from './schema/SavedProject'
 import type { SettingsPatch } from './schema/SettingsPatch'
 import type { Workflow } from './schema/Workflow'
 // с расширением: тест гоняет файл в Node без сборщика
-import { transportError, type ApiError, type Result } from './result.ts'
+import { transportError, type ApiError, type BuildProgress, type Result } from './result.ts'
 
 const ok = <T>(value: T): Result<T> => ({ ok: true, value })
 
@@ -49,10 +49,10 @@ const signInAgain = (e: ApiError) => {
 }
 
 /**
- * Ответ сервера — NDJSON: у `build` сначала строки прогресса, у всех последняя строка `ok` или `err`.
+ * Ответ сервера — NDJSON: у `build` сначала `queued` и строки прогресса, у всех последняя строка `ok` или `err`.
  * `Accept-Language` — язык из настроек: на нём ядро пишет `meta.locale` отчёта.
  */
-async function post<T>(cmd: string, args: Record<string, unknown>, onProgress?: (p: Progress) => void): Promise<Result<T>> {
+async function post<T>(cmd: string, args: Record<string, unknown>, onProgress?: (p: BuildProgress) => void): Promise<Result<T>> {
   try {
     const headers = { 'Content-Type': 'application/json', 'Accept-Language': settings().locale }
     const res = await fetch(`/api/${cmd}`, { method: 'POST', headers, body: JSON.stringify(args) })
@@ -71,6 +71,7 @@ async function post<T>(cmd: string, args: Record<string, unknown>, onProgress?: 
           return { ok: false, error: line.err }
         }
         if ('progress' in line) onProgress?.(line.progress)
+        if ('queued' in line) onProgress?.('queued')
       }
       if (done) return { ok: false, error: transportError(`HTTP ${res.status}: нет строки ok или err`) }
     }
@@ -141,7 +142,7 @@ const reports = new Map<number, { key: string; report: Report; form: Form }>()
 let lastId = 0
 
 /** Сервер строит отчёт и отдаёт готовую запись истории (`at`, очищенная ссылка, `request`, `label` — от ядра); отчёт ложится под `id`. */
-async function buildAs(id: number, form: Form, fresh: boolean, onProgress: (p: Progress) => void): Promise<Result<number>> {
+async function buildAs(id: number, form: Form, fresh: boolean, onProgress: (p: BuildProgress) => void): Promise<Result<number>> {
   const r = await post<{ report: Report; entry: HistoryEntry }>('build', fresh ? { form, fresh } : { form }, onProgress)
   if (!r.ok) return r
   const { report, entry } = r.value
@@ -151,10 +152,10 @@ async function buildAs(id: number, form: Form, fresh: boolean, onProgress: (p: P
   return ok(id)
 }
 
-export const build = (form: Form, onProgress: (p: Progress) => void) => buildAs(++lastId, form, false, onProgress)
+export const build = (form: Form, onProgress: (p: BuildProgress) => void) => buildAs(++lastId, form, false, onProgress)
 
 /** «Перестроить» (спека, § 10): сервер строит заново мимо кэша, отчёт остаётся под тем же id — адрес страницы не меняется. */
-export const rebuild = async (id: number, onProgress: (p: Progress) => void): Promise<Result<number>> => {
+export const rebuild = async (id: number, onProgress: (p: BuildProgress) => void): Promise<Result<number>> => {
   const found = reports.get(id)
   return found ? buildAs(id, found.form, true, onProgress) : expired(id)
 }

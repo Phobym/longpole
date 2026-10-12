@@ -31,17 +31,21 @@
     "oauthClientId": "Indica el Client ID de la aplicación registrada en {{host}}",
     "authRequired": "Inicia sesión en {{host}}",
     "unknownHost": "El host {{host}} no está conectado a este Longpole",
+    "tooManyBuilds": "Espera a que terminen de generarse tus otros informes",
+    "buildTimeout": "El informe tardó demasiado en generarse y se detuvo",
     "transport": "No se pudo ejecutar el comando: {{detail}}"
   },
   "form": {
     "cancel": "Cancelar",
+    "retry": "Reintentar",
     "language": "Idioma",
     "loading": "Cargando…",
     "nothing": "No se encontró nada",
     "more": "Mostrar más",
     "progress": {
       "start": "Cargando…",
-      "step": "Cargando {{loaded}} de {{total}}…"
+      "step": "Cargando {{loaded}} de {{total}}…",
+      "queued": "En cola…"
     },
     "history": {
       "clear": "Borrar",

@@ -31,17 +31,21 @@
     "oauthClientId": "请输入在 {{host}} 上注册的应用的 Client ID",
     "authRequired": "请登录 {{host}}",
     "unknownHost": "主机 {{host}} 未连接到此 Longpole",
+    "tooManyBuilds": "请等待其他报告生成完成",
+    "buildTimeout": "报告生成耗时过长，已停止",
     "transport": "无法执行命令：{{detail}}"
   },
   "form": {
     "cancel": "取消",
+    "retry": "重试",
     "language": "语言",
     "loading": "加载中…",
     "nothing": "未找到任何内容",
     "more": "显示更多",
     "progress": {
       "start": "加载中…",
-      "step": "正在加载 {{loaded}} / {{total}}…"
+      "step": "正在加载 {{loaded}} / {{total}}…",
+      "queued": "排队中…"
     },
     "history": {
       "clear": "清除",

@@ -9,7 +9,7 @@ import type { ProjectRef } from '../../../entities/project'
 // Своя сборка на строку: у каждой свой Channel, прогресс и ошибка остаются в её строке.
 function BuildRow({ pipeline }: { pipeline: Pipeline }) {
   const errorText = useErrorText()
-  const { start, busy, progressLabel, error } = useBuild()
+  const { start, busy, progressLabel, error, retry } = useBuild()
   return (
     <PipelineRow
       pipeline={pipeline}
@@ -17,6 +17,7 @@ function BuildRow({ pipeline }: { pipeline: Pipeline }) {
       progress={progressLabel}
       error={error && errorText(error)}
       onOpen={() => start(linkForm(pipeline.url))}
+      onRetry={retry}
     />
   )
 }

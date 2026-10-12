@@ -18,6 +18,12 @@ pub const JOBS: &str = "/api/v3/repos/o/r/actions/runs/7/jobs";
 
 /// Run 7 в `o/r` (репозиторий 42) с одним джобом; `status` — `completed` или `in_progress`.
 pub async fn mount_run(mock: &MockServer, status: &str, updated_at: &str) {
+    // окно, в которое второй одновременный запрос застаёт сборку
+    mount_run_after(mock, status, updated_at, Duration::from_millis(200)).await;
+}
+
+/// Как [`mount_run`], но джобы отвечают через `delay`.
+pub async fn mount_run_after(mock: &MockServer, status: &str, updated_at: &str, delay: Duration) {
     Mock::given(method("GET"))
         .and(path(RUN))
         .respond_with(reply(
@@ -48,8 +54,7 @@ pub async fn mount_run(mock: &MockServer, status: &str, updated_at: &str) {
                     "html_url": format!("https://{GHES}/o/r/actions/runs/7/job/1"),
                 }]}),
             )
-            // окно, в которое второй одновременный запрос застаёт сборку
-            .set_delay(Duration::from_millis(200)),
+            .set_delay(delay),
         )
         .mount(mock)
         .await;

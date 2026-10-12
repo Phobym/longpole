@@ -3,6 +3,7 @@ import { cn } from '../../../shared/lib/cn'
 import { durationShort, relativeTime } from '../../../shared/lib/format'
 import { useLocale } from '../../../shared/i18n'
 import { Badge } from '../../../shared/ui/badge'
+import { RetryButton } from '../../../shared/ui/retry-button'
 
 const PILL = { success: 'ok', running: 'run', pending: 'run', failed: 'bad' } as const
 
@@ -14,10 +15,12 @@ type Props = {
   progress: string
   /** Ошибка сборки этой строки. */
   error: string | null
+  /** «Повторить» под ошибкой — после `buildTimeout`. */
+  onRetry?: (() => void) | null
 }
 
 // Статус и ошибка — вне <button>: содержимое кнопки читалка не озвучивает как live-регион.
-export function PipelineRow({ pipeline, onOpen, busy, progress, error }: Props) {
+export function PipelineRow({ pipeline, onOpen, busy, progress, error, onRetry }: Props) {
   const locale = useLocale()
   const variant = PILL[pipeline.status as keyof typeof PILL] ?? 'mid'
   return (
@@ -42,6 +45,11 @@ export function PipelineRow({ pipeline, onOpen, busy, progress, error }: Props) 
       <p aria-live="polite" className={cn('px-3 text-xs empty:hidden', error ? 'text-destructive' : 'text-muted-foreground')}>
         {error ?? (busy ? progress : null)}
       </p>
+      {onRetry && (
+        <div className="px-3 pb-1">
+          <RetryButton onClick={onRetry} />
+        </div>
+      )}
     </li>
   )
 }

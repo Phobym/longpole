@@ -86,6 +86,11 @@ pub(crate) fn stored_login(jar: &PrivateCookieJar, domain: &str) -> Option<Strin
     sessions(jar).remove(domain).map(|s| s.login)
 }
 
+/// Id пользователя у провайдера из cookie, без обновления токена.
+pub(crate) fn stored_user(jar: &PrivateCookieJar, domain: &str) -> Option<u64> {
+    sessions(jar).remove(domain).map(|s| s.user_id)
+}
+
 /// Скользящий `Max-Age`: продлевается при каждой записи; пустая сессия стирает cookie.
 fn with_sessions(jar: PrivateCookieJar, sessions: &Sessions) -> PrivateCookieJar {
     if sessions.is_empty() {

@@ -31,17 +31,21 @@
     "oauthClientId": "Enter the Client ID of the app registered on {{host}}",
     "authRequired": "Sign in to {{host}}",
     "unknownHost": "Host {{host}} is not connected to this Longpole",
+    "tooManyBuilds": "Wait for your other reports to finish building",
+    "buildTimeout": "Building the report took too long and was stopped",
     "transport": "Could not run the command: {{detail}}"
   },
   "form": {
     "cancel": "Cancel",
+    "retry": "Retry",
     "language": "Language",
     "loading": "Loading…",
     "nothing": "Nothing found",
     "more": "Show more",
     "progress": {
       "start": "Loading…",
-      "step": "Loading {{loaded}} of {{total}}…"
+      "step": "Loading {{loaded}} of {{total}}…",
+      "queued": "Queued…"
     },
     "history": {
       "clear": "Clear",

@@ -31,17 +31,21 @@
     "oauthClientId": "Укажи Client ID приложения, зарегистрированного на {{host}}",
     "authRequired": "Войди в {{host}}",
     "unknownHost": "Хост {{host}} не подключён к этому Longpole",
+    "tooManyBuilds": "Дождись построения других отчётов",
+    "buildTimeout": "Отчёт строился слишком долго и был остановлен",
     "transport": "Не удалось выполнить команду: {{detail}}"
   },
   "form": {
     "cancel": "Отмена",
+    "retry": "Повторить",
     "language": "Язык",
     "loading": "Загрузка…",
     "nothing": "Ничего не найдено",
     "more": "Показать ещё",
     "progress": {
       "start": "Загружаю…",
-      "step": "Загружаю {{loaded}} из {{total}}…"
+      "step": "Загружаю {{loaded}} из {{total}}…",
+      "queued": "В очереди…"
     },
     "history": {
       "clear": "Очистить",

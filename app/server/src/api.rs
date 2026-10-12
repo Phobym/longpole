@@ -27,7 +27,7 @@ use serde_json::{Value, json};
 use time::OffsetDateTime;
 use tokio::sync::mpsc;
 
-use crate::auth::{auth_required, forget};
+use crate::auth::{auth_required, forget, stored_user};
 use crate::cache::{Key, finished};
 use crate::{AppState, ndjson};
 
@@ -234,8 +234,8 @@ pub(crate) struct BuildArgs {
     fresh: bool,
 }
 
-/// Отчёт и запись истории для «Недавних» в браузере. Ответ — поток NDJSON: строки `progress`, последняя —
-/// `ok` или `err`. Закрытая вкладка обрывает поток, а с ним и сборку.
+/// Отчёт и запись истории для «Недавних» в браузере. Ответ — поток NDJSON: `queued`, если все слоты реплики
+/// заняты, строки `progress`, последняя — `ok` или `err`. Закрытая вкладка обрывает поток, а с ним и сборку.
 pub(crate) async fn build(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -255,9 +255,17 @@ pub(crate) async fn build(
         Ok(prepared) => prepared,
         Err(e) => return (jar, fail(e)).into_response(),
     };
-    // строк не больше, чем пайплайнов в сборке (+1): ограничивает их лимит ядра
+    let user = stored_user(&jar, &parsed.host).expect("вход в хост проверен в prepare");
+    let Some(turn) = state.0.builds.enter((parsed.host.clone(), user)) else {
+        return (jar, fail(Error::new(ErrorCode::TooManyBuilds))).into_response();
+    };
+    // строк не больше, чем пайплайнов в сборке (+2): ограничивает их лимит ядра
     let (tx, rx) = mpsc::unbounded_channel::<Value>();
     let work = state.build_lines(source, args, parsed, env, tx);
+    let work = async move {
+        let _turn = turn;
+        work.await
+    };
     // `work` пишет строки в канал и закрывает его, когда завершён: последней уходит `ok` или `err`
     let lines = futures::stream::unfold(rx, |mut rx| async move {
         rx.recv().await.map(|line| (line, rx))
@@ -334,6 +342,15 @@ impl AppState {
         env: BuildEnv,
         tx: mpsc::UnboundedSender<Value>,
     ) {
+        // ponytail: слот держит и выдача из кэша, и ждущий single-flight того же ключа (его таймаут идёт и в
+        // ожидании); отдельная очередь для попаданий, если они начнут ждать долго
+        let _slot = self
+            .0
+            .builds
+            .slot(|| {
+                let _ = tx.send(json!({ "queued": true }));
+            })
+            .await;
         let started = Instant::now();
         let progress = tx.clone();
         let on_progress = move |p| {
@@ -356,7 +373,7 @@ impl AppState {
                 }
             }
         };
-        let built = built.await;
+        let built = self.0.builds.within_timeout(built).await;
         let ms = started.elapsed().as_millis() as u64;
         match &built {
             Ok((_, project, pipeline, cached)) => {

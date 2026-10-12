@@ -80,12 +80,12 @@ const report = (id: string) => ({ mode: 'single', meta: { project: 'g/p', label:
 const entry = (id: string, at: string) => ({ at, host: 'gitlab.example.com', form, request: request(id), label: { project: 'g/p', label: `#${id}` } })
 const built = (id: string, at: string) => [{ ok: { report: report(id), entry: entry(id, at) } }]
 
-test('build: прогресс из потока, отчёт в памяти вкладки, запись в историю браузера', async () => {
-  serve(() => [{ progress: { loaded: 1, total: 2 } }, { queued: true }, { progress: { loaded: 2, total: 2 } }, ...built('7', '2026-10-12T10:00:00Z')])
+test('build: очередь и прогресс из потока, отчёт в памяти вкладки, запись в историю браузера', async () => {
+  serve(() => [{ queued: true }, { progress: { loaded: 1, total: 2 } }, { progress: { loaded: 2, total: 2 } }, ...built('7', '2026-10-12T10:00:00Z')])
   const progress: unknown[] = []
   const id = value(await api.build(form, (p) => progress.push(p)))
   assert.deepEqual(calls[0], { url: '/api/build', body: { form } })
-  assert.deepEqual(progress, [{ loaded: 1, total: 2 }, { loaded: 2, total: 2 }])
+  assert.deepEqual(progress, ['queued', { loaded: 1, total: 2 }, { loaded: 2, total: 2 }])
   assert.deepEqual(value(await api.report(id)), report('7'))
   assert.equal(value(await api.findReport('gitlab.example.com', request('7'))), id)
   assert.equal(value(await api.findReport('gitlab.example.com', request('8'))), null)

@@ -1,6 +1,6 @@
 /** Транспорт Desktop: команды Tauri через `invoke`. */
 import { Channel, invoke } from '@tauri-apps/api/core'
-import { transportError, type Result } from './result'
+import { transportError, type BuildProgress, type Result } from './result'
 import type { AppSettings } from './schema/AppSettings'
 import type { CmdError } from './schema/CmdError'
 import type { Form } from './schema/Form'
@@ -55,7 +55,7 @@ export const pipelines = (host: string, project: string, ref: string | null, wor
 export const workflows = (host: string, project: string) => call<Workflow[]>('workflows', { host, project })
 export const hostProvider = (host: string) => call<Provider>('host_provider', { host })
 /** Собирает отчёт и возвращает его id для `/report/$id`; `onProgress` получает `{ loaded, total }` только от этой сборки. */
-export const build = (form: Form, onProgress: (p: Progress) => void) => {
+export const build = (form: Form, onProgress: (p: BuildProgress) => void) => {
   const channel = new Channel<Progress>(onProgress)
   return call<number>('build', { form, onProgress: channel })
 }
@@ -84,7 +84,7 @@ export const login = (host: string, _returnTo?: string): void => {
 }
 export const logout = async (host: string): Promise<Result<null>> => ({ ok: false, error: transportError(`logout ${host}: только Selfhosted`) })
 // Кэша отчётов в Desktop нет — перестраивать мимо него нечего
-export const rebuild = async (id: number, _onProgress: (p: Progress) => void): Promise<Result<number>> => ({
+export const rebuild = async (id: number, _onProgress: (p: BuildProgress) => void): Promise<Result<number>> => ({
   ok: false,
   error: transportError(`rebuild ${id}: только Selfhosted`),
 })

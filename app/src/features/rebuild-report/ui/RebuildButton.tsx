@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { apiError, rebuild, report as reportById, unwrap, type Progress, type Report } from '../../../shared/api'
+import { apiError, rebuild, report as reportById, unwrap, type BuildProgress, type Report } from '../../../shared/api'
 import { capabilities } from '../../../shared/config'
-import { useTranslation } from '../../../shared/i18n'
+import { progressText, useTranslation } from '../../../shared/i18n'
 import { showError } from '../../../shared/lib/dialogs'
 import { Button } from '../../../shared/ui/button'
 import { isFinished } from '../../../entities/report'
@@ -15,7 +15,7 @@ import { historyQuery } from '../../../entities/history-entry'
 export function RebuildButton({ id, report, onRebuilt }: { id: number; report: Report; onRebuilt: (report: Report) => void }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const [progress, setProgress] = useState<Progress | null>(null)
+  const [progress, setProgress] = useState<BuildProgress | null>(null)
   const mutation = useMutation({
     mutationFn: async () => {
       setProgress(null)
@@ -32,7 +32,7 @@ export function RebuildButton({ id, report, onRebuilt }: { id: number; report: R
     },
   })
   if (!capabilities.reportCache || !isFinished(report)) return null
-  const busy = progress ? t('form.progress.step', progress) : t('form.progress.start')
+  const busy = progressText(t, progress)
   return (
     <Button type="button" variant="ghost" size="sm" className="ml-auto" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
       {mutation.isPending ? busy : t('form.reportView.rebuild')}

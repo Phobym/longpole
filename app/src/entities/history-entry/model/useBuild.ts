@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { build, type Form, type Progress, apiError, unwrap } from '../../../shared/api'
-import { useTranslation } from '../../../shared/i18n'
+import { build, type BuildProgress, type Form, apiError, messageError, unwrap } from '../../../shared/api'
+import { progressText, useTranslation } from '../../../shared/i18n'
 import { historyQuery } from './history'
 
 /**
@@ -14,7 +14,7 @@ export function useBuild() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const [progress, setProgress] = useState<Progress | null>(null)
+  const [progress, setProgress] = useState<BuildProgress | null>(null)
   const mutation = useMutation({
     mutationFn: (form: Form) => {
       setProgress(null)
@@ -26,13 +26,16 @@ export function useBuild() {
       void navigate({ to: '/report/$id', params: { id: String(id) } })
     },
   })
+  const error = apiError(mutation.error)
   return {
     start: mutation.mutate,
     busy: mutation.isPending,
     /** сырой прогресс для жирафа загрузки; `null`, пока ядро его не прислало */
-    progress,
-    /** «Загружаю N из M…» (или «Загружаю…», пока прогресса нет). */
-    progressLabel: progress ? t('form.progress.step', progress) : t('form.progress.start'),
-    error: apiError(mutation.error),
+    progress: progress === 'queued' ? null : progress,
+    /** «В очереди…», «Загружаю N из M…» (или «Загружаю…», пока прогресса нет). */
+    progressLabel: progressText(t, progress),
+    error,
+    /** «Повторить» после `buildTimeout` — та же форма; при других ошибках `null`. */
+    retry: messageError(error)?.code === 'buildTimeout' ? () => mutation.mutate(mutation.variables!) : null,
   }
 }

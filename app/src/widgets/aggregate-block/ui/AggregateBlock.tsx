@@ -3,11 +3,12 @@ import { useErrorText } from '../../../shared/i18n'
 import { BuildAggregateButton, LastField, StatusFilter, useBuildAggregate } from '../../../features/build-aggregate'
 import type { ProjectRef } from '../../../entities/project'
 import { Giraffe } from '../../../shared/ui/giraffe'
+import { RetryButton } from '../../../shared/ui/retry-button'
 import { Tip } from '../../../features/onboarding'
 
 export function AggregateBlock(target: ProjectRef) {
   const errorText = useErrorText()
-  const { start, busy, progress, progressLabel, error } = useBuildAggregate(target)
+  const { start, busy, progress, progressLabel, error, retry } = useBuildAggregate(target)
   const failure = messageError(error)
   const workflowError = fieldError(error, 'workflow')
   return (
@@ -35,6 +36,7 @@ export function AggregateBlock(target: ProjectRef) {
           {errorText(failure)}
         </p>
       )}
+      {retry && <RetryButton onClick={retry} />}
     </section>
   )
 }

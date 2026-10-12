@@ -1,7 +1,7 @@
 import i18next, { type TFunction } from 'i18next'
 import { initReactI18next, useTranslation } from 'react-i18next'
 import type { Locale } from '../api/schema/Locale'
-import type { ApiError } from '../api/api'
+import type { ApiError, BuildProgress } from '../api/api'
 import type { ErrorBody } from '../api/schema/ErrorBody'
 import de from './locales/de.json'
 import en from './locales/en.json'
@@ -84,6 +84,10 @@ export const errorText = (t: TFunction, e: Failure): string =>
         .flatMap((body) => (body ? [errorText(t, body)] : []))
         .join(' ')
     : (t as unknown as (key: string, options: object) => string)(`errors.${e.code}`, textParams(e))
+
+/** Ход сборки: «В очереди…», «Загружаю N из M…» или «Загружаю…», пока прогресса нет. */
+export const progressText = (t: TFunction, p: BuildProgress | null): string =>
+  p === 'queued' ? t('form.progress.queued') : p ? t('form.progress.step', p) : t('form.progress.start')
 
 export const useErrorText = () => {
   const { t } = useTranslation()

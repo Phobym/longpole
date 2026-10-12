@@ -31,17 +31,21 @@
     "oauthClientId": "{{host}} に登録したアプリの Client ID を入力してください",
     "authRequired": "{{host}} にサインインしてください",
     "unknownHost": "ホスト {{host}} はこの Longpole に接続されていません",
+    "tooManyBuilds": "他のレポートの作成が終わるまでお待ちください",
+    "buildTimeout": "レポートの作成に時間がかかりすぎたため中止しました",
     "transport": "コマンドを実行できませんでした: {{detail}}"
   },
   "form": {
     "cancel": "キャンセル",
+    "retry": "再試行",
     "language": "言語",
     "loading": "読み込み中…",
     "nothing": "見つかりませんでした",
     "more": "さらに表示",
     "progress": {
       "start": "読み込み中…",
-      "step": "{{total}} 件中 {{loaded}} 件を読み込み中…"
+      "step": "{{total}} 件中 {{loaded}} 件を読み込み中…",
+      "queued": "待機中…"
     },
     "history": {
       "clear": "消去",

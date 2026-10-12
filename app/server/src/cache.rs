@@ -103,17 +103,30 @@ impl ReportCache {
     /// `work` по ключу выполняется по одному: второй запрос ждёт первый и затем видит его запись в кэше.
     // ponytail: ждущий незавершённого пайплайна строит заново — такие не кэшируются; общий результат, если понадобится
     pub(crate) async fn single_flight<T>(&self, key: &Key, work: impl Future<Output = T>) -> T {
-        let lock = self.inner().flights.entry(key.clone()).or_default().clone();
-        let result = {
-            let _turn = lock.lock().await;
-            work.await
+        let flight = Flight {
+            cache: self,
+            key,
+            lock: self.inner().flights.entry(key.clone()).or_default().clone(),
         };
-        let mut inner = self.inner();
+        let _turn = flight.lock.lock().await;
+        work.await
+    }
+}
+
+/// Очередь ключа; уходит из карты с последним участником — и когда закрытая вкладка отменила сборку.
+struct Flight<'a> {
+    cache: &'a ReportCache,
+    key: &'a Key,
+    lock: Arc<tokio::sync::Mutex<()>>,
+}
+
+impl Drop for Flight<'_> {
+    fn drop(&mut self) {
+        let mut inner = self.cache.inner();
         // в карте и у нас — больше ждущих нет
-        if Arc::strong_count(&lock) == 2 {
-            inner.flights.remove(key);
+        if Arc::strong_count(&self.lock) == 2 {
+            inner.flights.remove(self.key);
         }
-        result
     }
 }
 
@@ -172,6 +185,17 @@ mod tests {
         cache.put(key("2"), "v".into(), report(301));
         assert!(cache.get(&key("1"), "v").is_some());
         assert!(cache.get(&key("2"), "v").is_none());
+    }
+
+    #[test]
+    fn отменённая_сборка_не_оставляет_очередь_ключа() {
+        use futures::FutureExt;
+        let cache = ReportCache::new(300);
+        let cancelled = cache
+            .single_flight(&key("1"), futures::future::pending::<()>())
+            .now_or_never();
+        assert!(cancelled.is_none());
+        assert!(cache.inner().flights.is_empty());
     }
 
     #[test]

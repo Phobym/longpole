@@ -258,14 +258,16 @@ struct StampRepo {
 }
 
 impl Client {
+    fn run_not_found(&self, project: &str, id: &str) -> Error {
+        Error::new(ErrorCode::PipelineNotFound)
+            .with("host", self.host())
+            .with("pipeline", id)
+            .with("project", project)
+    }
+
     /// Тот же `GET` run, что и в `fetch_run`, без джоб; 403 без лимита — тоже «не найден».
     pub async fn run_stamp(&self, project: &str, id: &str) -> Result<Stamp, Error> {
-        let not_found = || {
-            Error::new(ErrorCode::PipelineNotFound)
-                .with("host", self.host())
-                .with("pipeline", id)
-                .with("project", project)
-        };
+        let not_found = || self.run_not_found(project, id);
         let run: StampRun = match self
             .json(&format!("/repos/{project}/actions/runs/{id}"))
             .await
@@ -288,12 +290,7 @@ impl Client {
 
     /// Workflow run со всеми попытками (спека, § 2).
     pub async fn fetch_run(&self, project: &str, id: &str) -> Result<RawPipeline, Error> {
-        let not_found = || {
-            Error::new(ErrorCode::PipelineNotFound)
-                .with("host", self.host())
-                .with("pipeline", id)
-                .with("project", project)
-        };
+        let not_found = || self.run_not_found(project, id);
         let run: WireRun = self
             .json(&format!("/repos/{project}/actions/runs/{id}"))
             .await?

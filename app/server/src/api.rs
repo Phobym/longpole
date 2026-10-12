@@ -340,25 +340,33 @@ impl AppState {
             // поток уже закрыт — прогресс некому показывать
             let _ = progress.send(json!({ "progress": p }));
         };
+        // отчёт, проект и пайплайн для лога (у пайплайна — числовые id ключа кэша), попадание в кэш
         let built = async {
             match single_pipeline(&source, &request).await? {
                 Some((project, pipeline)) => {
                     let (report, key, cached) = self
                         .cached_report(&source, project, pipeline, env, fresh, on_progress)
                         .await?;
-                    tracing::info!(host = %key.host, project = %key.project, pipeline = %key.pipeline,
-                        cached, ms = started.elapsed().as_millis() as u64, "build");
-                    Ok(report)
+                    Ok((report, key.project, key.pipeline, cached))
                 }
                 None => {
                     let built = build_report(&source, &request, env, on_progress).await?;
-                    tracing::info!(host = %host, project = %request.project(), cached = false,
-                        ms = started.elapsed().as_millis() as u64, "build");
-                    Ok::<_, Error>(to_json(built.report))
+                    let project = request.project().to_owned();
+                    Ok::<_, Error>((to_json(built.report), project, "-".to_owned(), false))
                 }
             }
         };
-        let result: Cmd<Value> = built.await.map_err(Into::into).map(|report| {
+        let built = built.await;
+        let ms = started.elapsed().as_millis() as u64;
+        match &built {
+            Ok((_, project, pipeline, cached)) => {
+                tracing::info!(host = %host, project = %project, pipeline = %pipeline, cached, ms, "build");
+            }
+            Err(e) => {
+                tracing::info!(host = %host, project = %request.project(), error = ?e.code, ms, "build");
+            }
+        }
+        let result: Cmd<Value> = built.map_err(Into::into).map(|(report, ..)| {
             let label = HistoryLabel::deserialize(&report["meta"])
                 .expect("meta отчёта несёт project и label");
             let entry = NewEntry {

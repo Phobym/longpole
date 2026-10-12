@@ -29,6 +29,8 @@
     "oauthExpired": "La connexion à {{host}} a expiré, recommencez",
     "oauthFailed": "Impossible de se connecter à {{host}} : {{detail}}",
     "oauthClientId": "Indiquez le Client ID de l'application enregistrée sur {{host}}",
+    "authRequired": "Connectez-vous à {{host}}",
+    "unknownHost": "L'hôte {{host}} n'est pas connecté à ce Longpole",
     "transport": "Impossible d'exécuter la commande : {{detail}}"
   },
   "form": {
@@ -138,7 +140,10 @@
       },
       "tips": "Astuces",
       "tipsShow": "Afficher les astuces de la girafe",
-      "tipsReset": "Réafficher"
+      "tipsReset": "Réafficher",
+      "signedInAs": "Connecté en tant que @{{login}}",
+      "signIn": "Se connecter",
+      "signOut": "Se déconnecter"
     },
     "reportView": {
       "back": "← Retour",
@@ -147,7 +152,8 @@
     "welcome": {
       "title": "Bienvenue dans Longpole",
       "text": "Connectez-vous pour voir vos pipelines et trouver ce qui ralentit le build.",
-      "skip": "Passer"
+      "skip": "Passer",
+      "loginWith": "Se connecter avec {{provider}} ({{host}})"
     },
     "connect": {
       "title": "Connecter un compte",

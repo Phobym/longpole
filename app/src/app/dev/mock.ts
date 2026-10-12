@@ -13,9 +13,9 @@ const welcome = new URLSearchParams(location.search).has('welcome')
 
 let settings: AppSettings = { locale: 'ru', theme: 'system', lastProject: { host: HOST, path: 'g/p' }, tips: true, seenTips: [] }
 const hosts: HostInfo[] = welcome ? [] : [
-  { host: HOST, source: 'keychain', provider: 'gitlab' },
-  { host: 'gitlab.com', source: 'glab', provider: 'gitlab' },
-  { host: 'github.com', source: 'gh', provider: 'github' },
+  { host: HOST, source: 'keychain', provider: 'gitlab', login: null },
+  { host: 'gitlab.com', source: 'glab', provider: 'gitlab', login: null },
+  { host: 'github.com', source: 'gh', provider: 'github', login: null },
 ]
 let saved: SavedProject[] = welcome ? [] : [
   { host: HOST, path: 'g/p', name: 'group / project', addedAt: iso(60 * 24 * 3) },
@@ -88,7 +88,7 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
     if (host === 'github.com') (onCode as { onmessage: (c: UserCode) => void }).onmessage({ userCode: 'WDJB-MJHT', verificationUri: 'https://github.com/login/device' })
     const cancelled = await Promise.race([delay(host === 'github.com' ? 4000 : 1500).then(() => false), new Promise<boolean>((r) => (cancelLogin = () => r(true)))])
     if (cancelled) return false
-    if (!hosts.some((h) => h.host === host)) hosts.push({ host: String(host), source: 'oauth', provider: host === 'github.com' ? 'github' : 'gitlab' })
+    if (!hosts.some((h) => h.host === host)) hosts.push({ host: String(host), source: 'oauth', provider: host === 'github.com' ? 'github' : 'gitlab', login: null })
     return true
   },
   oauth_cancel: () => cancelLogin?.() ?? null,

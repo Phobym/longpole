@@ -1,7 +1,9 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { PlusIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { findReport, type HistoryEntry } from '../../../shared/api'
+import { findReport, login, type HistoryEntry } from '../../../shared/api'
+import { capabilities } from '../../../shared/config'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { cn } from '../../../shared/lib/cn'
 import { Button } from '../../../shared/ui/button'
@@ -12,7 +14,7 @@ import { fillLink } from '../../../features/build-by-link'
 import { ClearHistoryButton, RemoveEntryButton } from '../../../features/history-actions'
 import { openConnect } from '../../../features/manage-token'
 import { resetSearch } from '../../../features/search-projects'
-import { pickHost, useHostState } from '../../../entities/host'
+import { hostsQuery, pickHost, useHostState } from '../../../entities/host'
 import { HistoryEntryItem, useHistory } from '../../../entities/history-entry'
 import { useOpenProject } from '../../../entities/project'
 import { SavedProjectItem, useRemoveProject, useSavedProjects } from '../../../entities/saved-project'
@@ -39,7 +41,9 @@ export function ProjectsSidebar() {
   const { projects, error: projectsError } = useSavedProjects()
   const removeProject = useRemoveProject()
   const { entries, error: historyError } = useHistory()
-  const { host: currentHost, saved: hosts } = useHostState()
+  const { host: currentHost } = useHostState()
+  // в Selfhosted — все хосты инстанса, и без входа тоже
+  const { data: accounts = [] } = useQuery(hostsQuery)
 
   // Готовый отчёт ещё в памяти — сразу на него; иначе запись заполняет сторы и ведёт на нужный экран, как раньше.
   const openEntry = async ({ host, form, request }: HistoryEntry) => {
@@ -106,23 +110,40 @@ export function ProjectsSidebar() {
       {/* прижат к низу: аккаунты всегда на виду, второй подключается отсюда (спека, § 6) */}
       <Section title={t('form.sidebar.accounts')} className="mt-auto">
         <ul className="flex flex-col gap-0.5">
-          {hosts.map((h) => (
-            <li key={h.host}>
-              <Link to="/settings" className="flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent">
+          {accounts.map((h) =>
+            h.source === null ? (
+              // Selfhosted: хост инстанса без входа (спека, § 10)
+              <li key={h.host} className="flex items-center gap-2 px-2 py-1 text-sm">
                 <ProviderIcon provider={h.provider} className="text-muted-foreground" />
                 <span translate="no" className="min-w-0 flex-1 truncate">
                   {h.host}
                 </span>
-                <span className="shrink-0 whitespace-nowrap text-[11px] text-muted-foreground">{t(`form.settings.source.${h.source}`)}</span>
-              </Link>
+                <button type="button" className="shrink-0 text-[11px] text-link hover:underline" onClick={() => login(h.host)}>
+                  {t('form.settings.signIn')}
+                </button>
+              </li>
+            ) : (
+              <li key={h.host}>
+                <Link to="/settings" className="flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent">
+                  <ProviderIcon provider={h.provider} className="text-muted-foreground" />
+                  <span translate="no" className="min-w-0 flex-1 truncate">
+                    {h.host}
+                  </span>
+                  <span translate={h.login ? 'no' : undefined} className="shrink-0 whitespace-nowrap text-[11px] text-muted-foreground">
+                    {h.login ? `@${h.login}` : t(`form.settings.source.${h.source}`)}
+                  </span>
+                </Link>
+              </li>
+            ),
+          )}
+          {capabilities.manageHosts && (
+            <li>
+              <button type="button" className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm text-link hover:bg-accent" onClick={openConnect}>
+                <PlusIcon aria-hidden className="size-4" />
+                {t('form.sidebar.connect')}
+              </button>
             </li>
-          ))}
-          <li>
-            <button type="button" className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm text-link hover:bg-accent" onClick={openConnect}>
-              <PlusIcon aria-hidden className="size-4" />
-              {t('form.sidebar.connect')}
-            </button>
-          </li>
+          )}
         </ul>
       </Section>
     </aside>

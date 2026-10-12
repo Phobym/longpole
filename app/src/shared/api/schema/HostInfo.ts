@@ -2,8 +2,16 @@
 import type { Provider } from "./Provider";
 import type { TokenSource } from "./TokenSource";
 
-export type HostInfo = { host: string, source: TokenSource, 
+export type HostInfo = { host: string, 
+/**
+ * `None` — входа нет: хост инстанса Selfhosted без сессии
+ */
+source: TokenSource | null, 
 /**
  * `None` — хост из связки ключей, тип ещё не определён
  */
-provider: Provider | null, };
+provider: Provider | null, 
+/**
+ * логин у провайдера; знает только Selfhosted
+ */
+login: string | null, };

@@ -7,6 +7,7 @@ publish = false
 
 [dependencies]
 axum = "0.8"
+axum-extra = { version = "0.12.6", features = ["cookie-private", "cookie-key-expansion"] }
 base64 = "0.22"
 longpole-core = { path = "../core", default-features = false }
 regex = "1"
@@ -14,10 +15,12 @@ rust-embed = { version = "8", features = ["mime-guess"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml_ng = "0.10.0"
-tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal"] }
+time = "0.3"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "sync"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "json"] }
 url = "2"
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
+wiremock = "0.6"

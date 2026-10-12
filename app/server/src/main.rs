@@ -46,7 +46,7 @@ async fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    match axum::serve(listener, app(&config))
+    match axum::serve(listener, app(config))
         .with_graceful_shutdown(shutdown(terminate))
         .await
     {

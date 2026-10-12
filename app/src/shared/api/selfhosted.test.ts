@@ -116,3 +116,27 @@ test('удалённый проект перестаёт быть последн
   await api.removeProject(p)
   assert.equal(value(await api.getSettings()).lastProject, null)
 })
+
+test('вход — переход всей страницы на /auth/login с возвратом на текущий URL', () => {
+  const assigned: string[] = []
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: { pathname: '/', search: '?a=1', hash: '#/project/h/g', assign: (url: string) => assigned.push(url) },
+  })
+  api.login('gitlab.example.com')
+  api.login('ghe.example.com', '/')
+  assert.deepEqual(assigned, ['/auth/login?host=gitlab.example.com&return_to=%2F%3Fa%3D1%23%2Fproject%2Fh%2Fg', '/auth/login?host=ghe.example.com&return_to=%2F'])
+})
+
+test('выход: POST /auth/logout с JSON-заголовком, отказ сервера — transport', async () => {
+  const sent: { url: string; init: RequestInit }[] = []
+  let status = 204
+  globalThis.fetch = (async (url: string, init: RequestInit) => {
+    sent.push({ url, init })
+    return new Response(null, { status })
+  }) as typeof fetch
+  assert.deepEqual(await api.logout('gitlab.example.com'), { ok: true, value: null })
+  assert.deepEqual(sent[0], { url: '/auth/logout?host=gitlab.example.com', init: { method: 'POST', headers: { 'Content-Type': 'application/json' } } })
+  status = 403
+  assert.deepEqual(await api.logout('gitlab.example.com'), { ok: false, error: { kind: 'message', code: 'transport', params: { detail: 'HTTP 403' } } })
+})

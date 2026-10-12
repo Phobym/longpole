@@ -29,6 +29,8 @@
     "oauthExpired": "L'accesso a {{host}} è scaduto, ricomincia",
     "oauthFailed": "Impossibile accedere a {{host}}: {{detail}}",
     "oauthClientId": "Indica il Client ID dell'app registrata su {{host}}",
+    "authRequired": "Accedi a {{host}}",
+    "unknownHost": "L'host {{host}} non è collegato a questo Longpole",
     "transport": "Impossibile eseguire il comando: {{detail}}"
   },
   "form": {
@@ -138,7 +140,10 @@
       },
       "tips": "Suggerimenti",
       "tipsShow": "Mostra i suggerimenti della giraffa",
-      "tipsReset": "Mostra di nuovo"
+      "tipsReset": "Mostra di nuovo",
+      "signedInAs": "Accesso come @{{login}}",
+      "signIn": "Accedi",
+      "signOut": "Esci"
     },
     "reportView": {
       "back": "← Indietro",
@@ -147,7 +152,8 @@
     "welcome": {
       "title": "Benvenuto in Longpole",
       "text": "Accedi per vedere le tue pipeline e scoprire cosa rallenta la build.",
-      "skip": "Salta"
+      "skip": "Salta",
+      "loginWith": "Accedi con {{provider}} ({{host}})"
     },
     "connect": {
       "title": "Collega account",

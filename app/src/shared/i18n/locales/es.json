@@ -29,6 +29,8 @@
     "oauthExpired": "El inicio de sesión en {{host}} caducó; vuelve a empezar",
     "oauthFailed": "No se pudo iniciar sesión en {{host}}: {{detail}}",
     "oauthClientId": "Indica el Client ID de la aplicación registrada en {{host}}",
+    "authRequired": "Inicia sesión en {{host}}",
+    "unknownHost": "El host {{host}} no está conectado a este Longpole",
     "transport": "No se pudo ejecutar el comando: {{detail}}"
   },
   "form": {
@@ -138,7 +140,10 @@
       },
       "tips": "Consejos",
       "tipsShow": "Mostrar los consejos de la jirafa",
-      "tipsReset": "Volver a mostrar"
+      "tipsReset": "Volver a mostrar",
+      "signedInAs": "Sesión iniciada como @{{login}}",
+      "signIn": "Iniciar sesión",
+      "signOut": "Cerrar sesión"
     },
     "reportView": {
       "back": "← Atrás",
@@ -147,7 +152,8 @@
     "welcome": {
       "title": "Te damos la bienvenida a Longpole",
       "text": "Inicia sesión para ver tus pipelines y descubrir qué ralentiza la compilación.",
-      "skip": "Omitir"
+      "skip": "Omitir",
+      "loginWith": "Iniciar sesión con {{provider}} ({{host}})"
     },
     "connect": {
       "title": "Conectar cuenta",

@@ -8,6 +8,6 @@ export type { ApiError, Result } from './result'
 const transport: typeof desktop = DELIVERY === 'desktop' ? desktop : selfhosted
 
 export const {
-  addProject, branches, build, clearHistory, findReport, getSettings, history, hosts, hostProvider, oauthCancel, oauthLogin, pipelines, projects,
+  addProject, branches, build, clearHistory, findReport, getSettings, history, hosts, hostProvider, login, logout, oauthCancel, oauthLogin, pipelines, projects,
   removeHistory, removeProject, removeToken, report, savedProjects, setCurrentReport, setSettings, setToken, workflows,
 } = transport

@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Navigate } from '@tanstack/react-router'
+import { capabilities } from '../../../shared/config'
 import { useErrorText, useTranslation } from '../../../shared/i18n'
 import { Button } from '../../../shared/ui/button'
 import { Card } from '../../../shared/ui/card'
 import { Giraffe } from '../../../shared/ui/giraffe'
 import { openAddProject } from '../../../features/add-project'
+import { WelcomeLogin } from '../../../features/instance-login'
 import { ConnectAccount } from '../../../features/manage-token'
 import { PickProject } from '../../../widgets/connect-account'
 import { useHostState } from '../../../entities/host'
@@ -37,6 +39,17 @@ export function HomePage() {
     )
   }
   const step = homeStep(projects.length, hosts.length)
+  if (step === 'welcome' && !capabilities.manageHosts) {
+    // Selfhosted: вход только в хосты инстанса, без ожидания на странице и без «Пропустить» (спека, § 10)
+    return (
+      <Card className="m-auto w-full max-w-[340px] items-center gap-3 py-8 text-center">
+        <Giraffe size={96} />
+        <h1 className="text-xl font-semibold">{t('form.welcome.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('form.welcome.text')}</p>
+        <WelcomeLogin />
+      </Card>
+    )
+  }
   if (step === 'welcome') {
     return (
       <Card className="m-auto w-full max-w-[340px] items-center gap-3 py-8 text-center">

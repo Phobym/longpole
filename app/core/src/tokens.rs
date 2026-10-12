@@ -11,12 +11,11 @@ use std::thread;
 use std::time::Duration;
 
 use keyring_core::{CredentialStore, Entry, Error as KeyringError};
+use serde::Deserialize;
 use serde::de::IgnoredAny;
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::error::{Error, ErrorCode};
-use crate::hosts::{HostList, bare, normalize_host};
+use crate::hosts::{HostInfo, HostList, TokenSource, bare, normalize_host};
 use crate::oauth::{self, Credential, RefreshError};
 use crate::source::{GITHUB_COM, Provider};
 
@@ -260,27 +259,6 @@ pub fn find_token(
     Err(Error::new(ErrorCode::NoToken).with("host", host))
 }
 
-/// Откуда у хоста токен; «Удалить» в настройках есть у `Keychain` и `Oauth`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
-#[serde(rename_all = "lowercase")]
-#[ts(export)]
-pub enum TokenSource {
-    Keychain,
-    Oauth,
-    Glab,
-    Env,
-    Gh,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-#[ts(export)]
-pub struct HostInfo {
-    pub host: String,
-    pub source: TokenSource,
-    /// `None` — хост из связки ключей, тип ещё не определён
-    pub provider: Option<Provider>,
-}
-
 /// Хосты, для которых токен найдётся: связка ключей (по алфавиту), хост `glab` по умолчанию, `GITLAB_HOST`.
 pub fn list_hosts(
     store: &TokenStore,
@@ -291,21 +269,23 @@ pub fn list_hosts(
         .hosts()?
         .into_iter()
         .map(|host| HostInfo {
-            source: if store.is_oauth(&host) {
+            source: Some(if store.is_oauth(&host) {
                 TokenSource::Oauth
             } else {
                 TokenSource::Keychain
-            },
+            }),
             host,
             provider: None,
+            login: None,
         })
         .collect();
     let mut push = |host: String, source: TokenSource| {
         if !hosts.iter().any(|h| h.host == host) {
             hosts.push(HostInfo {
                 host,
-                source,
+                source: Some(source),
                 provider: Some(Provider::Gitlab),
+                login: None,
             });
         }
     };
@@ -489,8 +469,9 @@ pub fn github_hosts(
 ) -> Vec<HostInfo> {
     let info = |host: String, source| HostInfo {
         host,
-        source,
+        source: Some(source),
         provider: Some(Provider::Github),
+        login: None,
     };
     let mut hosts: Vec<HostInfo> = match gh(&["auth", "status", "--json", "hosts"])
         .and_then(|text| serde_json::from_str::<GhStatus>(&text).ok())

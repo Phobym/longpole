@@ -13,10 +13,12 @@ RUN if [ -n "$VERSION" ]; then npm version "$VERSION" --no-git-tag-version --all
 RUN VITE_DELIVERY=selfhosted npm run build
 
 # Сервер: на Alpine Rust собирает под musl статически, статика фронта встраивается в бинарник.
+# Версия Rust — та же, что в app/rust-toolchain.toml: при смене тулчейна менять в обоих местах.
 FROM rust:1.94-alpine AS server
 RUN apk add --no-cache musl-dev
 WORKDIR /app
 COPY app/ ./
+# main.rs берёт версию из package.json через include_str!.
 COPY --from=front /app/package.json ./
 COPY --from=front /app/dist dist/
 RUN cargo build --release --locked -p longpole-server

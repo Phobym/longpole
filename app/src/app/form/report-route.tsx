@@ -10,6 +10,7 @@ import { isReportId, useReportById } from '../../entities/report'
 import { ReportPage } from '../../pages/report'
 import { markLeftReport } from '../../features/onboarding'
 import { RebuildButton } from '../../features/rebuild-report'
+import { DownloadButton } from '../../features/download-report'
 import { Giraffe } from '../../shared/ui/giraffe'
 
 /** Отчёт из памяти ядра; ядро узнаёт, что он на экране (⌘S). Вытесненный id — ошибка и домой, битый (`/report/abc`) — сразу домой без диалога. */
@@ -58,7 +59,7 @@ export const ReportLoading = ({ text }: { text: string }) => (
   </p>
 )
 
-/** Отчёт на весь экран с полосой «Назад», заголовком и «Перестроить»; `id` — отчёт в памяти транспорта. */
+/** Отчёт на весь экран с полосой «Назад», заголовком, «Перестроить» и «Скачать HTML»; `id` — отчёт в памяти транспорта. */
 export function ReportScreen({ id, report, onRebuilt }: { id: number; report: Report; onRebuilt: (report: Report) => void }) {
   const { t } = useTranslation()
   const back = useGoBack()
@@ -73,7 +74,10 @@ export function ReportScreen({ id, report, onRebuilt }: { id: number; report: Re
         <h1 translate="no" className="truncate text-sm font-semibold">
           {title}
         </h1>
-        <RebuildButton id={id} report={report} onRebuilt={onRebuilt} />
+        <div className="ml-auto flex gap-1">
+          <RebuildButton id={id} report={report} onRebuilt={onRebuilt} />
+          <DownloadButton id={id} report={report} />
+        </div>
       </div>
       <ReportPage report={report} embedded />
     </>

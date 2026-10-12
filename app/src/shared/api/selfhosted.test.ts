@@ -78,7 +78,7 @@ const form: Form = { mode: 'link', host: 'gitlab.example.com', url: 'https://git
 const request = (id: string) => ({ mode: 'pipeline', project: 'g/p', pipelineId: id }) as const
 const report = (id: string) => ({ mode: 'single', meta: { project: 'g/p', label: `#${id}` }, tree: {} }) as never
 const entry = (id: string, at: string) => ({ at, host: 'gitlab.example.com', form, request: request(id), label: { project: 'g/p', label: `#${id}` } })
-const built = (id: string, at: string) => [{ ok: { report: report(id), entry: entry(id, at) } }]
+const built = (id: string, at: string) => [{ ok: { report: report(id), entry: entry(id, at), fileName: `longpole-g-p-${id}.html` } }]
 
 test('build: очередь и прогресс из потока, отчёт в памяти вкладки, запись в историю браузера', async () => {
   serve(() => [{ queued: true }, { progress: { loaded: 1, total: 2 } }, { progress: { loaded: 2, total: 2 } }, ...built('7', '2026-10-12T10:00:00Z')])
@@ -105,8 +105,30 @@ test('rebuild: build с fresh по той же форме, новый отчёт
   assert.equal((await api.rebuild(999, () => {})).ok, false)
 })
 
+test('имя файла «Скачать HTML» — от сервера, после «Перестроить» тоже', async () => {
+  serve(() => built('7', '2026-10-12T10:00:00Z'))
+  const id = value(await api.build(form, () => {}))
+  assert.equal(value(await api.reportFileName(id)), 'longpole-g-p-7.html')
+  serve(() => built('8', '2026-10-12T11:00:00Z'))
+  await api.rebuild(id, () => {})
+  assert.equal(value(await api.reportFileName(id)), 'longpole-g-p-8.html')
+})
+
+test('шаблон отчёта — текст из статики сервера; нет файла — transport', async () => {
+  const asked: string[] = []
+  globalThis.fetch = (async (url: string) => {
+    asked.push(url)
+    return new Response('<html>шаблон</html>')
+  }) as typeof fetch
+  assert.equal(value(await api.reportTemplate()), '<html>шаблон</html>')
+  assert.deepEqual(asked, ['/report-template.txt'])
+  globalThis.fetch = (async () => new Response('', { status: 404 })) as unknown as typeof fetch
+  assert.deepEqual(await api.reportTemplate(), { ok: false, error: { kind: 'message', code: 'transport', params: { detail: 'HTTP 404' } } })
+})
+
 test('отчёта нет в памяти вкладки — reportExpired', async () => {
   assert.deepEqual(await api.report(999), { ok: false, error: { kind: 'message', code: 'reportExpired', params: { id: '999' } } })
+  assert.deepEqual(await api.reportFileName(999), { ok: false, error: { kind: 'message', code: 'reportExpired', params: { id: '999' } } })
 })
 
 test('история: тот же запрос поднимается наверх, не больше 20, удаление и очистка', async () => {

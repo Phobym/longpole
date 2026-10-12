@@ -9,5 +9,5 @@ const transport: typeof desktop = DELIVERY === 'desktop' ? desktop : selfhosted
 
 export const {
   addProject, branches, build, clearHistory, findReport, getSettings, history, hosts, hostProvider, login, logout, oauthCancel, oauthLogin, pipelines, projects,
-  rebuild, removeHistory, removeProject, removeToken, report, savedProjects, setCurrentReport, setSettings, setToken, workflows,
+  rebuild, removeHistory, removeProject, removeToken, report, reportFileName, reportTemplate, savedProjects, setCurrentReport, setSettings, setToken, workflows,
 } = transport

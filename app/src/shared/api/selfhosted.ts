@@ -138,17 +138,20 @@ const key = (host: string, request: Request) => JSON.stringify([host, request])
 
 /** Отчёты вкладки: серверного id нет, перезагрузка страницы их теряет. */
 // ponytail: память вкладки не ограничена; вытеснять старые, если вкладки живут долго
-const reports = new Map<number, { key: string; report: Report; form: Form }>()
+const reports = new Map<number, { key: string; report: Report; form: Form; fileName: string }>()
 let lastId = 0
 
-/** Сервер строит отчёт и отдаёт готовую запись истории (`at`, очищенная ссылка, `request`, `label` — от ядра); отчёт ложится под `id`. */
+/**
+ * Сервер строит отчёт и отдаёт готовую запись истории (`at`, очищенная ссылка, `request`, `label` — от ядра)
+ * и имя файла, как у ⌘S в Desktop; отчёт ложится под `id`.
+ */
 async function buildAs(id: number, form: Form, fresh: boolean, onProgress: (p: BuildProgress) => void): Promise<Result<number>> {
-  const r = await post<{ report: Report; entry: HistoryEntry }>('build', fresh ? { form, fresh } : { form }, onProgress)
+  const r = await post<{ report: Report; entry: HistoryEntry; fileName: string }>('build', fresh ? { form, fresh } : { form }, onProgress)
   if (!r.ok) return r
-  const { report, entry } = r.value
+  const { report, entry, fileName } = r.value
   const k = key(entry.host, entry.request)
   write('history', [entry, ...storedHistory().filter((e) => key(e.host, e.request) !== k)].slice(0, HISTORY_LIMIT))
-  reports.set(id, { key: k, report, form })
+  reports.set(id, { key: k, report, form, fileName })
   return ok(id)
 }
 
@@ -162,6 +165,20 @@ export const rebuild = async (id: number, onProgress: (p: BuildProgress) => void
 export const report = async (id: number): Promise<Result<Report>> => {
   const found = reports.get(id)
   return found ? ok(found.report) : expired(id)
+}
+/** Имя файла «Скачать HTML» (спека, § 10) — то же, что предлагает ⌘S в Desktop. */
+export const reportFileName = async (id: number): Promise<Result<string>> => {
+  const found = reports.get(id)
+  return found ? ok(found.fileName) : expired(id)
+}
+/** Шаблон самодостаточного отчёта для «Скачать HTML»: сборка кладёт его в статику текстом (`vite.config.ts`). */
+export const reportTemplate = async (): Promise<Result<string>> => {
+  try {
+    const res = await fetch('/report-template.txt')
+    return res.ok ? ok(await res.text()) : { ok: false, error: transportError(`HTTP ${res.status}`) }
+  } catch (e) {
+    return { ok: false, error: transportError(String(e)) }
+  }
 }
 const expired = (id: number): Result<never> => ({ ok: false, error: { kind: 'message', code: 'reportExpired', params: { id: String(id) } } })
 export const findReport = async (host: string, request: Request) => {

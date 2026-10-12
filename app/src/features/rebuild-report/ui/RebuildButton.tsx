@@ -34,7 +34,7 @@ export function RebuildButton({ id, report, onRebuilt }: { id: number; report: R
   if (!capabilities.reportCache || !isFinished(report)) return null
   const busy = progressText(t, progress)
   return (
-    <Button type="button" variant="ghost" size="sm" className="ml-auto" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
+    <Button type="button" variant="ghost" size="sm" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
       {mutation.isPending ? busy : t('form.reportView.rebuild')}
     </Button>
   )

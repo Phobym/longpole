@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && vite build -c vite.report.config.ts",
+    "build": "vite build -c vite.report.config.ts && vite build",
     "typecheck": "tsc --noEmit",
     "lint:fsd": "steiger ./src",
     "check:locales": "node scripts/check-locales.mjs",

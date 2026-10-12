@@ -97,6 +97,7 @@
     "addProject": {
       "title": "添加项目",
       "placeholder": "https://gitlab.example.com/group/project、https://github.com/owner/repo 或文件夹路径",
+      "placeholderLink": "https://gitlab.example.com/group/project 或 https://github.com/owner/repo",
       "hint": "支持仓库、流水线、MR、run 或 PR 链接。",
       "pickFolder": "选择文件夹…",
       "findOnHost": "在主机的项目列表中查找",
@@ -150,7 +151,8 @@
     "reportView": {
       "back": "← 返回",
       "loading": "正在加载报告…",
-      "rebuild": "重新生成"
+      "rebuild": "重新生成",
+      "download": "下载 HTML"
     },
     "reportLink": {
       "signIn": "登录 {{host}} 以查看报告",

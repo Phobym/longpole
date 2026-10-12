@@ -1,6 +1,6 @@
 export {
   addProject, branches, build, clearHistory, findReport, getSettings, history, hosts, hostProvider, login, logout, oauthCancel, oauthLogin, pipelines, projects, rebuild, removeHistory,
-  removeProject, removeToken, report, savedProjects, setCurrentReport, setSettings, setToken, workflows,
+  removeProject, removeToken, report, reportFileName, reportTemplate, savedProjects, setCurrentReport, setSettings, setToken, workflows,
   type ApiError, type BuildProgress, type Result,
 } from './api'
 export { isAggNode, type ReportNode } from './node'

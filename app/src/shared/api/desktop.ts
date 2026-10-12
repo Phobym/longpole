@@ -88,3 +88,6 @@ export const rebuild = async (id: number, _onProgress: (p: BuildProgress) => voi
   ok: false,
   error: transportError(`rebuild ${id}: только Selfhosted`),
 })
+// ⌘S сохраняет системным диалогом — имя файла и шаблон знает ядро
+export const reportFileName = async (id: number): Promise<Result<string>> => ({ ok: false, error: transportError(`reportFileName ${id}: только Selfhosted`) })
+export const reportTemplate = async (): Promise<Result<string>> => ({ ok: false, error: transportError('reportTemplate: только Selfhosted') })

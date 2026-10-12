@@ -100,6 +100,7 @@
     "addProject": {
       "title": "Добавить проект",
       "placeholder": "https://gitlab.example.com/group/project, https://github.com/owner/repo или путь к папке",
+      "placeholderLink": "https://gitlab.example.com/group/project или https://github.com/owner/repo",
       "hint": "Подойдёт ссылка на репозиторий, пайплайн, MR, run или PR.",
       "pickFolder": "Выбрать папку…",
       "findOnHost": "Найти в списке проектов хоста",
@@ -153,7 +154,8 @@
     "reportView": {
       "back": "← Назад",
       "loading": "Загрузка отчёта…",
-      "rebuild": "Перестроить"
+      "rebuild": "Перестроить",
+      "download": "Скачать HTML"
     },
     "reportLink": {
       "signIn": "Войди в {{host}}, чтобы увидеть отчёт",

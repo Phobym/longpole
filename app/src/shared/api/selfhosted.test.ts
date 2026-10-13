@@ -232,48 +232,60 @@ test('authRequired сразу после входа в этот хост (отк
   assert.equal(assigned.length, 2)
 })
 
-test('успех операции с входом в хост подтверждает вход: новый authRequired — снова тихий вход, 401 сразу после него — экран', async () => {
+/** Провайдер вернул на страницу: метку оставила прошлая страница, ушедшая на вход несколько секунд назад. */
+const returnedFromSignIn = (host: string) => session.set('longpole.signingIn', JSON.stringify({ host, at: Date.now() - 5_000 }))
+const gitlabAuthRequired = { kind: 'message', code: 'authRequired', params: { host: 'gitlab.example.com' } } as const
+const signInPage = () => {
   const assigned: string[] = []
   Object.defineProperty(globalThis, 'location', {
     configurable: true,
     value: { pathname: '/gitlab.example.com/g/p/-/pipelines/7', search: '', hash: '', assign: (url: string) => assigned.push(url) },
   })
-  const authRequired = { kind: 'message', code: 'authRequired', params: { host: 'gitlab.example.com' } } as const
-  serve(() => [{ err: authRequired }])
-  await pending(api.build(form, () => {}))
-  // вернулись со входа, отчёт по ссылке построен — вход в хост подтверждён
+  return assigned
+}
+
+test('успех операции с входом в хост подтверждает вход: новый authRequired — снова тихий вход, 401 сразу после него — экран', async () => {
+  const assigned = signInPage()
+  returnedFromSignIn('gitlab.example.com')
   serve(() => built('7', '2026-10-12T10:00:00Z'))
   await api.build(form, () => {})
-  serve(() => [{ err: authRequired }])
+  serve(() => [{ err: gitlabAuthRequired }])
   assert.equal(await pending(api.build(form, () => {})), 'pending')
-  assert.equal(assigned.length, 2)
+  assert.equal(assigned.length, 1)
   // 401 сразу после второго входа — экран, а не третий вход
-  assert.deepEqual(await api.build(form, () => {}), { ok: false, error: authRequired })
-  assert.equal(assigned.length, 2)
+  assert.deepEqual(await api.build(form, () => {}), { ok: false, error: gitlabAuthRequired })
+  assert.equal(assigned.length, 1)
   // то же для запроса с хостом в аргументах
+  returnedFromSignIn('gitlab.example.com')
   serve(() => [{ ok: [] }])
   await api.workflows('gitlab.example.com', 'g/p')
-  serve(() => [{ err: authRequired }])
+  serve(() => [{ err: gitlabAuthRequired }])
   await pending(api.pipelines('gitlab.example.com', 'g/p', null, null, null))
-  assert.equal(assigned.length, 3)
+  assert.equal(assigned.length, 2)
+})
+
+test('страница уже уходит на вход: успех запроса, что был в пути, метку не снимает', async () => {
+  const assigned = signInPage()
+  serve(() => [{ err: gitlabAuthRequired }])
+  await pending(api.build(form, () => {}))
+  serve(() => [{ ok: [] }])
+  await api.workflows('gitlab.example.com', 'g/p')
+  // провайдер вернул, сервер снова не пустил — экран, а не второй вход
+  serve(() => [{ err: gitlabAuthRequired }])
+  assert.deepEqual(await api.build(form, () => {}), { ok: false, error: gitlabAuthRequired })
+  assert.equal(assigned.length, 1)
 })
 
 test('успех без входа в этот хост (hosts, провайдер, другой хост) метку входа не снимает', async () => {
-  const assigned: string[] = []
-  Object.defineProperty(globalThis, 'location', {
-    configurable: true,
-    value: { pathname: '/gitlab.example.com/g/p/-/pipelines/7', search: '', hash: '', assign: (url: string) => assigned.push(url) },
-  })
-  const authRequired = { kind: 'message', code: 'authRequired', params: { host: 'gitlab.example.com' } } as const
-  serve(() => [{ err: authRequired }])
-  await pending(api.build(form, () => {}))
+  const assigned = signInPage()
+  returnedFromSignIn('gitlab.example.com')
   // сессия в cookie уже есть, но провайдер токен ещё не принял
   serve(() => [{ ok: [] }])
   await api.hosts()
   await api.workflows('ghe.example.com', 'o/r')
   serve(() => [{ ok: 'gitLab' }])
   await api.hostProvider('gitlab.example.com')
-  serve(() => [{ err: authRequired }])
-  assert.deepEqual(await api.build(form, () => {}), { ok: false, error: authRequired })
-  assert.equal(assigned.length, 1)
+  serve(() => [{ err: gitlabAuthRequired }])
+  assert.deepEqual(await api.build(form, () => {}), { ok: false, error: gitlabAuthRequired })
+  assert.deepEqual(assigned, [])
 })

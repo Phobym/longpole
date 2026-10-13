@@ -29,14 +29,16 @@ const SIGNING_IN = 'longpole.signingIn'
 /** Сколько после начала входа новый `authRequired` того же хоста считается его неудачей. */
 const SIGN_IN_WINDOW_MS = 60_000
 
+/** Метка начатого входа `{ host, at }` — её пишет `login`; испорченная — как её отсутствие. */
 const signingIn = () => {
   try {
     return JSON.parse(sessionStorage.getItem(SIGNING_IN) ?? 'null') as { host: string; at: number } | null
   } catch {
-    // испорченная метка — как её отсутствие
     return null
   }
 }
+/** `at` метки, которую записала эта страница: она уже уходит к провайдеру, вход ещё не случился. */
+let leavingAt: number | undefined
 
 /** Вход в хост начат только что: отказ у провайдера или 401 на свежий токен вернули на ту же страницу. */
 const justSignedIn = (host: string) => {
@@ -47,13 +49,16 @@ const justSignedIn = (host: string) => {
 /**
  * Провайдер принял вход в хост — операция с ним прошла: метка снимается, следующий `authRequired` снова уводит на тихий вход.
  * `hosts` и `host_provider` вход не подтверждают: сессия в cookie есть и тогда, когда провайдер отвечает на неё 401.
+ * Успех запроса, что был в пути, когда эта страница ушла на вход, — тоже: это ответ на старую сессию.
  */
-const signedIn = (host: string) => {
-  if (signingIn()?.host === host) sessionStorage.removeItem(SIGNING_IN)
+const confirmSignIn = (host: string) => {
+  const mark = signingIn()
+  if (mark?.host === host && mark.at !== leavingAt) sessionStorage.removeItem(SIGNING_IN)
 }
-const asUser = async <T>(host: string, r: Promise<Result<T>>) => {
+/** Операция от имени пользователя в хосте: её успех подтверждает вход. */
+const confirmingSignIn = async <T>(host: string, r: Promise<Result<T>>) => {
   const result = await r
-  if (result.ok) signedIn(host)
+  if (result.ok) confirmSignIn(host)
   return result
 }
 
@@ -89,6 +94,7 @@ async function post<T>(cmd: string, args: Record<string, unknown>, onProgress?: 
         if ('ok' in line) return ok(line.ok)
         if ('err' in line) {
           // страница уходит на вход: ответа нет, иначе экран на миг покажет ошибку («Войди в …»)
+          // ponytail: «Назад» со страницы провайдера из bfcache оставит загрузку — до перезагрузки, она покажет экран
           if (signInAgain(line.err)) return new Promise(() => {})
           return { ok: false, error: line.err }
         }
@@ -134,7 +140,7 @@ export const savedProjects = async () => ok(storedProjects())
 export const addProject = async (input: string): Promise<Result<SavedProject>> => {
   const r = await post<SavedProject>('add_project', { input })
   if (!r.ok) return r
-  signedIn(r.value.host)
+  confirmSignIn(r.value.host)
   const list = storedProjects()
   const found = list.find((p) => same(p, r.value))
   write('projects', found ? list.map((p) => (p === found ? { ...p, name: r.value.name } : p)) : [...list, r.value])
@@ -172,7 +178,7 @@ async function buildAs(id: number, form: Form, fresh: boolean, onProgress: (p: B
   const r = await post<{ report: Report; entry: HistoryEntry; fileName: string }>('build', fresh ? { form, fresh } : { form }, onProgress)
   if (!r.ok) return r
   const { report, entry, fileName } = r.value
-  signedIn(entry.host)
+  confirmSignIn(entry.host)
   const k = key(entry.host, entry.request)
   write('history', [entry, ...storedHistory().filter((e) => key(e.host, e.request) !== k)].slice(0, HISTORY_LIMIT))
   reports.set(id, { key: k, report, form, fileName })
@@ -214,7 +220,8 @@ export const hosts = () => post<HostInfo[]>('hosts', {})
 
 /** Вход переходом всей страницы (спека, § 5): сервер уводит к провайдеру и возвращает на `returnTo` — путь этого сайта. */
 export const login = (host: string, returnTo = location.pathname + location.search + location.hash): void => {
-  sessionStorage.setItem(SIGNING_IN, JSON.stringify({ host, at: Date.now() }))
+  leavingAt = Date.now()
+  sessionStorage.setItem(SIGNING_IN, JSON.stringify({ host, at: leavingAt }))
   location.assign(`/auth/login?${new URLSearchParams({ host, return_to: returnTo })}`)
 }
 /** Стирает вход только в этот хост; JSON-заголовок — как у всех POST (сверка CSRF на сервере). */
@@ -227,11 +234,11 @@ export const logout = async (host: string): Promise<Result<null>> => {
   }
 }
 export const hostProvider = (host: string) => post<Provider>('host_provider', { host })
-export const projects = (host: string, search: string, after: string | null) => asUser(host, post<Page<Project>>('projects', { host, search, after }))
-export const branches = (host: string, project: string, search: string) => asUser(host, post<string[]>('branches', { host, project, search }))
+export const projects = (host: string, search: string, after: string | null) => confirmingSignIn(host, post<Page<Project>>('projects', { host, search, after }))
+export const branches = (host: string, project: string, search: string) => confirmingSignIn(host, post<string[]>('branches', { host, project, search }))
 export const pipelines = (host: string, project: string, ref: string | null, workflow: string | null, after: string | null) =>
-  asUser(host, post<Page<Pipeline>>('pipelines', { host, project, ref, workflow, after }))
-export const workflows = (host: string, project: string) => asUser(host, post<Workflow[]>('workflows', { host, project }))
+  confirmingSignIn(host, post<Page<Pipeline>>('pipelines', { host, project, ref, workflow, after }))
+export const workflows = (host: string, project: string) => confirmingSignIn(host, post<Workflow[]>('workflows', { host, project }))
 
 // Только Desktop: хосты и вход задаёт инстанс, ⌘S нет. Интерфейс прячет их по `capabilities`, вызов — ошибка.
 const desktopOnly = async (cmd: string): Promise<Result<never>> => ({ ok: false, error: transportError(`${cmd}: только Desktop`) })

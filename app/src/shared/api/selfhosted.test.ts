@@ -13,7 +13,11 @@ Object.defineProperty(globalThis, 'localStorage', {
 })
 const session = new Map<string, string>()
 Object.defineProperty(globalThis, 'sessionStorage', {
-  value: { getItem: (k: string) => session.get(k) ?? null, setItem: (k: string, v: string) => void session.set(k, v) },
+  value: {
+    getItem: (k: string) => session.get(k) ?? null,
+    setItem: (k: string, v: string) => void session.set(k, v),
+    removeItem: (k: string) => void session.delete(k),
+  },
 })
 Object.defineProperty(globalThis, 'navigator', { value: { language: 'fr-FR' } })
 
@@ -34,6 +38,9 @@ beforeEach(() => {
   session.clear()
   calls.length = 0
 })
+
+/** Ответ так и не пришёл: страница уходит на вход, экрану показывать нечего. */
+const pending = (r: Promise<unknown>) => Promise.race([r.then(() => 'settled'), new Promise((done) => setTimeout(() => done('pending'), 20))])
 
 const value = <T>(r: { ok: true; value: T } | { ok: false }) => {
   assert.ok(r.ok)
@@ -168,7 +175,7 @@ test('вход — переход всей страницы на /auth/login с 
   assert.deepEqual(assigned, ['/auth/login?host=gitlab.example.com&return_to=%2F%3Fa%3D1%23%2Fproject%2Fh%2Fg', '/auth/login?host=ghe.example.com&return_to=%2F'])
 })
 
-test('authRequired во время работы — тихий вход в этот хост с возвратом на текущий URL', async () => {
+test('authRequired во время работы — тихий вход в этот хост с возвратом на текущий URL; ответа нет, пока страница уходит', async () => {
   const assigned: string[] = []
   Object.defineProperty(globalThis, 'location', {
     configurable: true,
@@ -176,7 +183,7 @@ test('authRequired во время работы — тихий вход в эт�
   })
   const authRequired = { kind: 'message', code: 'authRequired', params: { host: 'gitlab.example.com' } } as const
   serve(() => [{ progress: { loaded: 0, total: 1 } }, { err: authRequired }])
-  assert.deepEqual(await api.build(form, () => {}), { ok: false, error: authRequired })
+  assert.equal(await pending(api.build(form, () => {})), 'pending')
   serve(() => [{ err: { kind: 'message', code: 'pipelineNotFound', params: {} } }])
   await api.pipelines('gitlab.example.com', 'g/p', null, null, null)
   assert.deepEqual(assigned, ['/auth/login?host=gitlab.example.com&return_to=%2Fproject%2Fgitlab.example.com%2Fg%2Fp%3Fref%3Dmain'])
@@ -214,13 +221,59 @@ test('authRequired сразу после входа в этот хост (отк
   })
   const authRequired = (host: string) => ({ kind: 'message', code: 'authRequired', params: { host } }) as const
   serve(() => [{ err: authRequired('gitlab.example.com') }])
-  await api.build(form, () => {})
+  await pending(api.build(form, () => {}))
   assert.deepEqual(assigned, ['/auth/login?host=gitlab.example.com&return_to=%2Fgitlab.example.com%2Fg%2Fp%2F-%2Fpipelines%2F7'])
   // провайдер вернул на ту же ссылку, сервер снова не пустил
   assert.deepEqual(await api.build(form, () => {}), { ok: false, error: authRequired('gitlab.example.com') })
   assert.equal(assigned.length, 1)
   // другой хост — свой тихий вход
   serve(() => [{ err: authRequired('ghe.example.com') }])
-  await api.workflows('ghe.example.com', 'o/r')
+  await pending(api.workflows('ghe.example.com', 'o/r'))
   assert.equal(assigned.length, 2)
+})
+
+test('успех операции с входом в хост подтверждает вход: новый authRequired — снова тихий вход, 401 сразу после него — экран', async () => {
+  const assigned: string[] = []
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: { pathname: '/gitlab.example.com/g/p/-/pipelines/7', search: '', hash: '', assign: (url: string) => assigned.push(url) },
+  })
+  const authRequired = { kind: 'message', code: 'authRequired', params: { host: 'gitlab.example.com' } } as const
+  serve(() => [{ err: authRequired }])
+  await pending(api.build(form, () => {}))
+  // вернулись со входа, отчёт по ссылке построен — вход в хост подтверждён
+  serve(() => built('7', '2026-10-12T10:00:00Z'))
+  await api.build(form, () => {})
+  serve(() => [{ err: authRequired }])
+  assert.equal(await pending(api.build(form, () => {})), 'pending')
+  assert.equal(assigned.length, 2)
+  // 401 сразу после второго входа — экран, а не третий вход
+  assert.deepEqual(await api.build(form, () => {}), { ok: false, error: authRequired })
+  assert.equal(assigned.length, 2)
+  // то же для запроса с хостом в аргументах
+  serve(() => [{ ok: [] }])
+  await api.workflows('gitlab.example.com', 'g/p')
+  serve(() => [{ err: authRequired }])
+  await pending(api.pipelines('gitlab.example.com', 'g/p', null, null, null))
+  assert.equal(assigned.length, 3)
+})
+
+test('успех без входа в этот хост (hosts, провайдер, другой хост) метку входа не снимает', async () => {
+  const assigned: string[] = []
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: { pathname: '/gitlab.example.com/g/p/-/pipelines/7', search: '', hash: '', assign: (url: string) => assigned.push(url) },
+  })
+  const authRequired = { kind: 'message', code: 'authRequired', params: { host: 'gitlab.example.com' } } as const
+  serve(() => [{ err: authRequired }])
+  await pending(api.build(form, () => {}))
+  // сессия в cookie уже есть, но провайдер токен ещё не принял
+  serve(() => [{ ok: [] }])
+  await api.hosts()
+  await api.workflows('ghe.example.com', 'o/r')
+  serve(() => [{ ok: 'gitLab' }])
+  await api.hostProvider('gitlab.example.com')
+  serve(() => [{ err: authRequired }])
+  assert.deepEqual(await api.build(form, () => {}), { ok: false, error: authRequired })
+  assert.equal(assigned.length, 1)
 })

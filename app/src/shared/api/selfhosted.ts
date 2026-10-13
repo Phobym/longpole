@@ -65,11 +65,13 @@ const confirmingSignIn = async <T>(host: string, r: Promise<Result<T>>) => {
 /**
  * Вход истёк или отозван (спека, § 5): повторный вход у confidential-приложения тихий, возврат — на текущий URL.
  * Сразу после входа в тот же хост не повторяем — иначе цикл; ошибка доходит до экрана с кнопкой «Войти».
- * Возвращает, ушла ли страница на вход.
+ * Возвращает, ушла ли страница на вход. Ответ ей так и не придёт, поэтому «Назад» со страницы провайдера,
+ * поднявший её из bfcache, перезагружает её — иначе загрузка осталась бы навсегда.
  */
 const signInAgain = (e: ApiError) => {
   const host = e.kind === 'message' && e.code === 'authRequired' ? e.params.host : undefined
   if (!host || justSignedIn(host)) return false
+  addEventListener('pageshow', (event) => event.persisted && location.reload())
   login(host)
   return true
 }
@@ -94,7 +96,6 @@ async function post<T>(cmd: string, args: Record<string, unknown>, onProgress?: 
         if ('ok' in line) return ok(line.ok)
         if ('err' in line) {
           // страница уходит на вход: ответа нет, иначе экран на миг покажет ошибку («Войди в …»)
-          // ponytail: «Назад» со страницы провайдера из bfcache оставит загрузку — до перезагрузки, она покажет экран
           if (signInAgain(line.err)) return new Promise(() => {})
           return { ok: false, error: line.err }
         }

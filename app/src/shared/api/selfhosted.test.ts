@@ -20,6 +20,9 @@ Object.defineProperty(globalThis, 'sessionStorage', {
   },
 })
 Object.defineProperty(globalThis, 'navigator', { value: { language: 'fr-FR' } })
+// события окна: страница, поднятая из bfcache, получает `pageshow` с `persisted`
+const pageshow: ((e: { persisted: boolean }) => void)[] = []
+Object.defineProperty(globalThis, 'addEventListener', { value: (type: string, listener: never) => type === 'pageshow' && pageshow.push(listener) })
 
 const api = await import('./selfhosted.ts')
 
@@ -187,6 +190,21 @@ test('authRequired во время работы — тихий вход в эт�
   serve(() => [{ err: { kind: 'message', code: 'pipelineNotFound', params: {} } }])
   await api.pipelines('gitlab.example.com', 'g/p', null, null, null)
   assert.deepEqual(assigned, ['/auth/login?host=gitlab.example.com&return_to=%2Fproject%2Fgitlab.example.com%2Fg%2Fp%3Fref%3Dmain'])
+})
+
+test('«Назад» со страницы провайдера поднял страницу из bfcache — перезагрузка вместо вечной загрузки', async () => {
+  let reloads = 0
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: { pathname: '/', search: '', hash: '', assign: () => {}, reload: () => reloads++ },
+  })
+  pageshow.length = 0
+  serve(() => [{ err: { kind: 'message', code: 'authRequired', params: { host: 'gitlab.example.com' } } }])
+  await pending(api.build(form, () => {}))
+  for (const listener of pageshow) listener({ persisted: false })
+  assert.equal(reloads, 0)
+  for (const listener of pageshow) listener({ persisted: true })
+  assert.equal(reloads, 1)
 })
 
 test('язык отчёта — язык из настроек, а не только браузера', async () => {
